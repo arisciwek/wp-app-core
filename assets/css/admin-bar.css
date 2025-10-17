@@ -1,0 +1,117 @@
+/**
+ * App Core Admin Bar Styles
+ *
+ * @package     WP_App_Core
+ * @subpackage  Assets/CSS
+ * @version     1.0.0
+ * @author      arisciwek
+ *
+ * Path: /wp-app-core/assets/css/admin-bar.css
+ *
+ * Description: Generic styles for user information display in WordPress admin bar.
+ *              Works with multiple plugins (customer, agency, etc).
+ *              Includes styling for main display and dropdown details.
+ *              Positioned on the right side of admin bar.
+ *
+ * Changelog:
+ * 1.0.0 - 2025-01-18
+ * - Initial creation (migrated from wp-customer)
+ * - Made generic for multi-plugin support
+ * - Updated class names to wp-app-core-*
+ */
+
+/* Main admin bar info container */
+#wpadminbar .wp-app-core-admin-bar-info {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+}
+
+/* Entity info styling (customer/agency name, branch, etc) */
+#wpadminbar .wp-app-core-entity-info {
+    color: #72aee6;
+    background: transparent;
+}
+
+/* Roles info styling */
+#wpadminbar .wp-app-core-roles-info {
+    color: #00ba37;
+}
+
+/* Separator between sections */
+#wpadminbar .wp-app-core-separator {
+    color: #999;
+    margin: 0 5px;
+}
+
+/* Admin bar item background */
+#wpadminbar .wp-app-core-admin-bar-item {
+    background: rgba(0, 0, 0, 0.1) !important;
+}
+
+#wpadminbar .wp-app-core-admin-bar-item:hover {
+    background: rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Position on right side of admin bar */
+#wpadminbar #wp-admin-bar-wp-app-core-user-info {
+    float: right;
+}
+
+/* Dropdown detailed info styling */
+#wpadminbar .wp-app-core-detailed-info {
+    padding: 10px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #ccc;
+    min-width: 300px;
+    background: #32373c;
+}
+
+/* Info sections in dropdown */
+#wpadminbar .wp-app-core-detailed-info .info-section {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #444;
+}
+
+#wpadminbar .wp-app-core-detailed-info .info-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+/* Section headings */
+#wpadminbar .wp-app-core-detailed-info strong {
+    color: #fff;
+    display: block;
+    margin-bottom: 5px;
+    font-size: 13px;
+}
+
+/* Ensure dropdown appears correctly on right side */
+#wpadminbar #wp-admin-bar-wp-app-core-user-info .ab-sub-wrapper {
+    right: 0;
+    left: auto;
+}
+
+/* Responsive adjustments for smaller screens */
+@media screen and (max-width: 782px) {
+    /* Hide on very small screens to avoid clutter */
+    #wpadminbar #wp-admin-bar-wp-app-core-user-info {
+        display: none;
+    }
+}
+
+@media screen and (max-width: 960px) {
+    /* Simplify display on medium screens */
+    #wpadminbar .wp-app-core-admin-bar-info {
+        font-size: 12px;
+    }
+
+    #wpadminbar .wp-app-core-separator,
+    #wpadminbar .wp-app-core-roles-info {
+        display: none;
+    }
+}

@@ -172,3 +172,48 @@ See: [TODO/TODO-1202-review-07-assets-reorganization.md](TODO/TODO-1202-review-0
 See: [TODO/TODO-1201-wp-app-core-admin-bar-integration.md](TODO/TODO-1201-wp-app-core-admin-bar-integration.md)
 
 ---
+
+## TODO-1204: Method Migration to AdminBarModel
+- [x] Analyze methods in AgencyEmployeeModel
+- [x] Create AdminBarModel.php with generic methods
+- [x] Update AgencyEmployeeModel to use AdminBarModel
+- [x] Remove old helper methods from AgencyEmployeeModel
+- [x] Create TODO-1204-method-migration.md
+- [x] Sync to TODO.md
+
+**Status**: ✅ COMPLETED (needs browser testing)
+
+**Description**: Memindahkan method yang bersifat global scope dari AgencyEmployeeModel.php ke AdminBarModel.php untuk separation of concerns dan reusability.
+
+**Approach**: Option 2 - Proper Separation
+- Keep: `getUserInfo()` in AgencyEmployeeModel (data access layer)
+- Move: Helper methods to AdminBarModel as generic utilities
+
+**Methods Migrated**:
+1. `getRoleNamesFromCapabilities()` → Made generic with parameters
+2. `getPermissionNamesFromUserId()` → Made generic with parameters
+
+**Changes**:
+- Created: `/wp-app-core/src/Models/AdminBarModel.php` (256 lines)
+- Modified: `/wp-agency/src/Models/Employee/AgencyEmployeeModel.php` (removed 135 lines)
+- No change: `/wp-agency/includes/class-app-core-integration.php` (backward compatible)
+
+**Benefits**:
+- ✅ Separation of concerns (model vs utilities)
+- ✅ Reusable by all plugins (customer, agency, future)
+- ✅ Generic implementation (no hardcoded dependencies)
+- ✅ Backward compatible (no breaking changes)
+- ✅ Better maintainability
+
+**Files Created**:
+- `/wp-app-core/src/Models/AdminBarModel.php`
+- `/wp-app-core/TODO/TODO-1204-method-migration.md`
+- `/wp-app-core/TODO/PROPOSAL-1204-method-migration.md`
+- `/wp-app-core/TODO/ANALYSIS-1204-review-01.md`
+
+**Files Modified**:
+- `/wp-agency/src/Models/Employee/AgencyEmployeeModel.php`
+
+See: [TODO/TODO-1204-method-migration.md](TODO/TODO-1204-method-migration.md)
+
+---

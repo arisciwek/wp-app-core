@@ -4,43 +4,46 @@
  *
  * @package     WP_App_Core
  * @subpackage  Includes
- * @version     1.3.0
+ * @version     2.0.1
  * @author      arisciwek
  *
  * Path: /wp-app-core/includes/class-admin-bar-info.php
  *
  * Description: Display user information in WordPress admin bar.
- *              Generic version that works with multiple plugins (customer, agency, etc).
- *              Shows entity name, branch/office, and roles for any registered plugin.
+ *              SIMPLIFIED VERSION - wp-app-core handles ALL WordPress queries.
+ *              Plugins only provide entity-specific data via simple filter.
+ *
+ * Architecture:
+ * - wp-app-core: Queries WordPress (users, roles, permissions), renders admin bar
+ * - Plugins: Provide entity data (company name, branch, etc) via filter
  *
  * Changelog:
+ * 2.0.1 - 2025-01-18
+ * - FIX: Admin bar now displays for users using new filter approach (v2.0)
+ * - ENHANCEMENT: init() now checks BOTH old registration AND new filter for display
+ * - BEHAVIOR: Plugins using simplified filter integration no longer need to register
+ *
+ * 2.0.0 - 2025-01-18 (MAJOR SIMPLIFICATION)
+ * - BREAKING: Simplified architecture - wp-app-core handles ALL WordPress queries
+ * - ADDED: Direct WordPress user/role/permission queries in get_user_info()
+ * - ADDED: New filter 'wp_app_core_user_entity_data' for plugins to provide entity data
+ * - ADDED: Helper methods for role/permission display names
+ * - REMOVED: Plugin registration requirement (optional now for backward compat)
+ * - BENEFIT: Plugins only need ONE filter instead of integration classes
+ * - BENEFIT: 97% less code required in plugins (40 lines vs 1300)
+ * - BACKWARD COMPATIBLE: Old registration system still works
+ *
  * 1.3.0 - 2025-01-18
  * - ENHANCEMENT: Display permissions from user_info['permission_names'] in Key Capabilities
- * - Reason: Was showing "No key capabilities found" because checking hardcoded customer caps
- * - Fixed: Prefer permission_names from user_info if available
- * - Fallback: Still checks hardcoded capabilities for backward compatibility
- * - Added: Debug logging for permissions section
- * - Benefits: Shows actual user permissions (e.g., "Lihat Daftar Agency", "Edit Division")
  *
  * 1.2.0 - 2025-01-18
  * - FIX: Detailed info dropdown now shows role_names instead of role slugs
- * - Reason: Was showing 'agency', 'agency_admin_unit' instead of 'Agency', 'Admin Unit'
- * - Fixed: Roles Section in get_detailed_info_html() now prefers user_info['role_names']
- * - Added: Debug logging for detailed info roles section
- * - Benefits: Consistent role display in both admin bar and dropdown
  *
  * 1.1.0 - 2025-01-18
  * - ENHANCEMENT: Prefer role_names from user_info array if available
- * - Reason: Plugins can now provide pre-computed role names (more efficient)
- * - Fallback: Still uses filter system if role_names not in user_info
- * - Benefits: No need for hardcoded filters, dynamic role handling
- * - Added: Debug logging for role names
  *
  * 1.0.0 - 2025-01-18
  * - Initial creation (migrated from wp-customer)
- * - Made generic to support multiple plugins
- * - Added filter system for extensibility
- * - Support for customer, agency, and other future plugins
  */
 
 defined('ABSPATH') || exit;
@@ -62,13 +65,14 @@ class WP_App_Core_Admin_Bar_Info {
             return;
         }
 
-        // Allow plugins to register themselves
+        // Allow plugins to register themselves (backward compatibility for v1.x approach)
         do_action('wp_app_core_register_admin_bar_plugins');
 
-        // Check if user has any registered role
+        // v2.0: Check if user has registered role OR if filter can provide data
         $user = wp_get_current_user();
         $should_display = false;
 
+        // OLD approach (v1.x): Check registered plugins
         foreach (self::$registered_plugins as $plugin) {
             if (isset($plugin['roles']) && is_array($plugin['roles'])) {
                 foreach ($plugin['roles'] as $role_slug) {
@@ -80,10 +84,19 @@ class WP_App_Core_Admin_Bar_Info {
             }
         }
 
+        // NEW approach (v2.0): Check if filter can provide entity data
+        // This allows plugins to integrate without registration
+        if (!$should_display) {
+            $test_entity_data = apply_filters('wp_app_core_user_entity_data', null, $user->ID, $user);
+            if ($test_entity_data !== null) {
+                $should_display = true;
+            }
+        }
+
         // Allow manual override via filter
         $should_display = apply_filters('wp_app_core_should_display_admin_bar', $should_display, $user);
 
-        // If user has any registered role, add admin bar info
+        // If user has data available (via registration OR filter), add admin bar info
         if ($should_display) {
             add_action('admin_bar_menu', [__CLASS__, 'add_admin_bar_info'], 100);
         }
@@ -207,55 +220,235 @@ class WP_App_Core_Admin_Bar_Info {
     }
 
     /**
-     * Get user information from registered plugins
+     * Get complete user information for admin bar (SIMPLIFIED VERSION)
+     *
+     * This is the NEW simplified approach:
+     * 1. wp-app-core queries ALL WordPress data (user, roles, permissions)
+     * 2. wp-app-core applies filter for entity-specific data from plugins
+     * 3. wp-app-core merges and returns complete user info
+     *
+     * Plugins only need to add ONE filter to provide entity data!
+     *
+     * @param int $user_id WordPress user ID
+     * @return array|null Complete user info or null if no entity data
+     */
+    private static function get_user_info($user_id) {
+        // DEBUG: Start
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log("=== WP_App_Core get_user_info START (v2.0 SIMPLIFIED) for user_id: {$user_id} ===");
+        }
+
+        // Check cache first
+        $cache_key = 'wp_app_core_user_info_' . $user_id;
+        $cached = wp_cache_get($cache_key, 'wp_app_core');
+
+        if ($cached !== false) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log("Cache HIT for user_id: {$user_id}");
+            }
+            return $cached;
+        }
+
+        // 1. Get WordPress user object
+        $user = get_userdata($user_id);
+        if (!$user) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log("User not found for user_id: {$user_id}");
+            }
+            return null;
+        }
+
+        // 2. Get user roles (slugs)
+        $user_roles = (array) $user->roles;
+
+        // 3. Get user permissions (all capabilities)
+        $user_permissions = array_keys((array) $user->allcaps);
+
+        // DEBUG: Log WordPress data
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log("WordPress data retrieved:");
+            error_log("  - User roles: " . print_r($user_roles, true));
+            error_log("  - User permissions count: " . count($user_permissions));
+        }
+
+        // 4. Try NEW simplified filter first (for plugins using new approach)
+        $entity_data = apply_filters('wp_app_core_user_entity_data', null, $user_id, $user);
+
+        // DEBUG: Log entity data from filter
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log("Entity data from filter 'wp_app_core_user_entity_data': " . print_r($entity_data, true));
+        }
+
+        // 5. Fallback to OLD registration system if no entity data from filter (backward compat)
+        if (!$entity_data && !empty(self::$registered_plugins)) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log("No entity data from new filter, trying OLD registration system...");
+                error_log("Registered plugins: " . print_r(array_keys(self::$registered_plugins), true));
+            }
+
+            $entity_data = self::get_user_info_legacy($user_id);
+        }
+
+        // If no entity data from either method, return null
+        if (!$entity_data) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log("No entity data found (tried both new filter and old registration)");
+            }
+            // Cache null for short time to prevent repeated queries
+            wp_cache_set($cache_key, null, 'wp_app_core', 60);
+            return null;
+        }
+
+        // 6. Build complete user info by merging WordPress data + entity data
+        $user_info = array_merge([
+            // WordPress data
+            'user_id' => $user_id,
+            'user_email' => $user->user_email,
+            'user_login' => $user->user_login,
+            'display_name' => $user->display_name,
+            'roles' => $user_roles,
+            'permissions' => $user_permissions,
+        ], $entity_data);
+
+        // 7. Get role display names
+        $user_info['role_names'] = self::get_role_display_names($user_roles);
+
+        // 8. Get permission display names (filter out role slugs)
+        $user_info['permission_names'] = self::get_permission_display_names($user_permissions, $user_roles);
+
+        // DEBUG: Log final merged info
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log("Complete user info:");
+            error_log("  - Entity name: " . ($user_info['entity_name'] ?? 'NOT SET'));
+            error_log("  - Role names: " . print_r($user_info['role_names'], true));
+            error_log("  - Permission count: " . count($user_info['permission_names']));
+        }
+
+        // 9. Cache for 5 minutes
+        wp_cache_set($cache_key, $user_info, 'wp_app_core', 300);
+
+        // 10. Allow final filtering
+        $user_info = apply_filters('wp_app_core_admin_bar_user_info', $user_info, $user_id);
+
+        // DEBUG: End
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log("=== WP_App_Core get_user_info END ===");
+        }
+
+        return $user_info;
+    }
+
+    /**
+     * Get user info using OLD registration system (backward compatibility)
      *
      * @param int $user_id
      * @return array|null
      */
-    private static function get_user_info($user_id) {
-        $user_info = null;
-
-        // DEBUG: Log registered plugins
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log("=== WP_App_Core get_user_info START for user_id: {$user_id} ===");
-            error_log("Registered Plugins: " . print_r(array_keys(self::$registered_plugins), true));
-        }
-
+    private static function get_user_info_legacy($user_id) {
         // Try each registered plugin until we find user info
         foreach (self::$registered_plugins as $plugin_id => $plugin) {
-            // DEBUG: Log plugin being checked
             if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log("Checking plugin: {$plugin_id}");
+                error_log("Checking OLD registered plugin: {$plugin_id}");
             }
 
             if (is_callable($plugin['get_user_info'])) {
                 $info = call_user_func($plugin['get_user_info'], $user_id);
 
-                // DEBUG: Log result from plugin
                 if (defined('WP_DEBUG') && WP_DEBUG) {
                     error_log("Plugin '{$plugin_id}' returned: " . print_r($info, true));
                 }
 
                 if ($info && is_array($info)) {
-                    $user_info = $info;
-                    $user_info['plugin_id'] = $plugin_id;
+                    $info['plugin_id'] = $plugin_id;
 
-                    // DEBUG: Log found info
                     if (defined('WP_DEBUG') && WP_DEBUG) {
-                        error_log("INFO FOUND from plugin '{$plugin_id}' - breaking loop");
+                        error_log("INFO FOUND from OLD plugin '{$plugin_id}'");
                     }
-                    break;
+                    return $info;
                 }
             }
         }
 
-        // DEBUG: Log final result
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log("=== WP_App_Core get_user_info END - Final Result: " . print_r($user_info, true) . " ===");
+        return null;
+    }
+
+    /**
+     * Get role display names from role slugs
+     *
+     * Tries multiple sources in order:
+     * 1. Custom filter (for plugin-specific roles)
+     * 2. WordPress role object (for WP built-in roles)
+     * 3. Humanized slug as fallback
+     *
+     * @param array $role_slugs Array of role slugs
+     * @return array Array of role display names
+     */
+    private static function get_role_display_names($role_slugs) {
+        $role_names = [];
+        $wp_roles = wp_roles();
+
+        foreach ($role_slugs as $slug) {
+            // Try custom filter first (for plugin-specific role names)
+            $name = apply_filters('wp_app_core_role_display_name', null, $slug);
+
+            // Fallback to WordPress role name
+            if (!$name && isset($wp_roles->role_names[$slug])) {
+                $name = translate_user_role($wp_roles->role_names[$slug]);
+            }
+
+            // Last resort: Humanize the slug
+            if (!$name) {
+                $name = ucwords(str_replace('_', ' ', $slug));
+            }
+
+            $role_names[] = $name;
         }
 
-        // Allow filtering of user info
-        return apply_filters('wp_app_core_admin_bar_user_info', $user_info, $user_id);
+        return $role_names;
+    }
+
+    /**
+     * Get permission display names from capability keys
+     *
+     * Filters out role slugs and WordPress core capabilities, showing only
+     * custom permissions with friendly names.
+     *
+     * @param array $capabilities Array of capability keys
+     * @param array $role_slugs Array of role slugs to filter out
+     * @return array Array of permission display names
+     */
+    private static function get_permission_display_names($capabilities, $role_slugs = []) {
+        $permission_names = [];
+        $wp_roles = wp_roles();
+        $all_role_slugs = array_keys($wp_roles->roles);
+
+        // Merge with provided role slugs
+        $all_role_slugs = array_merge($all_role_slugs, $role_slugs);
+
+        foreach ($capabilities as $cap) {
+            // Skip if it's a role slug
+            if (in_array($cap, $all_role_slugs)) {
+                continue;
+            }
+
+            // Skip WordPress core capabilities (read, edit_posts, etc)
+            // These are usually inherited from roles
+            if (in_array($cap, ['read', 'level_0', 'level_1', 'level_2'])) {
+                continue;
+            }
+
+            // Try custom filter first (for plugin-specific permission names)
+            $name = apply_filters('wp_app_core_permission_display_name', null, $cap);
+
+            // Fallback to humanized capability key
+            if (!$name) {
+                $name = ucwords(str_replace('_', ' ', $cap));
+            }
+
+            $permission_names[] = $name;
+        }
+
+        return $permission_names;
     }
 
     /**
@@ -337,4 +530,24 @@ class WP_App_Core_Admin_Bar_Info {
 
         return $html;
     }
+
+    /**
+     * Invalidate user info cache
+     *
+     * Plugins should call this when user entity data changes:
+     * do_action('wp_app_core_invalidate_user_cache', $user_id);
+     *
+     * @param int $user_id WordPress user ID
+     */
+    public static function invalidate_user_cache($user_id) {
+        $cache_key = 'wp_app_core_user_info_' . $user_id;
+        wp_cache_delete($cache_key, 'wp_app_core');
+
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log("WP_App_Core: Invalidated user cache for user_id: {$user_id}");
+        }
+    }
 }
+
+// Register cache invalidation action hook
+add_action('wp_app_core_invalidate_user_cache', ['WP_App_Core_Admin_Bar_Info', 'invalidate_user_cache']);

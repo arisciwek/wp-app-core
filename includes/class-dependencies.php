@@ -4,7 +4,7 @@
  *
  * @package     WP_App_Core
  * @subpackage  Includes
- * @version     1.0.0
+ * @version     1.1.0
  * @author      arisciwek
  *
  * Path: /wp-app-core/includes/class-dependencies.php
@@ -13,6 +13,14 @@
  *              untuk admin bar dan komponen core lainnya
  *
  * Changelog:
+ * 1.1.0 - 2025-01-18 (Review-04 Fix)
+ * - FIXED: Assets now load on BOTH frontend and admin
+ * - Reason: Admin bar appears on both, but only admin hooks were registered
+ * - Added: wp_enqueue_scripts hooks (for frontend)
+ * - Added: is_admin_bar_showing() check to prevent unnecessary loading
+ * - Renamed: Methods to enqueue_styles() and enqueue_scripts() (more accurate)
+ * - Benefits: CSS/JS now load correctly everywhere admin bar appears
+ *
  * 1.0.0 - 2025-01-18
  * - Initial creation
  * - Added admin bar CSS enqueue
@@ -47,14 +55,24 @@ class WP_App_Core_Dependencies {
         $this->version = $version;
 
         // Register hooks with priority 20 to load after WordPress core (default 10)
-        add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_styles'], 20);
-        add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_scripts'], 20);
+        // IMPORTANT: Admin bar appears on BOTH admin AND frontend, so we need both hooks!
+        add_action('admin_enqueue_scripts', [$this, 'enqueue_styles'], 20);
+        add_action('admin_enqueue_scripts', [$this, 'enqueue_scripts'], 20);
+        add_action('wp_enqueue_scripts', [$this, 'enqueue_styles'], 20);
+        add_action('wp_enqueue_scripts', [$this, 'enqueue_scripts'], 20);
     }
 
     /**
-     * Enqueue admin styles
+     * Enqueue styles (both admin and frontend)
+     *
+     * Admin bar appears on both admin and frontend, so we need to load on both.
      */
-    public function enqueue_admin_styles() {
+    public function enqueue_styles() {
+        // Only load if admin bar is showing
+        if (!is_admin_bar_showing()) {
+            return;
+        }
+
         // Admin Bar styles - load with dependency on WP core admin-bar
         // This ensures our styles override core styles properly
         wp_enqueue_style(
@@ -66,9 +84,16 @@ class WP_App_Core_Dependencies {
     }
 
     /**
-     * Enqueue admin scripts
+     * Enqueue scripts (both admin and frontend)
+     *
+     * Admin bar appears on both admin and frontend, so we need to load on both.
      */
-    public function enqueue_admin_scripts() {
+    public function enqueue_scripts() {
+        // Only load if admin bar is showing
+        if (!is_admin_bar_showing()) {
+            return;
+        }
+
         // Admin Bar scripts - basic interactive functionality
         wp_enqueue_script(
             'wp-app-core-admin-bar',

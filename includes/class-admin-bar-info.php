@@ -144,14 +144,6 @@ class WP_App_Core_Admin_Bar_Info {
             : self::get_user_role_names($user);
         $roles_text = !empty($role_names) ? implode(', ', $role_names) : 'No Roles';
 
-        // DEBUG: Log role names used
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log("=== Admin Bar Role Names ===");
-            error_log("role_names from user_info: " . print_r($user_info['role_names'] ?? 'NOT SET', true));
-            error_log("Final role_names used: " . print_r($role_names, true));
-            error_log("Roles text displayed: " . $roles_text);
-        }
-
         // Build the display HTML
         $info_html = '<span class="wp-app-core-admin-bar-info">';
 
@@ -169,20 +161,6 @@ class WP_App_Core_Admin_Bar_Info {
 
         $info_html .= '</span>';
 
-        // DEBUG: Log user_info fields being used for display
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log("=== Admin Bar Display Fields ===");
-            error_log("entity_name: " . ($user_info['entity_name'] ?? 'NOT SET'));
-            error_log("entity_code: " . ($user_info['entity_code'] ?? 'NOT SET'));
-            error_log("branch_name: " . ($user_info['branch_name'] ?? 'NOT SET'));
-            error_log("branch_type: " . ($user_info['branch_type'] ?? 'NOT SET'));
-            error_log("division_name: " . ($user_info['division_name'] ?? 'NOT SET'));
-            error_log("division_type: " . ($user_info['division_type'] ?? 'NOT SET'));
-            error_log("relation_type: " . ($user_info['relation_type'] ?? 'NOT SET'));
-            error_log("position: " . ($user_info['position'] ?? 'NOT SET'));
-            error_log("icon: " . ($user_info['icon'] ?? 'NOT SET'));
-        }
-
         // Add to admin bar (parent: top-secondary for right side)
         $wp_admin_bar->add_node([
             'id'    => 'wp-app-core-user-info',
@@ -196,13 +174,6 @@ class WP_App_Core_Admin_Bar_Info {
 
         // Add submenu with detailed info
         $detailed_html = self::get_detailed_info_html($user_id, $user_info);
-
-        // DEBUG: Log the HTML that will be added to dropdown
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log("=== Admin Bar Dropdown HTML ===");
-            error_log("HTML Length: " . strlen($detailed_html));
-            error_log("HTML Preview (first 500 chars): " . substr($detailed_html, 0, 500));
-        }
 
         // Add as submenu item
         // IMPORTANT: href is required for WordPress to render HTML in dropdown
@@ -233,28 +204,17 @@ class WP_App_Core_Admin_Bar_Info {
      * @return array|null Complete user info or null if no entity data
      */
     private static function get_user_info($user_id) {
-        // DEBUG: Start
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log("=== WP_App_Core get_user_info START (v2.0 SIMPLIFIED) for user_id: {$user_id} ===");
-        }
-
         // Check cache first
         $cache_key = 'wp_app_core_user_info_' . $user_id;
         $cached = wp_cache_get($cache_key, 'wp_app_core');
 
         if ($cached !== false) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log("Cache HIT for user_id: {$user_id}");
-            }
             return $cached;
         }
 
         // 1. Get WordPress user object
         $user = get_userdata($user_id);
         if (!$user) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log("User not found for user_id: {$user_id}");
-            }
             return null;
         }
 
@@ -264,36 +224,16 @@ class WP_App_Core_Admin_Bar_Info {
         // 3. Get user permissions (all capabilities)
         $user_permissions = array_keys((array) $user->allcaps);
 
-        // DEBUG: Log WordPress data
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log("WordPress data retrieved:");
-            error_log("  - User roles: " . print_r($user_roles, true));
-            error_log("  - User permissions count: " . count($user_permissions));
-        }
-
         // 4. Try NEW simplified filter first (for plugins using new approach)
         $entity_data = apply_filters('wp_app_core_user_entity_data', null, $user_id, $user);
 
-        // DEBUG: Log entity data from filter
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log("Entity data from filter 'wp_app_core_user_entity_data': " . print_r($entity_data, true));
-        }
-
         // 5. Fallback to OLD registration system if no entity data from filter (backward compat)
         if (!$entity_data && !empty(self::$registered_plugins)) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log("No entity data from new filter, trying OLD registration system...");
-                error_log("Registered plugins: " . print_r(array_keys(self::$registered_plugins), true));
-            }
-
             $entity_data = self::get_user_info_legacy($user_id);
         }
 
         // If no entity data from either method, return null
         if (!$entity_data) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log("No entity data found (tried both new filter and old registration)");
-            }
             // Cache null for short time to prevent repeated queries
             wp_cache_set($cache_key, null, 'wp_app_core', 60);
             return null;
@@ -316,24 +256,11 @@ class WP_App_Core_Admin_Bar_Info {
         // 8. Get permission display names (filter out role slugs)
         $user_info['permission_names'] = self::get_permission_display_names($user_permissions, $user_roles);
 
-        // DEBUG: Log final merged info
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log("Complete user info:");
-            error_log("  - Entity name: " . ($user_info['entity_name'] ?? 'NOT SET'));
-            error_log("  - Role names: " . print_r($user_info['role_names'], true));
-            error_log("  - Permission count: " . count($user_info['permission_names']));
-        }
-
         // 9. Cache for 5 minutes
         wp_cache_set($cache_key, $user_info, 'wp_app_core', 300);
 
         // 10. Allow final filtering
         $user_info = apply_filters('wp_app_core_admin_bar_user_info', $user_info, $user_id);
-
-        // DEBUG: End
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log("=== WP_App_Core get_user_info END ===");
-        }
 
         return $user_info;
     }
@@ -347,23 +274,11 @@ class WP_App_Core_Admin_Bar_Info {
     private static function get_user_info_legacy($user_id) {
         // Try each registered plugin until we find user info
         foreach (self::$registered_plugins as $plugin_id => $plugin) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log("Checking OLD registered plugin: {$plugin_id}");
-            }
-
             if (is_callable($plugin['get_user_info'])) {
                 $info = call_user_func($plugin['get_user_info'], $user_id);
 
-                if (defined('WP_DEBUG') && WP_DEBUG) {
-                    error_log("Plugin '{$plugin_id}' returned: " . print_r($info, true));
-                }
-
                 if ($info && is_array($info)) {
                     $info['plugin_id'] = $plugin_id;
-
-                    if (defined('WP_DEBUG') && WP_DEBUG) {
-                        error_log("INFO FOUND from OLD plugin '{$plugin_id}'");
-                    }
                     return $info;
                 }
             }
@@ -494,12 +409,6 @@ class WP_App_Core_Admin_Bar_Info {
     private static function get_detailed_info_html($user_id, $user_info) {
         $user = get_user_by('ID', $user_id);
 
-        // DEBUG: Log detailed info generation
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log("=== Generating Detailed Info HTML ===");
-            error_log("All available fields: " . print_r(array_keys($user_info ?? []), true));
-        }
-
         // Use output buffering to capture template
         ob_start();
 
@@ -519,15 +428,6 @@ class WP_App_Core_Admin_Bar_Info {
 
         $html = ob_get_clean();
 
-        // DEBUG: Log roles section data (moved from template for logging)
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log("=== Detailed Info - Roles Section ===");
-            error_log("user_info['role_names']: " . print_r($user_info['role_names'] ?? 'NOT SET', true));
-            error_log("user->roles (slugs): " . print_r($user->roles, true));
-            error_log("=== Detailed Info - Permissions Section ===");
-            error_log("user_info['permission_names']: " . print_r($user_info['permission_names'] ?? 'NOT SET', true));
-        }
-
         return $html;
     }
 
@@ -542,10 +442,6 @@ class WP_App_Core_Admin_Bar_Info {
     public static function invalidate_user_cache($user_id) {
         $cache_key = 'wp_app_core_user_info_' . $user_id;
         wp_cache_delete($cache_key, 'wp_app_core');
-
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log("WP_App_Core: Invalidated user cache for user_id: {$user_id}");
-        }
     }
 }
 

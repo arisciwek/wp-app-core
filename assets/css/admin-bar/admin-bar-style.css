@@ -20,6 +20,8 @@
  * - Updated class names to wp-app-core-*
  */
 
+
+
 /* Main admin bar info container */
 #wpadminbar .wp-app-core-admin-bar-info {
     display: flex;
@@ -59,6 +61,28 @@
     float: right;
 }
 
+
+/* 1. Show dropdown saat hover parent */
+#wpadminbar #wp-admin-bar-wp-app-core-user-info:hover > .ab-sub-wrapper {
+  display: block;
+}
+
+/* 2. Keep dropdown visible saat hover dropdown itu sendiri */
+#wpadminbar #wp-admin-bar-wp-app-core-user-info .ab-sub-wrapper:hover {
+  display: block;
+}
+
+/* 3. Remove pointer cursor (detail item tidak clickable) */
+#wpadminbar #wp-admin-bar-wp-app-core-user-details > .ab-item {
+  cursor: default;
+}
+
+/* 4. Prevent background change saat hover detail */
+#wpadminbar #wp-admin-bar-wp-app-core-user-details .ab-item:hover {
+  background: transparent;
+}
+
+
 /* Dropdown detailed info styling */
 #wpadminbar .wp-app-core-detailed-info {
     padding: 10px;
@@ -94,6 +118,27 @@
 #wpadminbar #wp-admin-bar-wp-app-core-user-info .ab-sub-wrapper {
     right: 0;
     left: auto;
+}
+
+/* IMPORTANT: Show dropdown on parent hover, not just child hover */
+/* This makes dropdown appear when hovering the main admin bar item */
+#wpadminbar #wp-admin-bar-wp-app-core-user-info:hover > .ab-sub-wrapper {
+    display: block;
+}
+
+/* Keep dropdown visible when hovering over it */
+#wpadminbar #wp-admin-bar-wp-app-core-user-info .ab-sub-wrapper:hover {
+    display: block;
+}
+
+/* Remove pointer cursor from detail item since it's not clickable */
+#wpadminbar #wp-admin-bar-wp-app-core-user-details > .ab-item {
+    cursor: default;
+}
+
+/* Prevent the detail item from hiding parent dropdown */
+#wpadminbar #wp-admin-bar-wp-app-core-user-details .ab-item:hover {
+    background: transparent;
 }
 
 /* Responsive adjustments for smaller screens */

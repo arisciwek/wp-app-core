@@ -69,30 +69,12 @@ class AdminBarModel {
         array $role_slugs_filter = [],
         ?callable $role_name_resolver = null
     ): array {
-        // DEBUG: Log start
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log("=== AdminBarModel::getRoleNamesFromCapabilities START ===");
-            error_log("Raw capabilities string: " . substr($capabilities_string, 0, 100) . "...");
-        }
-
         // Unserialize the capabilities string
         // Format: a:2:{s:6:"agency";b:1;s:17:"agency_admin_unit";b:1;}
         $capabilities = @unserialize($capabilities_string);
 
         if (!is_array($capabilities)) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log("ERROR: Failed to unserialize capabilities");
-                error_log("=== AdminBarModel::getRoleNamesFromCapabilities END ===");
-            }
             return [];
-        }
-
-        // DEBUG: Log unserialized capabilities
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log("Unserialized capabilities (" . count($capabilities) . " items):");
-            error_log(print_r($capabilities, true));
-            error_log("Role slugs filter (" . count($role_slugs_filter) . " items):");
-            error_log(print_r($role_slugs_filter, true));
         }
 
         $role_names = [];
@@ -131,13 +113,6 @@ class AdminBarModel {
             }
 
             $role_names[] = $role_name;
-        }
-
-        // DEBUG: Log results
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log("Role names extracted (" . count($role_names) . " roles):");
-            error_log(print_r($role_names, true));
-            error_log("=== AdminBarModel::getRoleNamesFromCapabilities END ===");
         }
 
         return $role_names;
@@ -182,35 +157,16 @@ class AdminBarModel {
         array $role_slugs_to_skip = [],
         array $permission_labels = []
     ): array {
-        // DEBUG: Log start
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log("=== AdminBarModel::getPermissionNamesFromUserId START for user_id: {$user_id} ===");
-            error_log("Role slugs to skip (" . count($role_slugs_to_skip) . " items):");
-            error_log(print_r($role_slugs_to_skip, true));
-            error_log("Permission labels provided (" . count($permission_labels) . " items):");
-            error_log(print_r(array_keys($permission_labels), true));
-        }
-
         // Get WP_User object to access ALL capabilities (roles + inherited permissions)
         $user = get_userdata($user_id);
 
         if (!$user) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log("ERROR: User not found for user_id: {$user_id}");
-                error_log("=== AdminBarModel::getPermissionNamesFromUserId END ===");
-            }
             return [];
         }
 
         // Get ALL user capabilities (includes inherited from roles)
         // This is the CORRECT way to get actual permissions
         $all_caps = $user->allcaps;
-
-        // DEBUG: Log all capabilities
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log("ALL user capabilities (including inherited from roles) (" . count($all_caps) . " items):");
-            error_log(print_r($all_caps, true));
-        }
 
         $permission_names = [];
         $skipped_caps = [];
@@ -240,15 +196,6 @@ class AdminBarModel {
                 : ucwords(str_replace('_', ' ', $cap_slug));
 
             $permission_names[] = $display_name;
-        }
-
-        // DEBUG: Log results
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log("Permission names extracted (" . count($permission_names) . " permissions):");
-            error_log(print_r($permission_names, true));
-            error_log("Skipped capabilities (roles/non-permissions, " . count($skipped_caps) . " items):");
-            error_log(print_r($skipped_caps, true));
-            error_log("=== AdminBarModel::getPermissionNamesFromUserId END ===");
         }
 
         return $permission_names;

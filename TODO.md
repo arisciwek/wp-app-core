@@ -1,5 +1,153 @@
 # TODO List for WP App Core Plugin
 
+## TODO-1208: Base Role System Implementation ✅ COMPLETED
+
+**Status**: ✅ COMPLETED (FINAL FIX)
+**Created**: 2025-10-19
+**Completed**: 2025-10-19
+**Version**: 1.0.2
+
+**Summary**: Implemented base role system untuk semua platform users (dual roles: platform_staff + platform_xxx), fixing wp-admin access issue permanently.
+
+**Root Cause**:
+- WP-Customer users: `customer, customer_admin` (2 roles) → CAN access wp-admin
+- WP-Platform users: `platform_admin` (1 role) → CANNOT access wp-admin
+- Issue: WordPress requires base role with 'read' capability for reliable wp-admin access
+
+**Solution**:
+Implemented dual role system matching wp-customer pattern:
+```
+Platform User:
+├── Base Role: platform_staff (wp-admin access)
+│   └── Capability: read = true
+└── Admin Role: platform_xxx (specific permissions)
+```
+
+**Changes**:
+1. **class-role-manager.php**:
+   - Added `getBaseRole()`, `getBaseRoleName()`, `getAdminRoles()`
+   - Updated `createRoles()` to create base role first with 'read'
+
+2. **Data/PlatformUsersData.php**:
+   - Updated all 20 users from single role to dual roles
+   - `['platform_admin']` → `['platform_staff', 'platform_admin']`
+
+3. **class-upgrade.php** (v1.0.2):
+   - New `upgrade_to_1_0_2()` routine
+   - Auto-creates base role
+   - Auto-adds base role to ALL existing platform users
+   - Idempotent (safe to run multiple times)
+
+4. **wp-app-core.php**:
+   - Version: 1.0.1 → 1.0.2
+   - Updated changelog
+
+**How It Works** (Auto-Fix):
+1. User refreshes admin page
+2. Plugin detects version change (1.0.1 → 1.0.2)
+3. Upgrade script creates 'platform_staff' role with 'read' capability
+4. Loops all existing platform users
+5. Adds 'platform_staff' role to each user (without removing existing roles)
+6. **Auto-flushes WordPress cache**
+7. Users can now access wp-admin
+
+**IMPORTANT**: If auto-upgrade runs but users still can't access:
+```bash
+# Manually flush cache
+wp cache flush
+```
+
+**Testing**:
+```bash
+# After upgrade, check dual roles:
+wp user list --role=platform_admin --fields=ID,user_login,roles
+
+# Expected:
+232  edwin_felix   platform_staff, platform_admin  ✅
+233  grace_helen   platform_staff, platform_admin  ✅
+```
+
+**Files Modified**:
+- `/includes/class-role-manager.php`
+- `/src/Database/Demo/Data/PlatformUsersData.php`
+- `/includes/class-upgrade.php`
+- `/wp-app-core.php`
+
+**Files Created**:
+- `/TODO/TODO-1208-base-role-system.md`
+
+See: [TODO/TODO-1208-base-role-system.md](TODO/TODO-1208-base-role-system.md)
+
+---
+
+## TODO-1208: Platform Permission Read Capability ✅ COMPLETED (SUPERSEDED)
+
+**Status**: ✅ COMPLETED
+**Created**: 2025-10-19
+**Completed**: 2025-10-19
+
+**Summary**: Menambahkan default capability "read" ke semua platform role agar dapat mengakses halaman admin WordPress + Upgrade system untuk auto-migration.
+
+**Problem**:
+- Platform roles tidak dapat mengakses halaman wp-admin
+- Capability "read" tidak ditambahkan secara eksplisit meskipun sudah ada di default capabilities array
+- Method hanya menambahkan capabilities yang ada di `$available_capabilities` array
+- Existing users tidak mendapat update karena activator hanya run sekali
+
+**Solution**:
+1. Menambahkan capability "read" secara eksplisit di `addCapabilities()` dan `resetToDefault()`
+2. Membuat upgrade system yang otomatis detect version change dan run migrations
+3. Upgrade to v1.0.1 otomatis add 'read' capability ke existing platform roles
+
+**Changes**:
+1. **PlatformPermissionModel.php** (v1.0.1):
+   - Updated `addCapabilities()` method - explicitly add 'read' capability to all platform roles
+   - Updated `resetToDefault()` method - ensure 'read' capability persists after reset
+   - Added changelog for version 1.0.1
+
+2. **class-upgrade.php** (NEW):
+   - Version checking mechanism
+   - Upgrade routine for v1.0.1 (auto-add 'read' capability)
+   - Debug logging
+   - Extensible for future migrations
+
+3. **wp-app-core.php** (v1.0.1):
+   - Updated plugin version: 1.0.0 → 1.0.1
+   - Load upgrade class in `load_dependencies()`
+   - Hook upgrade checker to `plugins_loaded` (priority 5)
+   - Updated changelog
+
+**Platform Roles Affected**:
+- platform_super_admin
+- platform_admin
+- platform_manager
+- platform_support
+- platform_finance
+- platform_analyst
+- platform_viewer
+
+**How It Works** (Auto-Fix):
+1. User refresh admin page
+2. Plugin detect version 1.0.0 (DB) vs 1.0.1 (code)
+3. Upgrade script runs automatically
+4. All platform roles get 'read' capability
+5. Version updated to 1.0.1 in DB
+6. Users can now access wp-admin
+
+**Reference**: `/wp-customer/src/Models/Settings/PermissionModel.php` (lines 238, 298, 358)
+
+**Files Modified**:
+- `/wp-app-core/src/Models/Settings/PlatformPermissionModel.php`
+- `/wp-app-core/wp-app-core.php`
+
+**Files Created**:
+- `/wp-app-core/includes/class-upgrade.php` (NEW - Upgrade system)
+- `/wp-app-core/TODO/TODO-1208-platform-permission-read-capability.md`
+
+See: [TODO/TODO-1208-platform-permission-read-capability.md](TODO/TODO-1208-platform-permission-read-capability.md)
+
+---
+
 ## TODO-1207: Platform Staff CRUD & DataTable ✅ COMPLETED
 
 **Status**: ✅ COMPLETED (Ready for testing)

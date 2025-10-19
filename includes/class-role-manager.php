@@ -29,12 +29,32 @@ defined('ABSPATH') || exit;
 
 class WP_App_Core_Role_Manager {
     /**
-     * Get all available platform roles with their display names
-     * Single source of truth for roles in the plugin
+     * Get base role
+     * Base role given to ALL platform users for wp-admin access
+     *
+     * @return string Base role slug
+     */
+    public static function getBaseRole(): string {
+        return 'platform_staff';
+    }
+
+    /**
+     * Get base role name
+     *
+     * @return string Base role display name
+     */
+    public static function getBaseRoleName(): string {
+        return __('Platform Staff', 'wp-app-core');
+    }
+
+    /**
+     * Get all available platform admin roles with their display names
+     * These are secondary roles that define user's specific permissions
+     * Single source of truth for admin roles in the plugin
      *
      * @return array Array of role_slug => role_name pairs
      */
-    public static function getRoles(): array {
+    public static function getAdminRoles(): array {
         return [
             'platform_super_admin' => __('Platform Super Admin', 'wp-app-core'),
             'platform_admin' => __('Platform Admin', 'wp-app-core'),
@@ -44,6 +64,19 @@ class WP_App_Core_Role_Manager {
             'platform_analyst' => __('Platform Analyst', 'wp-app-core'),
             'platform_viewer' => __('Platform Viewer', 'wp-app-core'),
         ];
+    }
+
+    /**
+     * Get all available platform roles (base + admin roles)
+     * Single source of truth for ALL roles in the plugin
+     *
+     * @return array Array of role_slug => role_name pairs
+     */
+    public static function getRoles(): array {
+        return array_merge(
+            [self::getBaseRole() => self::getBaseRoleName()],
+            self::getAdminRoles()
+        );
     }
 
     /**
@@ -114,16 +147,29 @@ class WP_App_Core_Role_Manager {
      * @return void
      */
     public static function createRoles(): void {
-        $roles = self::getRoles();
+        // Create base role first with 'read' capability
+        $base_role = self::getBaseRole();
+        $base_role_name = self::getBaseRoleName();
 
-        foreach ($roles as $role_slug => $role_name) {
-            // Check if role already exists
+        if (!self::roleExists($base_role)) {
+            add_role(
+                $base_role,
+                $base_role_name,
+                ['read' => true]  // Base role MUST have 'read' for wp-admin access
+            );
+        }
+
+        // Create admin roles without 'read' (they will get it from base role)
+        $admin_roles = self::getAdminRoles();
+
+        foreach ($admin_roles as $role_slug => $role_name) {
             if (!self::roleExists($role_slug)) {
-                // Create role with basic 'read' capability
+                // Admin roles start with empty capabilities
+                // Capabilities will be added by PlatformPermissionModel
                 add_role(
                     $role_slug,
                     $role_name,
-                    ['read' => true]
+                    []
                 );
             }
         }

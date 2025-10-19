@@ -3,7 +3,7 @@
  * Plugin Name: WP App Core
  * Plugin URI: https://example.com/wp-app-core
  * Description: Core plugin untuk mengelola fitur global aplikasi marketplace. Menyediakan user profile management, membership system, dan fitur shared lainnya.
- * Version: 1.0.0
+ * Version: 1.0.2
  * Author: arisciwek
  * Author URI: https://example.com
  * License: GPL v2 or later
@@ -19,6 +19,17 @@
  *              dan fitur dari WP App Core plugin.
  *
  * Changelog:
+ * 1.0.2 - 2025-10-19
+ * - Implemented base role system (platform_staff) for wp-admin access
+ * - All platform users now get dual roles: platform_staff + platform_xxx
+ * - Updated upgrade script to add base role to existing users
+ * - Fixed platform roles unable to access wp-admin (FINAL FIX)
+ *
+ * 1.0.1 - 2025-10-19
+ * - Added 'read' capability to all platform roles for wp-admin access
+ * - Added upgrade system for version migrations
+ * - Fixed platform roles unable to access wp-admin (partial fix)
+ *
  * 1.0.0 - 2025-01-18
  * - Initial release
  * - User profile management (migrated from wp-customer)
@@ -28,7 +39,7 @@
 defined('ABSPATH') || exit;
 
 // Define plugin constants
-define('WP_APP_CORE_VERSION', '1.0.0');
+define('WP_APP_CORE_VERSION', '1.0.2');
 define('WP_APP_CORE_PATH', plugin_dir_path(__FILE__));
 define('WP_APP_CORE_PLUGIN_DIR', plugin_dir_path(__FILE__)); // Backward compatibility
 define('WP_APP_CORE_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -76,6 +87,9 @@ class WP_App_Core {
         // Load core classes
         require_once WP_APP_CORE_PLUGIN_DIR . 'includes/class-admin-bar-info.php';
 
+        // Load upgrade handler
+        require_once WP_APP_CORE_PLUGIN_DIR . 'includes/class-upgrade.php';
+
         // Load dependencies handler
         require_once WP_APP_CORE_PLUGIN_DIR . 'includes/class-dependencies.php';
 
@@ -92,6 +106,9 @@ class WP_App_Core {
         // Activation and deactivation hooks
         register_activation_hook(__FILE__, [$this, 'activate']);
         register_deactivation_hook(__FILE__, [$this, 'deactivate']);
+
+        // Check and run upgrades on plugins loaded
+        add_action('plugins_loaded', ['WP_App_Core_Upgrade', 'check_and_upgrade'], 5);
 
         // Init hook
         add_action('plugins_loaded', [$this, 'init']);

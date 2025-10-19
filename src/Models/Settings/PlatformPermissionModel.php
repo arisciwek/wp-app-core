@@ -13,6 +13,11 @@
  *              Mengatur capabilities untuk role platform management
  *
  * Changelog:
+ * 1.0.1 - 2025-10-19
+ * - Added explicit 'read' capability to all platform roles for wp-admin access
+ * - Updated addCapabilities() method to explicitly add 'read' capability
+ * - Updated resetToDefault() method to explicitly add 'read' capability
+ *
  * 1.0.0 - 2025-10-19
  * - Initial release
  * - Platform permission groups (Platform, User, Tenant, Financial, Support, Reports, Content)
@@ -221,8 +226,16 @@ class PlatformPermissionModel {
         foreach ($platform_roles as $role_slug) {
             $role = get_role($role_slug);
             if ($role) {
+                // Add 'read' capability explicitly - required for wp-admin access
+                $role->add_cap('read');
+
                 $default_caps = $this->getDefaultCapabilitiesForRole($role_slug);
                 foreach ($default_caps as $cap => $enabled) {
+                    // Skip 'read' as it's already added above
+                    if ($cap === 'read') {
+                        continue;
+                    }
+
                     if ($enabled && isset($this->available_capabilities[$cap])) {
                         $role->add_cap($cap);
                     } else if (!$enabled) {
@@ -309,8 +322,16 @@ class PlatformPermissionModel {
 
                 // Platform roles get their default capabilities
                 if (\WP_App_Core_Role_Manager::isPluginRole($role_name)) {
+                    // Add 'read' capability explicitly - required for wp-admin access
+                    $role->add_cap('read');
+
                     $default_caps = $this->getDefaultCapabilitiesForRole($role_name);
                     foreach ($default_caps as $cap => $enabled) {
+                        // Skip 'read' as it's already added above
+                        if ($cap === 'read') {
+                            continue;
+                        }
+
                         if ($enabled && isset($this->available_capabilities[$cap])) {
                             $role->add_cap($cap);
                         }

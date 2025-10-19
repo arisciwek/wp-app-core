@@ -103,10 +103,14 @@ class Installer {
         $columns = $wpdb->get_results("DESCRIBE {$table}");
 
         $has_full_name = false;
+        $has_status = false;
+
         foreach ($columns as $column) {
             if ($column->Field === 'full_name') {
                 $has_full_name = true;
-                break;
+            }
+            if ($column->Field === 'status') {
+                $has_status = true;
             }
         }
 
@@ -114,6 +118,12 @@ class Installer {
             $wpdb->query("ALTER TABLE {$table} ADD COLUMN full_name varchar(100) NOT NULL AFTER employee_id");
             $wpdb->query("ALTER TABLE {$table} ADD INDEX full_name_index (full_name)");
             self::debug("Added full_name column to platform_staff table");
+        }
+
+        if (!$has_status) {
+            $wpdb->query("ALTER TABLE {$table} ADD COLUMN status varchar(20) NOT NULL DEFAULT 'aktif' AFTER phone");
+            $wpdb->query("ALTER TABLE {$table} ADD INDEX status_index (status)");
+            self::debug("Added status column to platform_staff table");
         }
 
         self::debug("Migrations completed");

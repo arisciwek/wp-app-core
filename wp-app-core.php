@@ -29,7 +29,8 @@ defined('ABSPATH') || exit;
 
 // Define plugin constants
 define('WP_APP_CORE_VERSION', '1.0.0');
-define('WP_APP_CORE_PLUGIN_DIR', plugin_dir_path(__FILE__));
+define('WP_APP_CORE_PATH', plugin_dir_path(__FILE__));
+define('WP_APP_CORE_PLUGIN_DIR', plugin_dir_path(__FILE__)); // Backward compatibility
 define('WP_APP_CORE_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WP_APP_CORE_PLUGIN_FILE', __FILE__);
 
@@ -77,6 +78,11 @@ class WP_App_Core {
 
         // Load dependencies handler
         require_once WP_APP_CORE_PLUGIN_DIR . 'includes/class-dependencies.php';
+
+        // Explicitly load Cache manager (fallback for autoloader timing issues)
+        if (!class_exists('WPAppCore\Cache\PlatformCacheManager')) {
+            require_once WP_APP_CORE_PLUGIN_DIR . 'src/Cache/PlatformCacheManager.php';
+        }
     }
 
     /**
@@ -128,6 +134,12 @@ class WP_App_Core {
         if (is_admin()) {
             $menu_manager = new \WPAppCore\Controllers\MenuManager('wp-app-core', WP_APP_CORE_VERSION);
             $menu_manager->init();
+
+            // Initialize Platform Settings Controller
+            $platform_settings = new \WPAppCore\Controllers\PlatformSettingsController();
+
+            // Initialize Platform Staff Controller
+            $platform_staff = new \WPAppCore\Controllers\Platform\PlatformStaffController();
         }
 
         // Initialize components here

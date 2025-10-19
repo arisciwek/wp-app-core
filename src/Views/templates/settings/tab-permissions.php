@@ -212,7 +212,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             ?>
         </h2>
 
-        <form method="post" action="<?php echo add_query_arg(['tab' => 'permissions', 'permission_tab' => $current_tab]); ?>">
+        <form method="post" id="wp-app-core-permissions-form" action="<?php echo add_query_arg(['tab' => 'permissions', 'permission_tab' => $current_tab]); ?>">
             <?php wp_nonce_field('wp_app_core_permissions'); ?>
             <input type="hidden" name="current_tab" value="<?php echo esc_attr($current_tab); ?>">
             <input type="hidden" name="action" value="update_role_permissions">
@@ -269,8 +269,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     ?>
                 </tbody>
             </table>
-
-            <?php submit_button(__('Save Changes', 'wp-app-core')); ?>
         </form>
+
+        <!-- Sticky Footer with Action Buttons -->
+        <div class="settings-footer">
+            <p class="submit">
+                <?php submit_button(__('Save Permission Changes', 'wp-app-core'), 'primary', 'submit', false, ['form' => 'wp-app-core-permissions-form']); ?>
+            </p>
+        </div>
     </div><!-- .permissions-section -->
 </div><!-- .wrap -->

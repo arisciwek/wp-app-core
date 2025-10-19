@@ -363,7 +363,15 @@ if (!defined('ABSPATH')) {
                 </tr>
             </table>
         </div>
-
-        <?php submit_button(__('Save Email Settings', 'wp-app-core')); ?>
     </form>
+
+    <!-- Sticky Footer with Action Buttons -->
+    <div class="settings-footer">
+        <p class="submit">
+            <?php submit_button(__('Save Email Settings', 'wp-app-core'), 'primary', 'submit', false, ['form' => 'platform-email-settings-form']); ?>
+            <button type="button" id="reset-email-settings" class="button button-secondary">
+                <?php _e('Reset to Default', 'wp-app-core'); ?>
+            </button>
+        </p>
+    </div>
 </div>

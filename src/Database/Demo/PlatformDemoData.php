@@ -3,11 +3,11 @@
  * Platform Demo Data Generator
  *
  * @package     WP_App_Core
- * @subpackage  Database/Demo/Data
+ * @subpackage  Database/Demo
  * @version     1.0.0
  * @author      arisciwek
  *
- * Path: /wp-app-core/src/Database/Demo/Data/PlatformDemoData.php
+ * Path: /wp-app-core/src/Database/Demo/PlatformDemoData.php
  *
  * Description: Generate demo data untuk platform staff users.
  *              Creates WordPress users dan platform staff records.
@@ -25,9 +25,10 @@
  * - Platform staff record creation
  */
 
-namespace WPAppCore\Database\Demo\Data;
+namespace WPAppCore\Database\Demo;
 
 use WPAppCore\Database\Demo\WPUserGenerator;
+use WPAppCore\Database\Demo\Data\PlatformUsersData;
 
 defined('ABSPATH') || exit;
 

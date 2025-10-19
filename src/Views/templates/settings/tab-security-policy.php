@@ -41,7 +41,7 @@ if (!defined('ABSPATH')) {
 <div class="wrap wp-app-core-security-policy-wrap">
     <div id="security-policy-messages" class="notice" style="display:none;"></div>
 
-    <form method="post" action="options.php" class="wp-app-core-security-policy-form">
+    <form method="post" action="options.php" id="wp-app-core-security-policy-form" class="wp-app-core-security-policy-form">
         <?php
         settings_fields('wp_app_core_security_policy');
         ?>
@@ -622,12 +622,15 @@ if (!defined('ABSPATH')) {
                 </tbody>
             </table>
         </div>
+    </form>
 
+    <!-- Sticky Footer with Action Buttons -->
+    <div class="settings-footer">
         <p class="submit">
-            <?php submit_button(__('Save Policy Settings', 'wp-app-core'), 'primary', 'submit', false); ?>
-            <button type="button" id="reset-security-policy" class="button button-secondary" style="margin-left: 10px;">
+            <?php submit_button(__('Save Policy Settings', 'wp-app-core'), 'primary', 'submit', false, ['form' => 'wp-app-core-security-policy-form']); ?>
+            <button type="button" id="reset-security-policy" class="button button-secondary">
                 <?php _e('Reset to Default', 'wp-app-core'); ?>
             </button>
         </p>
-    </form>
+    </div>
 </div>

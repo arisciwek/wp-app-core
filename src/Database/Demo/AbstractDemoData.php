@@ -2,12 +2,12 @@
 /**
  * Abstract Base Class for Demo Data Generation
  *
- * @package     WP_Customer
+ * @package     WP_App_Core
  * @subpackage  Database/Demo
  * @version     1.0.0
  * @author      arisciwek
  *
- * Path: /wp-customer/src/Database/Demo/AbstractDemoData.php
+ * Path: /wp-app-core/src/Database/Demo/AbstractDemoData.php
  *
  * Description: Base abstract class for demo data generation.
  *              Provides common functionality and structure for:
@@ -37,7 +37,7 @@
  * - Added model dependencies
  */
 
-namespace WPCustomer\Database\Demo;
+namespace WPAppCore\Database\Demo;
 
 use WPCustomer\Cache\CustomerCacheManager;
 

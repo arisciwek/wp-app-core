@@ -140,6 +140,48 @@
     border-left-color: #dc3232;
 }
 
+/* Settings Footer - Sticky Bottom */
+.settings-footer {
+    position: fixed;
+    bottom: 0;
+    left: 160px; /* WordPress admin menu width */
+    right: 0;
+    background: #fff;
+    padding: 15px 20px;
+    border-top: 1px solid #ccd0d4;
+    box-shadow: 0 -2px 5px rgba(0,0,0,.05);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.settings-footer .submit {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.settings-footer .submit input[type="submit"],
+.settings-footer .submit .button {
+    margin: 0;
+}
+
+/* Add padding to tab content to prevent content being hidden behind footer */
+.tab-content {
+    margin-top: 20px;
+    padding-bottom: 80px; /* Space for sticky footer */
+}
+
+/* Collapsed admin menu */
+@media screen and (max-width: 960px) {
+    .settings-footer {
+        left: 36px; /* Collapsed menu width */
+    }
+}
+
 /* Responsive */
 @media screen and (max-width: 782px) {
     .settings-section {
@@ -150,5 +192,21 @@
     .permission-matrix-table td {
         padding: 8px;
         font-size: 12px;
+    }
+
+    .settings-footer {
+        left: 0;
+        padding: 12px 15px;
+    }
+
+    .settings-footer .submit {
+        flex-direction: column;
+        width: 100%;
+        gap: 8px;
+    }
+
+    .settings-footer .submit input[type="submit"],
+    .settings-footer .submit .button {
+        width: 100%;
     }
 }

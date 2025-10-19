@@ -61,6 +61,13 @@ class PlatformSettingsController {
      * Register settings
      */
     public function registerSettings() {
+        // Add redirect after settings saved to prevent form resubmission
+        add_filter('wp_redirect', [$this, 'addSettingsSavedMessage'], 10, 2);
+
+        // Clear cache after settings updated
+        add_action('update_option_wp_app_core_platform_settings', [$this, 'clearPlatformSettingsCache']);
+        add_action('update_option_wp_app_core_email_settings', [$this, 'clearEmailSettingsCache']);
+
         // Platform Settings
         register_setting(
             'wp_app_core_platform_settings',
@@ -137,6 +144,10 @@ class PlatformSettingsController {
         add_action('wp_ajax_save_platform_permissions', [$this, 'handleSavePlatformPermissions']);
         add_action('wp_ajax_reset_platform_permissions', [$this, 'handleResetPlatformPermissions']);
 
+        // General & Email Settings Reset AJAX handlers
+        add_action('wp_ajax_reset_general_settings', [$this, 'handleResetGeneralSettings']);
+        add_action('wp_ajax_reset_email_settings', [$this, 'handleResetEmailSettings']);
+
         // Security Settings Reset AJAX handlers
         add_action('wp_ajax_reset_security_authentication', [$this, 'handleResetSecurityAuthentication']);
         add_action('wp_ajax_reset_security_session', [$this, 'handleResetSecuritySession']);
@@ -187,6 +198,28 @@ class PlatformSettingsController {
 
         // Get current tab
         $current_tab = isset($_GET['tab']) ? sanitize_key($_GET['tab']) : 'general';
+
+        // Load general tab specific assets
+        if ($current_tab === 'general') {
+            wp_enqueue_script(
+                'wp-app-core-general-tab',
+                WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/general-tab-script.js',
+                ['jquery', 'wp-app-core-settings'],
+                WP_APP_CORE_VERSION,
+                true
+            );
+        }
+
+        // Load email tab specific assets
+        if ($current_tab === 'email') {
+            wp_enqueue_script(
+                'wp-app-core-email-tab',
+                WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/email-tab-script.js',
+                ['jquery', 'wp-app-core-settings'],
+                WP_APP_CORE_VERSION,
+                true
+            );
+        }
 
         // Load permissions-specific assets
         if ($current_tab === 'permissions') {
@@ -640,10 +673,10 @@ class PlatformSettingsController {
 
         try {
             require_once WP_APP_CORE_PLUGIN_DIR . 'src/Database/Demo/Data/PlatformUsersData.php';
-            require_once WP_APP_CORE_PLUGIN_DIR . 'src/Database/Demo/Data/PlatformDemoData.php';
+            require_once WP_APP_CORE_PLUGIN_DIR . 'src/Database/Demo/PlatformDemoData.php';
             require_once WP_APP_CORE_PLUGIN_DIR . 'src/Database/Demo/WPUserGenerator.php';
 
-            $result = \WPAppCore\Database\Demo\Data\PlatformDemoData::generate();
+            $result = \WPAppCore\Database\Demo\PlatformDemoData::generate();
 
             if ($result['success']) {
                 wp_send_json_success([
@@ -680,10 +713,10 @@ class PlatformSettingsController {
 
         try {
             require_once WP_APP_CORE_PLUGIN_DIR . 'src/Database/Demo/Data/PlatformUsersData.php';
-            require_once WP_APP_CORE_PLUGIN_DIR . 'src/Database/Demo/Data/PlatformDemoData.php';
+            require_once WP_APP_CORE_PLUGIN_DIR . 'src/Database/Demo/PlatformDemoData.php';
             require_once WP_APP_CORE_PLUGIN_DIR . 'src/Database/Demo/WPUserGenerator.php';
 
-            $result = \WPAppCore\Database\Demo\Data\PlatformDemoData::deleteAll();
+            $result = \WPAppCore\Database\Demo\PlatformDemoData::deleteAll();
 
             if ($result['success']) {
                 wp_send_json_success([
@@ -720,10 +753,10 @@ class PlatformSettingsController {
 
         try {
             require_once WP_APP_CORE_PLUGIN_DIR . 'src/Database/Demo/Data/PlatformUsersData.php';
-            require_once WP_APP_CORE_PLUGIN_DIR . 'src/Database/Demo/Data/PlatformDemoData.php';
+            require_once WP_APP_CORE_PLUGIN_DIR . 'src/Database/Demo/PlatformDemoData.php';
             require_once WP_APP_CORE_PLUGIN_DIR . 'src/Database/Demo/WPUserGenerator.php';
 
-            $stats = \WPAppCore\Database\Demo\Data\PlatformDemoData::getStatistics();
+            $stats = \WPAppCore\Database\Demo\PlatformDemoData::getStatistics();
 
             wp_send_json_success([
                 'stats' => $stats
@@ -831,6 +864,122 @@ class PlatformSettingsController {
             wp_send_json_error([
                 'message' => sprintf(__('Error resetting settings: %s', 'wp-app-core'), $e->getMessage())
             ]);
+        }
+    }
+
+    /**
+     * Add settings saved message to redirect URL
+     * Prevents form resubmission issue on general and email tabs
+     *
+     * @param string $location Redirect location
+     * @param int $status HTTP status code
+     * @return string Modified redirect location
+     */
+    public function addSettingsSavedMessage($location, $status) {
+        // Only handle redirects from options.php for our settings
+        if (strpos($location, 'page=wp-app-core-settings') === false) {
+            return $location;
+        }
+
+        // Check if this is a settings save redirect
+        if (isset($_POST['option_page'])) {
+            $option_page = $_POST['option_page'];
+
+            // Only for our settings pages
+            $our_settings = [
+                'wp_app_core_platform_settings',
+                'wp_app_core_email_settings',
+                'wp_app_core_development_settings'
+            ];
+
+            if (in_array($option_page, $our_settings)) {
+                // Add settings-updated parameter if not already present
+                if (strpos($location, 'settings-updated=true') === false) {
+                    $location = add_query_arg('settings-updated', 'true', $location);
+                }
+            }
+        }
+
+        return $location;
+    }
+
+    /**
+     * Handle reset general settings to default
+     */
+    public function handleResetGeneralSettings() {
+        check_ajax_referer('wp_app_core_settings_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => __('Permission denied', 'wp-app-core')]);
+        }
+
+        try {
+            // Delete the option - this will force getSettings() to return defaults
+            delete_option('wp_app_core_platform_settings');
+            wp_cache_delete('wp_app_core_platform_settings', 'wp_app_core');
+
+            // Get default settings to return to client
+            $defaults = $this->platform_model->getDefaultSettings();
+
+            wp_send_json_success([
+                'message' => __('General settings reset to default successfully.', 'wp-app-core'),
+                'settings' => $defaults
+            ]);
+        } catch (\Exception $e) {
+            wp_send_json_error([
+                'message' => sprintf(__('Error resetting settings: %s', 'wp-app-core'), $e->getMessage())
+            ]);
+        }
+    }
+
+    /**
+     * Handle reset email settings to default
+     */
+    public function handleResetEmailSettings() {
+        check_ajax_referer('wp_app_core_settings_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => __('Permission denied', 'wp-app-core')]);
+        }
+
+        try {
+            // Delete the option - this will force getSettings() to return defaults
+            delete_option('wp_app_core_email_settings');
+            wp_cache_delete('wp_app_core_email_settings', 'wp_app_core');
+
+            // Get default settings to return to client
+            $defaults = $this->email_model->getDefaultSettings();
+
+            wp_send_json_success([
+                'message' => __('Email settings reset to default successfully.', 'wp-app-core'),
+                'settings' => $defaults
+            ]);
+        } catch (\Exception $e) {
+            wp_send_json_error([
+                'message' => sprintf(__('Error resetting settings: %s', 'wp-app-core'), $e->getMessage())
+            ]);
+        }
+    }
+
+    /**
+     * Clear platform settings cache after update
+     */
+    public function clearPlatformSettingsCache() {
+        wp_cache_delete('wp_app_core_platform_settings', 'wp_app_core');
+        // Also clear any object cache
+        if (function_exists('wp_cache_flush')) {
+            wp_cache_flush();
+        }
+    }
+
+    /**
+     * Clear email settings cache after update
+     */
+    public function clearEmailSettingsCache() {
+        wp_cache_delete('wp_app_core_email_settings', 'wp_app_core');
+        // Also clear any object cache
+        if (function_exists('wp_cache_flush')) {
+            wp_cache_flush();
         }
     }
 }

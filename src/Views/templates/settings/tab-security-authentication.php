@@ -38,7 +38,7 @@ if (!current_user_can('manage_options')) {
 <div class="wrap">
     <div id="security-auth-messages"></div>
 
-    <form method="post" action="options.php" class="wp-app-core-security-auth-form">
+    <form method="post" action="options.php" id="wp-app-core-security-authentication-form" class="wp-app-core-security-auth-form">
         <?php settings_fields('wp_app_core_security_authentication'); ?>
 
         <!-- Password Policy Settings Section -->
@@ -433,12 +433,15 @@ if (!current_user_can('manage_options')) {
                 </tr>
             </table>
         </div>
+    </form>
 
+    <!-- Sticky Footer with Action Buttons -->
+    <div class="settings-footer">
         <p class="submit">
-            <?php submit_button(__('Save Security Settings', 'wp-app-core'), 'primary', 'submit', false); ?>
-            <button type="button" id="reset-security-authentication" class="button button-secondary" style="margin-left: 10px;">
+            <?php submit_button(__('Save Security Settings', 'wp-app-core'), 'primary', 'submit', false, ['form' => 'wp-app-core-security-authentication-form']); ?>
+            <button type="button" id="reset-security-authentication" class="button button-secondary">
                 <?php _e('Reset to Default', 'wp-app-core'); ?>
             </button>
         </p>
-    </form>
+    </div>
 </div>

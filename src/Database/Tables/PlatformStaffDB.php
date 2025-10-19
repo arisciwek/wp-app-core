@@ -4,7 +4,7 @@
  *
  * @package     WP_App_Core
  * @subpackage  Database/Tables
- * @version     1.0.0
+ * @version     1.1.0
  * @author      arisciwek
  *
  * Path: /wp-app-core/src/Database/Tables/PlatformStaffDB.php
@@ -17,13 +17,18 @@
  * - id             : Primary key
  * - user_id        : ID User WP (foreign key to wp_users)
  * - employee_id    : Unique employee identifier (STAFF-001, etc.)
+ * - full_name      : Full name of staff
  * - department     : Platform department
  * - hire_date      : Date joined platform team
  * - phone          : Contact phone number
+ * - status         : Staff status (aktif/tidak_aktif)
  * - created_at     : Timestamp pembuatan
  * - updated_at     : Timestamp update terakhir
  *
  * Changelog:
+ * 1.1.0 - 2025-10-19
+ * - Added status field (aktif/tidak_aktif)
+ *
  * 1.0.0 - 2025-10-19
  * - Initial version
  * - Platform staff profile data storage
@@ -47,13 +52,15 @@ class PlatformStaffDB {
             department varchar(50) NULL,
             hire_date date NULL,
             phone varchar(20) NULL,
+            status varchar(20) NOT NULL DEFAULT 'aktif',
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
             updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY  (id),
             UNIQUE KEY user_id (user_id),
             UNIQUE KEY employee_id (employee_id),
             KEY department_index (department),
-            KEY full_name_index (full_name)
+            KEY full_name_index (full_name),
+            KEY status_index (status)
         ) $charset_collate ENGINE=InnoDB;";
     }
 }

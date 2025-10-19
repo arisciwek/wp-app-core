@@ -93,6 +93,10 @@ class WP_App_Core {
         // Load dependencies handler
         require_once WP_APP_CORE_PLUGIN_DIR . 'includes/class-dependencies.php';
 
+        // Load WP Customer integration (TODO-1210)
+        // DISABLED: Not needed anymore - using direct capability checks in wp-customer
+        // require_once WP_APP_CORE_PLUGIN_DIR . 'includes/class-wp-customer-integration.php';
+
         // Explicitly load Cache manager (fallback for autoloader timing issues)
         if (!class_exists('WPAppCore\Cache\PlatformCacheManager')) {
             require_once WP_APP_CORE_PLUGIN_DIR . 'src/Cache/PlatformCacheManager.php';
@@ -117,8 +121,81 @@ class WP_App_Core {
         // Initialize dependencies handler
         new WP_App_Core_Dependencies('wp-app-core', WP_APP_CORE_VERSION);
 
+        // Initialize WP Customer integration (TODO-1210)
+        // Hook into wp_customer_access_type filter to set platform user access type
+        add_filter('wp_customer_access_type', [$this, 'set_platform_access_type'], 10, 2);
+
+        // Hook into wp_branch_access_type filter to set platform user access type for branches
+        add_filter('wp_branch_access_type', [$this, 'set_platform_branch_access_type'], 10, 2);
+
         // Initialize admin bar info
         add_action('init', ['WP_App_Core_Admin_Bar_Info', 'init']);
+    }
+
+    /**
+     * Set access_type for platform users
+     *
+     * @param string $access_type Current access type
+     * @param array $context Context data (is_admin, user_id, etc)
+     * @return string Modified access type
+     */
+    public function set_platform_access_type($access_type, $context) {
+        // If already has access type, return it
+        if ($access_type !== 'none') {
+            return $access_type;
+        }
+
+        // Check if user has platform role with customer view capability
+        if (current_user_can('view_customer_detail')) {
+            $user_id = $context['user_id'] ?? get_current_user_id();
+            $user = get_userdata($user_id);
+
+            if ($user) {
+                // Find platform role
+                $platform_roles = array_filter($user->roles, function($role) {
+                    return strpos($role, 'platform_') === 0;
+                });
+
+                if (!empty($platform_roles)) {
+                    return 'platform'; // Set access_type to 'platform'
+                }
+            }
+        }
+
+        return $access_type;
+    }
+
+    /**
+     * Set access_type for platform users (Branch context)
+     *
+     * @param string $access_type Current access type
+     * @param array $context Context data (is_admin, user_id, etc)
+     * @return string Modified access type
+     */
+    public function set_platform_branch_access_type($access_type, $context) {
+        // If already has access type, return it
+        if ($access_type !== 'none') {
+            return $access_type;
+        }
+
+        // Check if user has platform role with branch view capability
+        if (current_user_can('view_customer_branch_list')) {
+            $user_id = $context['user_id'] ?? get_current_user_id();
+            $user = get_userdata($user_id);
+
+            if ($user) {
+                // Find platform role
+                $platform_roles = array_filter($user->roles, function($role) {
+                    return strpos($role, 'platform_') === 0;
+                });
+
+                if (!empty($platform_roles)) {
+                    return 'platform'; // Set access_type to 'platform'
+                }
+            }
+        }
+
+        return $access_type;
     }
 
     /**

@@ -1,5 +1,287 @@
 # TODO List for WP App Core Plugin
 
+## TODO-1211: Platform Access to Branch and Employee DataTables ✅ COMPLETED
+
+**Status**: ✅ COMPLETED
+**Created**: 2025-10-19
+**Completed**: 2025-10-19
+**Dependencies**: TODO-1210 (Customer access), wp-customer TODO-2166
+**Priority**: High
+**Extends**: TODO-1210
+
+**Summary**: Extend platform role access dari Customer entity ke Branch dan Employee entities. Implementasi filter hooks dan capabilities untuk memastikan platform users dapat mengakses Branch dan Employee DataTables dengan benar.
+
+**Problem**:
+- Platform users sudah bisa akses Customer DataTable (TODO-1210 ✅)
+- Tapi **Branch dan Employee DataTable masih kosong**
+- BranchModel dan EmployeeModel belum ada filtering untuk `access_type='platform'`
+- BranchValidator tidak recognize platform users (return `access_type='none'`)
+- Platform_finance tidak punya employee capabilities
+
+**Root Cause**:
+```php
+// BranchModel::getTotalCount() dan EmployeeModel::getTotalCount()
+// Hanya cek 4 tipe access (sama seperti CustomerModel sebelum TODO-1210):
+if ($relation['is_admin']) { }
+elseif ($relation['is_customer_admin']) { }
+elseif ($relation['is_customer_branch_admin']) { }
+elseif ($relation['is_customer_employee']) { }
+else { WHERE 1=0 } // Platform users jatuh kesini!
+```
+
+**Solution**:
+1. Tambah filter hook `wp_branch_access_type` di wp-app-core untuk set access_type='platform'
+2. Update BranchModel dan EmployeeModel untuk recognize `access_type='platform'`
+3. Update BranchValidator untuk recognize platform capabilities
+4. Tambah employee capabilities ke platform_finance role
+
+**Implementation**:
+
+**1. wp-app-core Changes**:
+- `/wp-app-core.php`:
+  - Added `wp_branch_access_type` filter hook (line 129)
+  - Added `set_platform_branch_access_type()` method (lines 168-199)
+  - Checks `view_customer_branch_list` capability
+
+- `/src/Models/Settings/PlatformPermissionModel.php` (v1.0.4):
+  - Added `view_customer_employee_list` to platform_finance (line 686)
+  - Added `view_customer_employee_detail` to platform_finance (line 687)
+  - Employee capabilities already in `$available_capabilities` and `$capability_groups`
+
+**2. wp-customer Changes** (via TODO-2166):
+- BranchModel, EmployeeModel: Added platform filtering
+- BranchValidator: Added platform capability checks
+- All DataTables now working for platform users
+
+**Filter Hook Pattern**:
+```php
+// wp-app-core.php
+add_filter('wp_branch_access_type', [$this, 'set_platform_branch_access_type'], 10, 2);
+
+public function set_platform_branch_access_type($access_type, $context) {
+    if ($access_type !== 'none') return $access_type;
+
+    if (current_user_can('view_customer_branch_list')) {
+        // Check platform role
+        if (/* has platform_ role */) {
+            return 'platform';
+        }
+    }
+    return $access_type;
+}
+```
+
+**Test Results**:
+```
+Platform User: benny_clara (platform_finance)
+
+✓ Customer DataTable: 10 records (access_type: platform)
+✓ Branch DataTable: 9 records (access_type: platform)
+✓ Employee DataTable: 16 records (access_type: platform)
+
+Capabilities:
+✓ view_customer_detail
+✓ view_customer_branch_list
+✓ view_customer_employee_list
+✓ view_customer_employee_detail
+```
+
+**Platform Finance Capabilities** (WP Customer):
+- Customer: view_customer_list, view_customer_detail
+- Branch: view_customer_branch_list
+- Employee: view_customer_employee_list, view_customer_employee_detail
+- Invoice: Full membership invoice access (view, create, edit, approve, pay)
+
+**Files Modified**:
+- `/wp-app-core/wp-app-core.php` (added branch access filter)
+- `/wp-app-core/src/Models/Settings/PlatformPermissionModel.php` (v1.0.4)
+
+**Related Tasks**:
+- wp-app-core TODO-1210: Customer access (completed ✅)
+- wp-customer TODO-2166: Branch & Employee model updates (completed ✅)
+
+**Pattern Consistency**:
+All 3 entities (Customer, Branch, Employee) now follow same pattern:
+1. Model: Check `access_type='platform'` in data filtering
+2. wp-app-core: Hook filter to set access_type='platform'
+3. Validator: Check platform capabilities
+4. PlatformPermissionModel: Manage capabilities centrally
+
+See: wp-customer [TODO-2166](../wp-customer/TODO.md#TODO-2166) for implementation details
+
+---
+
+## TODO-1210: Platform Role Access to WP Customer via Capability System ✅ COMPLETED
+
+**Status**: ✅ COMPLETED
+**Created**: 2025-10-19
+**Completed**: 2025-10-19
+**Dependencies**: wp-customer TODO-2165, TODO-1209 (capabilities registration)
+**Priority**: High
+**Approach**: Direct Capability Checks (Opsi 1 - Simplified)
+
+**Summary**: Enable platform roles (platform_finance, platform_admin, etc.) to access WP Customer entities using WordPress capability system. Simplified approach using direct `current_user_can()` checks instead of complex hook filters.
+
+**Problem**:
+- Platform users sudah memiliki WP Customer capabilities (TODO-1209 ✅)
+- Menu sudah terlihat di wp-admin
+- Tetapi **DataTable kosong** karena `access_type = 'none'`
+- CustomerValidator::getUserRelation() tidak recognize platform roles
+- Validator return `has_access = false` → WHERE 1=0 → No records
+
+**Root Cause**:
+```php
+// CustomerModel::getUserRelation() hanya cek 4 tipe:
+- is_admin (WordPress administrator)
+- is_customer_admin (customer owner)
+- is_customer_branch_admin (branch admin)
+- is_customer_employee (employee)
+
+// Platform roles tidak ter-detect → access_type = 'none'
+```
+
+**Solution**:
+Implement filter hooks di wp-app-core untuk inject platform role access:
+```php
+// wp-customer provides hooks (after TODO-2165):
+apply_filters('wp_customer_user_can_view_customer', false, $relation);
+apply_filters('wp_customer_user_can_edit_customer', false, $relation);
+apply_filters('wp_customer_user_can_delete_customer', false, $relation);
+
+// wp-app-core implements filters (TODO-1210):
+add_filter('wp_customer_user_can_view_customer', 'check_platform_access', 10, 2);
+```
+
+**Implementation**:
+1. Create `/includes/class-wp-customer-integration.php` (WPCustomerIntegration class)
+2. Register filters for customer entity (view, edit, delete)
+3. Check platform capabilities with caching (5 minutes)
+4. Register integration in wp-app-core.php
+
+**Caching Strategy**:
+- Level 1: Object Cache (wp_cache) - 5 minutes
+- Level 2: Database query (only on cache miss)
+- Estimated overhead: ~0.001s per request (after cache warm-up)
+
+**Expected Result**:
+```
+Before:
+  access_type: none
+  has_access: NO
+  DataTable: Empty (0 records)
+
+After:
+  access_type: platform
+  has_access: YES
+  DataTable: Shows all records
+```
+
+**Final Implementation**:
+Instead of complex hook system, used **Opsi 1: Direct Capability Checks**:
+- wp-customer checks capabilities directly: `current_user_can('view_customer_detail')`
+- Platform roles have these capabilities (managed in PlatformPermissionModel)
+- Simpler, more secure, and maintainable
+
+**Files Modified**:
+- `/src/Models/Settings/PlatformPermissionModel.php` (v1.0.3 → v1.0.4)
+  - Added `view_customer_detail` to platform_finance, platform_analyst, platform_viewer
+- wp-customer `CustomerValidator.php` (v1.0.4 → v1.0.6)
+  - Added direct capability checks in canView(), canUpdate(), canDelete()
+  - No hook filters needed
+
+**Files Created (Reference Only - Not Used)**:
+- `/includes/class-wp-customer-integration.php` (created but disabled)
+- `/TODO/TODO-1210-implement-platform-role-access-filters.md` (detailed analysis)
+
+**Related Tasks**:
+- wp-customer TODO-2165: Refactor hook naming convention (dependency)
+- wp-app-core TODO-1208: Base role system (completed ✅)
+- wp-app-core TODO-1209: WP Customer capabilities registration (completed ✅)
+
+**Test Results**:
+```
+platform_finance:
+  ✓ view_customer_detail capability
+  ✓ has_access = YES
+  ✓ canView() = YES
+  ⚠ access_type = 'none' (trade-off, but functional)
+
+platform_admin:
+  ✓ view_customer_detail + edit_all_customers
+  ✓ has_access = YES
+  ✓ canView() = YES, canUpdate() = YES
+  ✓ access_type = 'admin' (detected correctly)
+```
+
+**Benefits**:
+- ✅ Simple and maintainable (KISS principle)
+- ✅ Uses WordPress core capability system
+- ✅ No complex hooks or integration classes
+- ✅ Secure (capability-based access control)
+- ✅ Easy to extend (just add capabilities to roles)
+
+**Trade-offs**:
+- ⚠ access_type = 'none' for some platform users (acceptable - has_access still works)
+- ⚠ Coupling: wp-customer aware of platform capabilities (minimal impact)
+
+See: [TODO/TODO-1210-implement-platform-role-access-filters.md](TODO/TODO-1210-implement-platform-role-access-filters.md) for detailed analysis and alternative approaches
+
+---
+
+## TODO-1209: Fix WP Customer Plugin Capabilities Registration ✅ COMPLETED
+
+**Status**: ✅ COMPLETED
+**Created**: 2025-10-19
+**Completed**: 2025-10-19
+**Version**: 1.0.3
+
+**Summary**: Fixed WP Customer plugin capabilities registration by adding all 32 capabilities to `$available_capabilities`, `$capability_groups`, and capability descriptions arrays in PlatformPermissionModel.php.
+
+**Problem**:
+- WP Customer capabilities were added to role defaults but NOT registered in `$available_capabilities` array
+- Platform users couldn't access WP Customer menus even after `wp cache flush`
+- Capabilities were skipped during role assignment due to validation check: `isset($this->available_capabilities[$cap])`
+
+**Root Cause**:
+```php
+// Line 246 in addCapabilities():
+if ($enabled && isset($this->available_capabilities[$cap])) {
+    $role->add_cap($cap);
+}
+// WP Customer caps were NOT in $available_capabilities, so isset() returned false
+```
+
+**Solution**:
+1. Added 32 WP Customer capabilities to `$available_capabilities` array (lines 98-138)
+2. Added 5 capability groups to `$capability_groups` array (lines 222-278):
+   - wp_customer_management (7 caps)
+   - wp_customer_branch (7 caps)
+   - wp_customer_employee (7 caps)
+   - wp_customer_invoice (8 caps)
+   - wp_customer_invoice_payment (3 caps)
+3. Added capability descriptions for all 32 capabilities (lines 772-812)
+4. Updated version from 1.0.2 to 1.0.3
+
+**Testing Results**:
+```
+✓ platform_finance: 8 WP Customer capabilities
+✓ platform_admin: 15 WP Customer capabilities
+✓ All platform users can access 3 WP Customer menus:
+  - WP Customer Menu (view_customer_list)
+  - WP Perusahaan Menu (view_customer_branch_list)
+  - Invoice Membership Menu (view_customer_membership_invoice_list)
+```
+
+**Files Modified**:
+- `/src/Models/Settings/PlatformPermissionModel.php` (v1.0.2 → v1.0.3)
+
+**Files Created**:
+- `/TODO/TODO-1209-fix-wp-customer-capabilities.md`
+
+See: [TODO/TODO-1209-fix-wp-customer-capabilities.md](TODO/TODO-1209-fix-wp-customer-capabilities.md)
+
+---
+
 ## TODO-1208: Base Role System Implementation ✅ COMPLETED
 
 **Status**: ✅ COMPLETED (FINAL FIX)

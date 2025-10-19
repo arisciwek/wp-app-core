@@ -4,7 +4,7 @@
  *
  * @package     WP_App_Core
  * @subpackage  Models/Settings
- * @version     1.0.0
+ * @version     1.0.4
  * @author      arisciwek
  *
  * Path: /wp-app-core/src/Models/Settings/PlatformPermissionModel.php
@@ -13,6 +13,27 @@
  *              Mengatur capabilities untuk role platform management
  *
  * Changelog:
+ * 1.0.4 - 2025-10-19
+ * - Added view_customer_detail capability to additional platform roles (TODO-1210)
+ * - platform_finance: Added view_customer_detail for customer access via hook filters
+ * - platform_analyst: Added view_customer_list, view_customer_detail, view_customer_branch_list for data analysis
+ * - platform_viewer: Added view_customer_list, view_customer_detail for read-only monitoring
+ * - Enables platform users to access WP Customer entities via integration hooks
+ *
+ * 1.0.3 - 2025-10-19
+ * - Fixed WP Customer capabilities registration (Task-1209)
+ * - Added all 32 WP Customer capabilities to $available_capabilities array
+ * - Added WP Customer capability groups to $capability_groups for organized UI display
+ * - Added capability descriptions for all WP Customer capabilities
+ * - This ensures capabilities are properly added to roles via addCapabilities() method
+ *
+ * 1.0.2 - 2025-10-19
+ * - Added WP Customer plugin capabilities to platform roles (Task-2164)
+ * - platform_finance: Full membership invoice access (view, create, edit, approve, pay) + view customers/branches
+ * - platform_super_admin: Full access to all customer features (customers, branches, employees, invoices)
+ * - platform_admin: Management access (view, add, edit, approve - no delete)
+ * - platform_manager: View-only access to customers, branches, employees, and invoices
+ *
  * 1.0.1 - 2025-10-19
  * - Added explicit 'read' capability to all platform roles for wp-admin access
  * - Updated addCapabilities() method to explicitly add 'read' capability
@@ -87,6 +108,48 @@ class PlatformPermissionModel {
         'manage_email_templates' => 'Kelola Email Templates',
         'manage_static_pages' => 'Kelola Static Pages',
         'manage_help_center_content' => 'Kelola Help Center Content',
+
+        // WP Customer Plugin - Customer Management
+        'view_customer_list' => 'Lihat Daftar Customer',
+        'view_customer_detail' => 'Lihat Detail Customer',
+        'view_own_customer' => 'Lihat Customer Sendiri',
+        'add_customer' => 'Tambah Customer',
+        'edit_all_customers' => 'Edit Semua Customer',
+        'edit_own_customer' => 'Edit Customer Sendiri',
+        'delete_customer' => 'Hapus Customer',
+
+        // WP Customer Plugin - Branch Management
+        'view_customer_branch_list' => 'Lihat Daftar Cabang',
+        'view_customer_branch_detail' => 'Lihat Detail Cabang',
+        'view_own_customer_branch' => 'Lihat Cabang Sendiri',
+        'add_customer_branch' => 'Tambah Cabang',
+        'edit_all_customer_branches' => 'Edit Semua Cabang',
+        'edit_own_customer_branch' => 'Edit Cabang Sendiri',
+        'delete_customer_branch' => 'Hapus Cabang',
+
+        // WP Customer Plugin - Employee Management
+        'view_customer_employee_list' => 'Lihat Daftar Karyawan',
+        'view_customer_employee_detail' => 'Lihat Detail Karyawan',
+        'view_own_customer_employee' => 'Lihat Karyawan Sendiri',
+        'add_customer_employee' => 'Tambah Karyawan',
+        'edit_all_customer_employees' => 'Edit Karyawan',
+        'edit_own_customer_employee' => 'Edit Karyawan Sendiri',
+        'delete_customer_employee' => 'Hapus Karyawan',
+
+        // WP Customer Plugin - Membership Invoice Management
+        'view_customer_membership_invoice_list' => 'Lihat Daftar Invoice Membership',
+        'view_customer_membership_invoice_detail' => 'Lihat Detail Invoice Membership',
+        'view_own_customer_membership_invoice' => 'Lihat Invoice Membership Sendiri',
+        'create_customer_membership_invoice' => 'Buat Invoice Membership',
+        'edit_all_customer_membership_invoices' => 'Edit Semua Invoice Membership',
+        'edit_own_customer_membership_invoice' => 'Edit Invoice Membership Sendiri',
+        'delete_customer_membership_invoice' => 'Hapus Invoice Membership',
+        'approve_customer_membership_invoice' => 'Approve Invoice Membership',
+
+        // WP Customer Plugin - Membership Invoice Payment
+        'pay_all_customer_membership_invoices' => 'Bayar Semua Invoice Membership Customer',
+        'pay_own_customer_membership_invoices' => 'Bayar Invoice Membership Customer Sendiri',
+        'pay_own_branch_membership_invoices' => 'Bayar Invoice Membership Cabang Sendiri',
     ];
 
     /**
@@ -168,6 +231,63 @@ class PlatformPermissionModel {
                 'manage_email_templates',
                 'manage_static_pages',
                 'manage_help_center_content'
+            ]
+        ],
+        'wp_customer_management' => [
+            'title' => 'WP Customer - Customer Management',
+            'caps' => [
+                'view_customer_list',
+                'view_customer_detail',
+                'view_own_customer',
+                'add_customer',
+                'edit_all_customers',
+                'edit_own_customer',
+                'delete_customer'
+            ]
+        ],
+        'wp_customer_branch' => [
+            'title' => 'WP Customer - Branch Management',
+            'caps' => [
+                'view_customer_branch_list',
+                'view_customer_branch_detail',
+                'view_own_customer_branch',
+                'add_customer_branch',
+                'edit_all_customer_branches',
+                'edit_own_customer_branch',
+                'delete_customer_branch'
+            ]
+        ],
+        'wp_customer_employee' => [
+            'title' => 'WP Customer - Employee Management',
+            'caps' => [
+                'view_customer_employee_list',
+                'view_customer_employee_detail',
+                'view_own_customer_employee',
+                'add_customer_employee',
+                'edit_all_customer_employees',
+                'edit_own_customer_employee',
+                'delete_customer_employee'
+            ]
+        ],
+        'wp_customer_invoice' => [
+            'title' => 'WP Customer - Membership Invoice',
+            'caps' => [
+                'view_customer_membership_invoice_list',
+                'view_customer_membership_invoice_detail',
+                'view_own_customer_membership_invoice',
+                'create_customer_membership_invoice',
+                'edit_all_customer_membership_invoices',
+                'edit_own_customer_membership_invoice',
+                'delete_customer_membership_invoice',
+                'approve_customer_membership_invoice'
+            ]
+        ],
+        'wp_customer_invoice_payment' => [
+            'title' => 'WP Customer - Invoice Payment',
+            'caps' => [
+                'pay_all_customer_membership_invoices',
+                'pay_own_customer_membership_invoices',
+                'pay_own_branch_membership_invoices'
             ]
         ]
     ];
@@ -431,6 +551,30 @@ class PlatformPermissionModel {
                 'manage_email_templates' => true,
                 'manage_static_pages' => true,
                 'manage_help_center_content' => true,
+
+                // WP Customer Plugin - Full Access (Task-2164)
+                'view_customer_list' => true,
+                'view_customer_detail' => true,
+                'add_customer' => true,
+                'edit_all_customers' => true,
+                'delete_customer' => true,
+                'view_customer_branch_list' => true,
+                'view_customer_branch_detail' => true,
+                'add_customer_branch' => true,
+                'edit_all_customer_branches' => true,
+                'delete_customer_branch' => true,
+                'view_customer_employee_list' => true,
+                'view_customer_employee_detail' => true,
+                'add_customer_employee' => true,
+                'edit_all_customer_employees' => true,
+                'delete_customer_employee' => true,
+                'view_customer_membership_invoice_list' => true,
+                'view_customer_membership_invoice_detail' => true,
+                'create_customer_membership_invoice' => true,
+                'edit_all_customer_membership_invoices' => true,
+                'delete_customer_membership_invoice' => true,
+                'approve_customer_membership_invoice' => true,
+                'pay_all_customer_membership_invoices' => true,
             ],
             'platform_admin' => [
                 'read' => true,
@@ -460,6 +604,23 @@ class PlatformPermissionModel {
                 'view_platform_analytics' => true,
                 'view_usage_statistics' => true,
                 'view_audit_logs' => true,
+
+                // WP Customer Plugin - Management Access (Task-2164)
+                'view_customer_list' => true,
+                'view_customer_detail' => true,
+                'add_customer' => true,
+                'edit_all_customers' => true,
+                'view_customer_branch_list' => true,
+                'view_customer_branch_detail' => true,
+                'add_customer_branch' => true,
+                'edit_all_customer_branches' => true,
+                'view_customer_employee_list' => true,
+                'view_customer_employee_detail' => true,
+                'view_customer_membership_invoice_list' => true,
+                'view_customer_membership_invoice_detail' => true,
+                'create_customer_membership_invoice' => true,
+                'edit_all_customer_membership_invoices' => true,
+                'approve_customer_membership_invoice' => true,
             ],
             'platform_manager' => [
                 'read' => true,
@@ -477,6 +638,16 @@ class PlatformPermissionModel {
                 'view_platform_analytics' => true,
                 'view_usage_statistics' => true,
                 'generate_custom_reports' => true,
+
+                // WP Customer Plugin - View Only Access (Task-2164)
+                'view_customer_list' => true,
+                'view_customer_detail' => true,
+                'view_customer_branch_list' => true,
+                'view_customer_branch_detail' => true,
+                'view_customer_employee_list' => true,
+                'view_customer_employee_detail' => true,
+                'view_customer_membership_invoice_list' => true,
+                'view_customer_membership_invoice_detail' => true,
             ],
             'platform_support' => [
                 'read' => true,
@@ -507,6 +678,19 @@ class PlatformPermissionModel {
                 // Reports & Analytics - Financial only
                 'view_platform_analytics' => true,
                 'export_reports' => true,
+
+                // WP Customer Plugin - Membership Invoice Access (Task-2164, Task-1210)
+                'view_customer_list' => true,
+                'view_customer_detail' => true,  // Added for platform access (TODO-1210)
+                'view_customer_branch_list' => true,
+                'view_customer_employee_list' => true,  // Added for platform access (TODO-1210)
+                'view_customer_employee_detail' => true,  // Added for platform access (TODO-1210)
+                'view_customer_membership_invoice_list' => true,
+                'view_customer_membership_invoice_detail' => true,
+                'create_customer_membership_invoice' => true,
+                'edit_all_customer_membership_invoices' => true,
+                'approve_customer_membership_invoice' => true,
+                'pay_all_customer_membership_invoices' => true,
             ],
             'platform_analyst' => [
                 'read' => true,
@@ -523,6 +707,11 @@ class PlatformPermissionModel {
                 'export_reports' => true,
                 'view_audit_logs' => true,
                 'view_security_reports' => true,
+
+                // WP Customer Plugin - View Only for Analysis (TODO-1210)
+                'view_customer_list' => true,
+                'view_customer_detail' => true,
+                'view_customer_branch_list' => true,
             ],
             'platform_viewer' => [
                 'read' => true,
@@ -533,6 +722,10 @@ class PlatformPermissionModel {
                 // Reports & Analytics - View only
                 'view_platform_analytics' => true,
                 'view_usage_statistics' => true,
+
+                // WP Customer Plugin - Read-Only Monitoring (TODO-1210)
+                'view_customer_list' => true,
+                'view_customer_detail' => true,
             ],
         ];
 
@@ -601,6 +794,48 @@ class PlatformPermissionModel {
             'manage_email_templates' => __('Memungkinkan mengelola email templates', 'wp-app-core'),
             'manage_static_pages' => __('Memungkinkan mengelola static pages', 'wp-app-core'),
             'manage_help_center_content' => __('Memungkinkan mengelola help center content', 'wp-app-core'),
+
+            // WP Customer Plugin - Customer Management
+            'view_customer_list' => __('Memungkinkan melihat daftar customer', 'wp-app-core'),
+            'view_customer_detail' => __('Memungkinkan melihat detail customer', 'wp-app-core'),
+            'view_own_customer' => __('Memungkinkan melihat customer sendiri', 'wp-app-core'),
+            'add_customer' => __('Memungkinkan menambah customer', 'wp-app-core'),
+            'edit_all_customers' => __('Memungkinkan mengedit semua customer', 'wp-app-core'),
+            'edit_own_customer' => __('Memungkinkan mengedit customer sendiri', 'wp-app-core'),
+            'delete_customer' => __('Memungkinkan menghapus customer', 'wp-app-core'),
+
+            // WP Customer Plugin - Branch Management
+            'view_customer_branch_list' => __('Memungkinkan melihat daftar cabang', 'wp-app-core'),
+            'view_customer_branch_detail' => __('Memungkinkan melihat detail cabang', 'wp-app-core'),
+            'view_own_customer_branch' => __('Memungkinkan melihat cabang sendiri', 'wp-app-core'),
+            'add_customer_branch' => __('Memungkinkan menambah cabang', 'wp-app-core'),
+            'edit_all_customer_branches' => __('Memungkinkan mengedit semua cabang', 'wp-app-core'),
+            'edit_own_customer_branch' => __('Memungkinkan mengedit cabang sendiri', 'wp-app-core'),
+            'delete_customer_branch' => __('Memungkinkan menghapus cabang', 'wp-app-core'),
+
+            // WP Customer Plugin - Employee Management
+            'view_customer_employee_list' => __('Memungkinkan melihat daftar karyawan', 'wp-app-core'),
+            'view_customer_employee_detail' => __('Memungkinkan melihat detail karyawan', 'wp-app-core'),
+            'view_own_customer_employee' => __('Memungkinkan melihat karyawan sendiri', 'wp-app-core'),
+            'add_customer_employee' => __('Memungkinkan menambah karyawan', 'wp-app-core'),
+            'edit_all_customer_employees' => __('Memungkinkan mengedit karyawan', 'wp-app-core'),
+            'edit_own_customer_employee' => __('Memungkinkan mengedit karyawan sendiri', 'wp-app-core'),
+            'delete_customer_employee' => __('Memungkinkan menghapus karyawan', 'wp-app-core'),
+
+            // WP Customer Plugin - Membership Invoice Management
+            'view_customer_membership_invoice_list' => __('Memungkinkan melihat daftar invoice membership', 'wp-app-core'),
+            'view_customer_membership_invoice_detail' => __('Memungkinkan melihat detail invoice membership', 'wp-app-core'),
+            'view_own_customer_membership_invoice' => __('Memungkinkan melihat invoice membership sendiri', 'wp-app-core'),
+            'create_customer_membership_invoice' => __('Memungkinkan membuat invoice membership', 'wp-app-core'),
+            'edit_all_customer_membership_invoices' => __('Memungkinkan mengedit semua invoice membership', 'wp-app-core'),
+            'edit_own_customer_membership_invoice' => __('Memungkinkan mengedit invoice membership sendiri', 'wp-app-core'),
+            'delete_customer_membership_invoice' => __('Memungkinkan menghapus invoice membership', 'wp-app-core'),
+            'approve_customer_membership_invoice' => __('Memungkinkan approve invoice membership', 'wp-app-core'),
+
+            // WP Customer Plugin - Membership Invoice Payment
+            'pay_all_customer_membership_invoices' => __('Memungkinkan bayar semua invoice membership customer', 'wp-app-core'),
+            'pay_own_customer_membership_invoices' => __('Memungkinkan bayar invoice membership customer sendiri', 'wp-app-core'),
+            'pay_own_branch_membership_invoices' => __('Memungkinkan bayar invoice membership cabang sendiri', 'wp-app-core'),
         ];
     }
 

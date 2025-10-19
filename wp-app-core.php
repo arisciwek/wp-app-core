@@ -102,25 +102,34 @@ class WP_App_Core {
      * Plugin activation
      */
     public function activate() {
-        // Create database tables if needed
-        // For Phase 1, we only need to ensure the plugin is activated properly
+        // Load activator class
+        require_once WP_APP_CORE_PLUGIN_DIR . 'includes/class-activator.php';
 
-        // Flush rewrite rules
-        flush_rewrite_rules();
+        // Run activation
+        WP_App_Core_Activator::activate();
     }
 
     /**
      * Plugin deactivation
      */
     public function deactivate() {
-        // Cleanup if needed
-        flush_rewrite_rules();
+        // Load deactivator class
+        require_once WP_APP_CORE_PLUGIN_DIR . 'includes/class-deactivator.php';
+
+        // Run deactivation
+        WP_App_Core_Deactivator::deactivate();
     }
 
     /**
      * Initialize plugin
      */
     public function init() {
+        // Initialize Menu Manager
+        if (is_admin()) {
+            $menu_manager = new \WPAppCore\Controllers\MenuManager('wp-app-core', WP_APP_CORE_VERSION);
+            $menu_manager->init();
+        }
+
         // Initialize components here
         do_action('wp_app_core_init');
     }

@@ -1,0 +1,154 @@
+/**
+ * Platform Settings CSS
+ *
+ * @package     WP_App_Core
+ * @subpackage  Assets/CSS/Settings
+ * @version     1.0.0
+ * @author      arisciwek
+ *
+ * Path: /wp-app-core/assets/css/settings/settings.css
+ *
+ * Description: Styles for platform settings pages
+ *
+ * Changelog:
+ * 1.0.0 - 2025-10-19
+ * - Initial creation
+ */
+
+/* Settings Sections */
+.settings-section {
+    background: #fff;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+.settings-section h2 {
+    margin-top: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e5e5e5;
+    font-size: 1.3em;
+    font-weight: 600;
+}
+
+.settings-section h3 {
+    margin-top: 20px;
+    font-size: 1.1em;
+    font-weight: 600;
+}
+
+/* Tab Content */
+.tab-content {
+    margin-top: 20px;
+}
+
+/* Permission Matrix */
+.permission-matrix-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+}
+
+.permission-matrix-table th,
+.permission-matrix-table td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: center;
+}
+
+.permission-matrix-table th {
+    background: #f7f7f7;
+    font-weight: 600;
+}
+
+.permission-matrix-table tbody tr:hover {
+    background: #f9f9f9;
+}
+
+.permission-matrix-table .capability-name {
+    text-align: left;
+    font-weight: 500;
+}
+
+/* Settings Groups */
+.settings-group {
+    margin-bottom: 30px;
+}
+
+.settings-group-title {
+    font-size: 1.2em;
+    font-weight: 600;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #0073aa;
+}
+
+/* Buttons */
+.button-reset-permissions {
+    background: #dc3232;
+    border-color: #dc3232;
+    color: #fff;
+}
+
+.button-reset-permissions:hover {
+    background: #c22;
+    border-color: #c22;
+    color: #fff;
+}
+
+/* Loading States */
+.settings-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.settings-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #0073aa;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Notice Messages */
+.settings-notice {
+    padding: 12px;
+    margin: 15px 0;
+    border-left: 4px solid #0073aa;
+    background: #fff;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+.settings-notice.success {
+    border-left-color: #46b450;
+}
+
+.settings-notice.error {
+    border-left-color: #dc3232;
+}
+
+/* Responsive */
+@media screen and (max-width: 782px) {
+    .settings-section {
+        padding: 15px;
+    }
+
+    .permission-matrix-table th,
+    .permission-matrix-table td {
+        padding: 8px;
+        font-size: 12px;
+    }
+}

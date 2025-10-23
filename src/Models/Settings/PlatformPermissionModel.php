@@ -427,7 +427,17 @@ class PlatformPermissionModel {
                 $role = get_role($role_name);
                 if (!$role) continue;
 
-                // Remove all platform capabilities first
+                // BUG FIX (Task-2172): Only remove capabilities from platform roles + administrator
+                // Do NOT remove from agency/customer/other plugin roles!
+                $is_platform_role = \WP_App_Core_Role_Manager::isPluginRole($role_name);
+                $is_admin = $role_name === 'administrator';
+
+                if (!$is_platform_role && !$is_admin) {
+                    // Skip non-platform roles - don't touch their capabilities
+                    continue;
+                }
+
+                // Remove all platform capabilities first (only from platform roles + admin)
                 foreach (array_keys($this->available_capabilities) as $cap) {
                     $role->remove_cap($cap);
                 }
@@ -441,7 +451,7 @@ class PlatformPermissionModel {
                 }
 
                 // Platform roles get their default capabilities
-                if (\WP_App_Core_Role_Manager::isPluginRole($role_name)) {
+                if ($is_platform_role) {
                     // Add 'read' capability explicitly - required for wp-admin access
                     $role->add_cap('read');
 
@@ -679,10 +689,11 @@ class PlatformPermissionModel {
                 'view_platform_analytics' => true,
                 'export_reports' => true,
 
-                // WP Customer Plugin - Membership Invoice Access (Task-2164, Task-1210)
+                // WP Customer Plugin - Membership Invoice Access (Task-2164, Task-1210, wp-agency TODO-2064)
                 'view_customer_list' => true,
                 'view_customer_detail' => true,  // Added for platform access (TODO-1210)
                 'view_customer_branch_list' => true,
+                'view_customer_branch_detail' => true,  // Added for wp-agency menu access (TODO-2064)
                 'view_customer_employee_list' => true,  // Added for platform access (TODO-1210)
                 'view_customer_employee_detail' => true,  // Added for platform access (TODO-1210)
                 'view_customer_membership_invoice_list' => true,

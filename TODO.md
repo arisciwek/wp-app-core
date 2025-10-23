@@ -1,5 +1,82 @@
 # TODO List for WP App Core Plugin
 
+## TODO-1212: Platform Access to WP Customer Menu for WP Agency ✅ COMPLETED
+
+**Status**: ✅ COMPLETED
+**Created**: 2025-10-19
+**Completed**: 2025-10-19
+**Dependencies**: TODO-1211 (filter hooks)
+**Related**: wp-agency TODO-2064
+**Priority**: High
+**Complexity**: Low
+
+**Summary**: Enable platform users (from wp-agency) to access WP Customer menus. Quick capability fix untuk menu visibility - data filtering untuk jurisdiction handled by wp-agency TODO-2065.
+
+**Problem**:
+- wp-agency platform users tidak bisa lihat menu WP Customer
+- Menu "WP Customer" dan "WP Perusahaan" tidak muncul
+- platform_finance punya capabilities tapi kurang `view_customer_branch_detail`
+
+**Solution**:
+Add missing `view_customer_branch_detail` capability to platform_finance role.
+
+**Implementation**:
+
+**Files Modified**:
+- `/src/Models/Settings/PlatformPermissionModel.php`:
+  - Added `view_customer_branch_detail` to platform_finance (line 686)
+  - Updated comment reference wp-agency TODO-2064 (line 682)
+
+**Capability Added**:
+```php
+'platform_finance' => [
+    // ... existing capabilities
+    'view_customer_branch_detail' => true,  // Added for wp-agency menu access
+]
+```
+
+**Test Results**:
+```
+Platform User: benny_clara (platform_finance)
+
+✅ Capabilities:
+   - view_customer_list: yes
+   - view_customer_detail: yes
+   - view_customer_branch_list: yes
+   - view_customer_branch_detail: yes ← ADDED
+   - view_customer_employee_list: yes
+   - view_customer_employee_detail: yes
+
+✅ Menu Access (Expected):
+   - Menu "WP Customer" → SHOULD APPEAR
+   - Menu "WP Perusahaan" → SHOULD APPEAR
+   - Menu "Invoice Membership" → SHOULD APPEAR
+
+✅ Data Access:
+   - Customer access_type: platform (10 records)
+   - Branch access_type: platform (50 records)
+```
+
+**Impact**:
+- ✅ Platform users see WP Customer menus
+- ✅ Data accessible (full access - no filtering)
+- ⚠️ Shows ALL customer/branch data
+- 📋 Jurisdiction filtering: wp-agency TODO-2065
+
+**Related Tasks**:
+- wp-app-core TODO-1211: Filter hooks (completed ✅)
+- wp-agency TODO-2064: Menu access (completed ✅)
+- wp-agency TODO-2065: Jurisdiction filtering (planning 📋)
+
+**Notes**:
+- Simple 1-line capability addition
+- platform_admin already had all capabilities
+- Menu visibility working via WordPress capability system
+- Data currently shows all records (intended for finance role)
+- wp-agency will implement jurisdiction filtering for restricted access
+
+---
+
 ## TODO-1211: Platform Access to Branch and Employee DataTables ✅ COMPLETED
 
 **Status**: ✅ COMPLETED

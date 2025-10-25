@@ -51,6 +51,12 @@ class PlatformStaffController {
         add_action('wp_ajax_update_platform_staff', [$this, 'updateStaff']);
         add_action('wp_ajax_delete_platform_staff', [$this, 'deleteStaff']);
 
+        // Register NEW DataTable system test endpoint
+        \WPAppCore\Controllers\DataTable\DataTableController::register_ajax_action(
+            'platform_staff_datatable_test',
+            'WPAppCore\\Models\\Platform\\PlatformStaffDataTableModel'
+        );
+
         // Register menu page
         add_action('admin_menu', [$this, 'registerMenu'], 20);
 
@@ -70,6 +76,16 @@ class PlatformStaffController {
             [$this, 'renderDashboard'],
             'dashicons-groups',
             25
+        );
+
+        // Add submenu for DataTable Test
+        add_submenu_page(
+            'wp-app-core-platform-staff',
+            __('DataTable Test', 'wp-app-core'),
+            __('🧪 DataTable Test', 'wp-app-core'),
+            'manage_options',
+            'wp-app-core-datatable-test',
+            [$this, 'renderDataTableTest']
         );
     }
 
@@ -159,6 +175,20 @@ class PlatformStaffController {
         }
 
         require_once WP_APP_CORE_PATH . 'src/Views/templates/platform-staff/platform-staff-dashboard.php';
+    }
+
+    /**
+     * Render DataTable Test Page
+     *
+     * Test page untuk verify new DataTable system
+     */
+    public function renderDataTableTest() {
+        // Check permission (admin only for test page)
+        if (!current_user_can('manage_options')) {
+            wp_die(__('You do not have sufficient permissions to access this page.', 'wp-app-core'));
+        }
+
+        require_once WP_APP_CORE_PATH . 'src/Views/platform/staff-datatable-test.php';
     }
 
     /**

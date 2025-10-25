@@ -30,6 +30,8 @@ wp-config.php
 
 # Uploads
 /wp-content/uploads/
+/TODO-OLD/
+/docs-old/
 
 # Log files
 *.log

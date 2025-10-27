@@ -10,6 +10,8 @@
  * @since 1.0.0
  * @author arisciwek
  *
+ * Path: /wp-app-core/src/Views/DataTable/Templates/DashboardTemplate.php
+ *
  * Usage:
  * ```php
  * use WPAppCore\Views\DataTable\Templates\DashboardTemplate;
@@ -48,7 +50,8 @@ class DashboardTemplate {
 
         // Start rendering
         ?>
-        <div class="wrap wpapp-dashboard-wrap" data-entity="<?php echo esc_attr($config['entity']); ?>">
+        <div class="wrap wpapp-dashboard-wrap">
+        <div class="wrap wpapp-datatable-page" data-entity="<?php echo esc_attr($config['entity']); ?>">
 
             <!-- Page Header Container (Global Scope) -->
             <?php self::render_page_header($config); ?>
@@ -82,11 +85,14 @@ class DashboardTemplate {
             ?>
 
         </div>
+        </div>
         <?php
     }
 
     /**
      * Render page header with hook system
+     *
+     * All classes use wpapp- prefix (from wp-app-core)
      *
      * @param array $config Configuration
      * @return void
@@ -95,14 +101,16 @@ class DashboardTemplate {
         ?>
         <div class="wpapp-page-header">
             <div class="wpapp-page-header-container">
-                <!-- Header Left: Title & Subtitle (Scope Local) -->
+                <!-- Header Left: Title & Subtitle -->
                 <div class="wpapp-header-left">
                     <?php
                     /**
                      * Action: Page header left content
                      *
                      * Plugins should hook here to render title and subtitle
-                     * Each plugin renders their own HTML with their own classes
+                     * Each plugin renders their own HTML with their own CSS classes
+                     *
+                     * IMPORTANT: Use plugin-specific CSS classes (e.g., agency-, customer-)
                      *
                      * @param array $config Dashboard configuration
                      * @param string $entity Entity name
@@ -123,43 +131,16 @@ class DashboardTemplate {
                     <?php endif; ?>
                 </div>
 
-                <!-- Header Center: Cards, Stats, etc (Scope Local) -->
-                <div class="wpapp-header-center">
-                    <?php
-                    /**
-                     * Action: Page header center content
-                     *
-                     * Plugins should hook here to render cards, badges, stats, etc
-                     * Each plugin renders their own HTML + CSS + JS
-                     *
-                     * @param array $config Dashboard configuration
-                     * @param string $entity Entity name
-                     *
-                     * @example
-                     * add_action('wpapp_page_header_center', function($config, $entity) {
-                     *     if ($entity !== 'agency') return;
-                     *     ?>
-                     *     <div class="agency-header-cards">
-                     *         <div class="agency-card agency-card-blue">
-                     *             <span class="agency-card-value">10</span>
-                     *             <span class="agency-card-label">Total</span>
-                     *         </div>
-                     *     </div>
-                     *     <?php
-                     * }, 10, 2);
-                     */
-                    do_action('wpapp_page_header_center', $config, $config['entity']);
-                    ?>
-                </div>
-
-                <!-- Header Right: Action Buttons (Scope Local) -->
+                <!-- Header Right: Action Buttons -->
                 <div class="wpapp-header-right">
                     <?php
                     /**
                      * Action: Page header right content
                      *
                      * Plugins should hook here to render action buttons
-                     * Each plugin renders their own HTML with their own classes
+                     * Each plugin renders their own HTML with their own CSS classes
+                     *
+                     * IMPORTANT: Use plugin-specific CSS classes (e.g., agency-, customer-)
                      *
                      * @param array $config Dashboard configuration
                      * @param string $entity Entity name
@@ -167,7 +148,7 @@ class DashboardTemplate {
                      * @example
                      * add_action('wpapp_page_header_right', function($config, $entity) {
                      *     if ($entity !== 'agency') return;
-                     *     echo '<a href="#" class="button button-primary">Add New Agency</a>';
+                     *     echo '<a href="#" class="button button-primary agency-add-btn">Add New Agency</a>';
                      * }, 10, 2);
                      */
                     do_action('wpapp_page_header_right', $config, $config['entity']);

@@ -10,6 +10,8 @@
  * @since 1.0.0
  * @author arisciwek
  *
+ * Path: /wp-app-core/src/Views/DataTable/Templates/StatsBoxTemplate.php
+ *
  * Stats Structure:
  * ```php
  * [
@@ -32,6 +34,8 @@ class StatsBoxTemplate {
     /**
      * Render statistics boxes
      *
+     * All classes use wpapp- prefix (from wp-app-core)
+     *
      * @param string $entity Entity name
      * @return void
      */
@@ -39,16 +43,37 @@ class StatsBoxTemplate {
         // Get stats from filter
         $stats = self::get_stats($entity);
 
-        if (empty($stats)) {
-            // No stats registered
-            return;
-        }
-
+        // Always render container even if no stats (for plugin hooks)
         ?>
-        <div class="wpapp-stats-container">
-            <?php foreach ($stats as $stat): ?>
-                <?php self::render_stat_box($stat, $entity); ?>
-            <?php endforeach; ?>
+        <!-- Statistics Container -->
+        <div class="wpapp-statistics-container">
+            <?php
+            /**
+             * Action: Statistics cards content
+             *
+             * Plugins can hook here to render custom statistics cards
+             * Cards should be rendered inside this container
+             *
+             * @param string $entity Entity name
+             *
+             * @example
+             * add_action('wpapp_statistics_cards_content', function($entity) {
+             *     if ($entity !== 'agency') return;
+             *     echo '<div class="statistics-cards">';
+             *     echo '<div class="stats-card">Custom Card</div>';
+             *     echo '</div>';
+             * });
+             */
+            do_action('wpapp_statistics_cards_content', $entity);
+            ?>
+
+            <?php if (!empty($stats)): ?>
+            <div class="statistics-cards hidden" id="<?php echo esc_attr($entity); ?>-statistics">
+                <?php foreach ($stats as $stat): ?>
+                    <?php self::render_stat_box($stat, $entity); ?>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
         </div>
         <?php
     }
@@ -72,17 +97,17 @@ class StatsBoxTemplate {
          *
          * @example
          * add_filter('wpapp_datatable_stats', function($stats, $entity) {
-         *     if ($entity !== 'customer') return $stats;
+         *     if ($entity !== 'agency') return $stats;
          *
          *     return [
          *         [
-         *             'id' => 'total-customers',
-         *             'label' => 'Total Customers',
-         *             'icon' => 'dashicons-groups',
+         *             'id' => 'agency-stat-total',
+         *             'label' => 'Total Disnaker',
+         *             'icon' => 'dashicons-building',
          *             'class' => 'primary'
          *         ],
          *         [
-         *             'id' => 'active-customers',
+         *             'id' => 'agency-stat-active',
          *             'label' => 'Active',
          *             'icon' => 'dashicons-yes-alt',
          *             'class' => 'success'
@@ -97,6 +122,8 @@ class StatsBoxTemplate {
 
     /**
      * Render single stat box
+     *
+     * All classes use wpapp- prefix (from wp-app-core)
      *
      * @param array $stat Stat configuration
      * @param string $entity Entity name
@@ -114,30 +141,26 @@ class StatsBoxTemplate {
         }
 
         ?>
-        <div class="wpapp-stat-box <?php echo esc_attr($class); ?>"
+        <div class="stats-card <?php echo esc_attr($class); ?>"
              data-stat-id="<?php echo esc_attr($id); ?>"
              data-entity="<?php echo esc_attr($entity); ?>">
 
             <!-- Icon -->
             <?php if (!empty($icon)): ?>
-                <div class="wpapp-stat-icon">
+                <div class="stats-icon">
                     <span class="dashicons <?php echo esc_attr($icon); ?>"></span>
                 </div>
             <?php endif; ?>
 
             <!-- Content -->
-            <div class="wpapp-stat-content">
+            <div class="stats-content">
                 <!-- Number (loaded via JavaScript) -->
-                <div class="wpapp-stat-number" id="<?php echo esc_attr($id); ?>">
-                    <span class="wpapp-stat-loading">
-                        <span class="spinner is-active"></span>
-                    </span>
-                </div>
+                <h3 class="stats-number" id="<?php echo esc_attr($id); ?>">0</h3>
 
                 <!-- Label -->
-                <div class="wpapp-stat-label">
+                <p class="stats-label">
                     <?php echo esc_html($label); ?>
-                </div>
+                </p>
             </div>
 
         </div>

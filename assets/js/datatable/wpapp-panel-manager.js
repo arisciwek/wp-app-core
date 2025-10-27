@@ -48,6 +48,7 @@
             this.isOpen = false;
             this.ajaxRequest = null;
             this.loadingTimeout = null;
+            this.dataTable = null;
 
             this.init();
         }
@@ -70,6 +71,9 @@
             // Bind events
             this.bindEvents();
 
+            // Get DataTable instance
+            this.getDataTableInstance();
+
             // Check hash on load
             this.checkHashOnLoad();
 
@@ -79,8 +83,23 @@
                     entity: this.currentEntity,
                     hasLayout: this.layout.length > 0,
                     hasLeftPanel: this.leftPanel.length > 0,
-                    hasRightPanel: this.rightPanel.length > 0
+                    hasRightPanel: this.rightPanel.length > 0,
+                    hasDataTable: this.dataTable !== null
                 });
+            }
+        }
+
+        /**
+         * Get DataTable instance from DOM
+         */
+        getDataTableInstance() {
+            const $table = $('.wpapp-datatable');
+
+            if ($table.length > 0 && $.fn.DataTable && $.fn.DataTable.isDataTable($table)) {
+                this.dataTable = $table.DataTable();
+                console.log('[WPApp Panel] DataTable instance found');
+            } else {
+                console.log('[WPApp Panel] No DataTable instance found');
             }
         }
 
@@ -226,94 +245,102 @@
 
         /**
          * Show panel with animation
+         * Simplified pattern - exact copy from platform-staff
          */
         showPanel() {
-            console.group('🔍 DEBUG: Panel Opening');
+            const self = this;
 
-            // === BEFORE MEASUREMENTS ===
+            console.group('🔍 DEBUG: Panel Opening Sequence');
+
+            // Anti-flicker: Delay showing loading placeholder for 300ms
+            // If AJAX completes < 300ms, loading won't show at all
+            this.loadingTimeout = setTimeout(function() {
+                self.rightPanel.find('.wpapp-loading-placeholder').addClass('visible');
+                console.log('⏱️ Loading placeholder shown after 300ms delay');
+            }, 300);
+
+            // === BEFORE STATE ===
             const before = {
-                scrollTop: window.pageYOffset || document.documentElement.scrollTop,
-                scrollLeft: window.pageXOffset || document.documentElement.scrollLeft,
+                scrollY: window.scrollY || window.pageYOffset,
+                scrollX: window.scrollX || window.pageXOffset,
+                docHeight: document.documentElement.scrollHeight,
                 viewportHeight: window.innerHeight,
-                documentHeight: document.documentElement.scrollHeight,
                 layoutHeight: this.layout.outerHeight(),
-                navigationTop: $('.wpapp-navigation-container').offset()?.top || 0,
-                navigationHeight: $('.wpapp-navigation-container').outerHeight() || 0,
-                pageHeaderHeight: $('.wpapp-page-header').outerHeight() || 0,
+                leftPanelWidth: this.leftPanel.width(),
+                rightPanelDisplay: this.rightPanel.css('display'),
+                rightPanelVisible: this.rightPanel.hasClass('visible'),
                 timestamp: Date.now()
             };
 
             console.log('📊 BEFORE Panel Open:', before);
-            console.log('📍 Navigation Container Position:', {
-                top: before.navigationTop,
-                height: before.navigationHeight,
-                'visible in viewport': before.navigationTop < (before.scrollTop + before.viewportHeight)
-            });
 
-            // Scroll to page header FIRST (before panel opens) to prevent flicker
-            const pageHeader = document.querySelector('.wpapp-dashboard-wrap');
-            if (pageHeader) {
-                const headerTop = pageHeader.getBoundingClientRect().top + window.pageYOffset;
-                const adminBarHeight = $('#wpadminbar').outerHeight() || 32;
-                const scrollTarget = Math.max(0, headerTop - adminBarHeight);
+            // Step 1: Show panel immediately (no delay)
+            console.log('⏱️ Step 1: Show panel (add visible class)');
+            this.rightPanel.removeClass('hidden').addClass('visible');
 
-                // INSTANT scroll (no animation) to eliminate flicker
-                window.scrollTo(0, scrollTarget);
+            // Check immediately after
+            const afterStep1 = {
+                scrollY: window.scrollY || window.pageYOffset,
+                rightPanelDisplay: this.rightPanel.css('display'),
+                scrollDelta: (window.scrollY || window.pageYOffset) - before.scrollY
+            };
+            console.log('📊 After Step 1:', afterStep1);
+            if (afterStep1.scrollDelta !== 0) {
+                console.error('⚠️ SCROLL JUMP at Step 1! Delta:', afterStep1.scrollDelta);
             }
 
-            // Simple approach: just add classes, let CSS handle everything
+            // Step 2: Trigger left panel shrink
+            console.log('⏱️ Step 2: Trigger left panel shrink (add with-right-panel class)');
             this.layout.addClass('with-right-panel');
-            this.rightPanel.removeClass('hidden').addClass('visible');
+
+            const afterStep2 = {
+                scrollY: window.scrollY || window.pageYOffset,
+                leftPanelWidth: this.leftPanel.width(),
+                scrollDelta: (window.scrollY || window.pageYOffset) - before.scrollY
+            };
+            console.log('📊 After Step 2:', afterStep2);
+            if (afterStep2.scrollDelta !== 0) {
+                console.error('⚠️ SCROLL JUMP at Step 2! Delta:', afterStep2.scrollDelta);
+            }
+
             this.isOpen = true;
 
-            // Force immediate layout recalculation
-            this.layout[0].offsetHeight; // Force reflow
+            // Step 3: Wait for CSS transition (300ms) + buffer (50ms) = 350ms
+            // Then adjust DataTable for new width
+            setTimeout(function() {
+                console.log('⏱️ Step 3: After 350ms - Adjust DataTable');
 
-            // === IMMEDIATE AFTER MEASUREMENTS ===
-            requestAnimationFrame(() => {
-                const after = {
-                    scrollTop: window.pageYOffset || document.documentElement.scrollTop,
-                    scrollLeft: window.pageXOffset || document.documentElement.scrollLeft,
-                    viewportHeight: window.innerHeight,
-                    documentHeight: document.documentElement.scrollHeight,
-                    layoutHeight: this.layout.outerHeight(),
-                    navigationTop: $('.wpapp-navigation-container').offset()?.top || 0,
-                    navigationHeight: $('.wpapp-navigation-container').outerHeight() || 0,
-                    pageHeaderHeight: $('.wpapp-page-header').outerHeight() || 0,
-                    timestamp: Date.now()
-                };
+                if (self.dataTable) {
+                    console.log('  → DataTable found, adjusting columns...');
 
-                console.log('📊 AFTER Panel Open:', after);
+                    // Force recalculation of column widths
+                    // NO REDRAW needed - columns.adjust() is enough for panel resize
+                    // This prevents flicker in left panel
+                    self.dataTable.columns.adjust();
 
-                // === DELTA ANALYSIS ===
-                const delta = {
-                    scrollTop: after.scrollTop - before.scrollTop,
-                    documentHeight: after.documentHeight - before.documentHeight,
-                    layoutHeight: after.layoutHeight - before.layoutHeight,
-                    navigationTop: after.navigationTop - before.navigationTop,
-                    navigationHeight: after.navigationHeight - before.navigationHeight,
-                    pageHeaderHeight: after.pageHeaderHeight - before.pageHeaderHeight,
-                    elapsed: after.timestamp - before.timestamp
-                };
-
-                console.log('📈 DELTA (Changes):', delta);
-
-                if (delta.scrollTop !== 0) {
-                    console.warn('⚠️ SCROLL JUMP DETECTED!', {
-                        'jumped by': delta.scrollTop + 'px',
-                        'direction': delta.scrollTop > 0 ? '⬇️ DOWN' : '⬆️ UP'
-                    });
+                    console.log('  → DataTable columns adjusted (no redraw to prevent flicker)');
+                } else {
+                    console.warn('  → No DataTable instance found');
                 }
 
-                if (delta.navigationTop !== 0) {
-                    console.warn('⚠️ NAVIGATION MOVED!', {
-                        'moved by': delta.navigationTop + 'px',
-                        'direction': delta.navigationTop > 0 ? '⬇️ DOWN' : '⬆️ UP'
-                    });
+                const final = {
+                    scrollY: window.scrollY || window.pageYOffset,
+                    leftPanelWidth: self.leftPanel.width(),
+                    rightPanelWidth: self.rightPanel.width(),
+                    totalDelta: (window.scrollY || window.pageYOffset) - before.scrollY,
+                    elapsed: Date.now() - before.timestamp
+                };
+
+                console.log('📊 FINAL State:', final);
+
+                if (final.totalDelta !== 0) {
+                    console.error('❌ TOTAL SCROLL JUMP: ' + final.totalDelta + 'px');
+                } else {
+                    console.log('✅ NO SCROLL JUMP - Perfect!');
                 }
 
                 console.groupEnd();
-            });
+            }, 350);
 
             // Trigger opened event after animation
             setTimeout(() => {
@@ -321,21 +348,47 @@
                     entity: this.currentEntity,
                     id: this.currentId
                 });
-            }, 300); // Match CSS transition duration
+            }, 400); // After DataTable adjustment
         }
 
         /**
          * Hide panel with animation
+         * Anti-flicker pattern adopted from platform-staff-script.js
          */
         hidePanel() {
-            // Remove visible class
+            const self = this;
+            console.log('[WPApp Panel] Closing right panel - Left panel will expand to 100%');
+
+            // Clear loading timeout if still pending
+            if (this.loadingTimeout) {
+                clearTimeout(this.loadingTimeout);
+                this.loadingTimeout = null;
+            }
+
+            // Remove visible class to trigger CSS transition
             this.rightPanel.removeClass('visible');
 
-            // After animation, add hidden and remove layout class
-            setTimeout(() => {
-                this.rightPanel.addClass('hidden');
-                this.layout.removeClass('with-right-panel');
-                this.isOpen = false;
+            // After CSS transition (300ms), clean up and adjust DataTable
+            setTimeout(function() {
+                self.rightPanel.addClass('hidden');
+                self.layout.removeClass('with-right-panel');
+                self.isOpen = false;
+
+                // Adjust DataTable for full width
+                if (self.dataTable) {
+                    console.log('[WPApp Panel] Adjusting DataTable after panel closed');
+
+                    // Force recalculation of column widths
+                    self.dataTable.columns.adjust();
+
+                    // Small delay then redraw for smooth rendering
+                    setTimeout(function() {
+                        self.dataTable.draw(false); // false = keep current page
+                        console.log('[WPApp Panel] DataTable adjusted to full width');
+                    }, 50);
+                }
+
+                console.log('[WPApp Panel] Left panel width:', self.leftPanel.width());
             }, 300); // Match CSS transition duration
         }
 
@@ -352,8 +405,12 @@
                 return;
             }
 
-            // Show loading state
-            this.showLoading();
+            console.group('📡 DEBUG: AJAX Data Loading');
+            const ajaxStart = Date.now();
+            console.log('🔹 Entity:', this.currentEntity);
+            console.log('🔹 Entity ID:', entityId);
+            console.log('🔹 AJAX Action:', ajaxAction);
+            console.log('🔹 AJAX URL:', wpAppConfig.ajaxUrl);
 
             // Trigger loading event
             $(document).trigger('wpapp:panel-loading', {
@@ -363,6 +420,7 @@
 
             // Abort previous request
             if (this.ajaxRequest) {
+                console.log('⚠️ Aborting previous AJAX request');
                 this.ajaxRequest.abort();
             }
 
@@ -377,14 +435,22 @@
                     nonce: wpAppConfig.nonce
                 },
                 success: (response) => {
+                    const elapsed = Date.now() - ajaxStart;
+                    console.log('✅ AJAX Success - Elapsed:', elapsed + 'ms');
+                    console.log('📦 Response:', response);
                     this.handleAjaxSuccess(response, entityId);
                 },
                 error: (jqXHR, textStatus, errorThrown) => {
+                    const elapsed = Date.now() - ajaxStart;
+                    console.error('❌ AJAX Error - Elapsed:', elapsed + 'ms');
+                    console.error('📦 Error:', textStatus, errorThrown);
                     this.handleAjaxError(jqXHR, textStatus, errorThrown, entityId);
                 },
                 complete: () => {
+                    const elapsed = Date.now() - ajaxStart;
+                    console.log('🏁 AJAX Complete - Total time:', elapsed + 'ms');
+                    console.groupEnd();
                     this.ajaxRequest = null;
-                    this.hideLoading();
                 }
             });
         }
@@ -469,6 +535,16 @@
          */
         updatePanelContent(data) {
             console.log('[WPApp Panel] updatePanelContent called with:', data);
+
+            // Clear loading timeout to prevent flicker on fast responses
+            if (this.loadingTimeout) {
+                clearTimeout(this.loadingTimeout);
+                this.loadingTimeout = null;
+                console.log('✓ Loading timeout cleared (fast response < 300ms)');
+            }
+
+            // Hide loading placeholder (from template)
+            this.rightPanel.find('.wpapp-loading-placeholder').removeClass('visible');
 
             // Update title if provided
             if (data.title) {
@@ -560,6 +636,13 @@
          * @param {string} message Error message
          */
         showError(message) {
+            // Clear loading timeout and hide loading placeholder
+            if (this.loadingTimeout) {
+                clearTimeout(this.loadingTimeout);
+                this.loadingTimeout = null;
+            }
+            this.rightPanel.find('.wpapp-loading-placeholder').removeClass('visible');
+
             const errorHtml = `
                 <div class="notice notice-error wpapp-panel-error">
                     <p><strong>Error:</strong> ${message}</p>
@@ -583,7 +666,9 @@
          */
         updateHash(entityId) {
             if (this.currentEntity && entityId) {
-                window.location.hash = `${this.currentEntity}-${entityId}`;
+                const newHash = `${this.currentEntity}-${entityId}`;
+                // Use history.pushState to avoid scroll jump (consistent with clearHash)
+                history.pushState(null, document.title, window.location.pathname + window.location.search + '#' + newHash);
             }
         }
 

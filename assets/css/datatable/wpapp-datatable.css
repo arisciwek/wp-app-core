@@ -20,6 +20,11 @@
     overflow-anchor: auto; /* Enable scroll anchoring */
 }
 
+/* DataTable Page Container - Copied from companies.css */
+.wpapp-datatable-page {
+    padding: 20px 20px 40px;
+}
+
 /* Prevent autofocus scroll behavior */
 html {
     scroll-behavior: auto !important;
@@ -38,10 +43,11 @@ html {
 }
 
 .wpapp-page-header {
-    margin-bottom: 20px;
+    margin-bottom: 0;
 }
 
-.wpapp-page-header-container {
+/* Page Header Container - Copied from wp-customer companies.css */
+.wpapp-page-header .wpapp-page-header-container {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -49,34 +55,46 @@ html {
     background: #fff;
     border: 1px solid #ddd;
     border-radius: 5px;
-    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.wpapp-page-header-container .wpapp-header-left {
+/* Header Left Section - Copied from wp-customer companies.css */
+.wpapp-page-header .wpapp-header-left {
     flex: 1;
     margin: 0;
     padding: 0;
 }
 
-.wpapp-page-header-container .wpapp-header-left h1 {
+.wpapp-page-header .wpapp-header-left h1 {
     margin: 0 0 5px 0;
     padding: 0;
     font-size: 23px;
+    font-weight: 400;
     line-height: 1.3;
 }
 
-.wpapp-page-header-container .wpapp-header-left .subtitle {
+.wpapp-page-header .wpapp-header-left .subtitle {
     font-size: 13px;
     color: #666;
+    font-weight: normal;
     margin: 0;
     padding: 0;
+    line-height: 1.5;
 }
 
-.wpapp-page-header-container .wpapp-header-right {
-    margin-left: 20px;
+/* Header Right Section - Copied from wp-customer companies.css */
+.wpapp-page-header .wpapp-header-right {
+    display: flex;
+    align-items: center;
 }
 
-.wpapp-page-header-container .wpapp-header-right .button {
+.wpapp-page-header .wpapp-header-right .wpapp-header-buttons {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.wpapp-page-header .wpapp-header-right .button {
     display: inline-flex;
     align-items: center;
     gap: 5px;
@@ -84,18 +102,13 @@ html {
     padding: 0 15px;
 }
 
-.wpapp-page-header-container .wpapp-header-right .button .dashicons {
+.wpapp-page-header .wpapp-header-right .button .dashicons {
     font-size: 18px;
     width: 18px;
     height: 18px;
-}
-
-/* Header Center: Container for plugin content (cards, badges, etc) */
-.wpapp-page-header-container .wpapp-header-center {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    margin: 0 20px;
+    line-height: 1;
+    margin: 0;
+    vertical-align: middle;
 }
 
 /* WordPress default hr after page title */
@@ -104,101 +117,113 @@ html {
 }
 
 /* ===================================================================
-   NAVIGATION CONTAINER - Statistics & Filters (Global Scope)
-   Container ini SELALU visible untuk semua user
-   Berisi: Statistics Section + Filters Section (nested)
+   FILTERS CONTAINER - Stacked Layout (matches wp-customer)
+   Properties copied from companies.css
    =================================================================== */
 
-.wpapp-navigation-container {
+.wpapp-filters-container {
     margin: 0 0 20px 0;
-    position: relative;
-    display: block;
-    background-color: #fff;
-    border: 1px solid #dcdcde;
-    border-radius: 4px;
-    padding: 15px 20px;
 }
 
-/* Split Layout: Filters (Left) | Stats (Right) */
-.wpapp-navigation-split {
+/* Filters content wrapper - Copied from companies.css */
+.wpapp-filters-container .wpapp-datatable-filters {
+    padding: 12px 20px;
+    background: #fff;
+    border-radius: 5px;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     display: flex;
-    gap: 20px;
-    align-items: flex-start;
-    justify-content: space-between; /* Better spacing distribution */
+    align-items: center;
+    gap: 10px;
 }
 
-/* LEFT: Filters Section */
-.wpapp-navigation-left {
-    flex: 0 1 auto; /* Don't grow, shrink if needed */
-    min-width: 200px; /* Minimum width for filters */
-    max-width: 400px; /* Maximum width to prevent pushing cards too far */
+.wpapp-filters-container .wpapp-datatable-filters label {
+    margin: 0;
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
 }
 
-/* RIGHT: Statistics Section */
-.wpapp-navigation-right {
-    flex: 0 0 auto; /* Don't grow or shrink */
-    min-width: fit-content;
-    margin-left: auto; /* Push to right but stay visible */
-}
-
-/* Filters Wrapper (inside navigation left) */
-.wpapp-filters-wrapper {
-    /* Remove old border-top since it's now side-by-side */
+.wpapp-filters-container .wpapp-datatable-filters select.status-filter {
+    padding: 7px 12px;
+    min-width: 150px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    background: #fff;
+    font-size: 14px;
 }
 
 /* ===================================================================
-   PANEL LAYOUT - Left/Right Panel System (Perfex CRM Pattern)
+   PANEL LAYOUT - Left/Right Panel System (Bootstrap Row/Col Pattern)
+   Anti-flicker pattern adopted from platform-staff-style.css
+   TODO-1182: Smooth panel transitions with 45%/55% width split
    =================================================================== */
 
 .wpapp-datatable-layout {
+    margin-top: 0;
+}
+
+/* Row container for sliding panels */
+.wpapp-datatable-layout .wpapp-row {
     display: flex;
-    gap: 20px;
+    flex-wrap: nowrap; /* IMPORTANT: Don't wrap to next line */
+    margin-right: -15px;
+    margin-left: -15px;
+    align-items: flex-start;
+}
+
+/* Left panel (DataTable container) - with transition */
+.wpapp-left-panel,
+.wpapp-datatable-layout .wpapp-col-md-12 {
     position: relative;
-    margin-top: 20px;
-    transition: none; /* Remove transition from layout */
-}
-
-/* Left Panel */
-.wpapp-left-panel {
-    flex: 1 1 100%;
-    transition: flex 0.3s ease;
+    min-height: 1px;
+    padding-right: 15px;
+    padding-left: 15px;
+    width: 100%;
+    transition: width 0.3s ease;
+    -webkit-transition: width 0.3s ease;
+    flex: 1 1 100%; /* Start at 100% width */
+    max-width: 100%;
     background: #fff;
-    border: 1px solid #ccd0d4;
-    border-radius: 4px;
+    overflow-x: auto;
 }
 
-/* Left Panel when right panel is open */
-.wpapp-datatable-layout.with-right-panel .wpapp-left-panel {
+/* When right panel is visible, left panel shrinks to 45% (platform-staff pattern) */
+.wpapp-datatable-layout.with-right-panel .wpapp-left-panel,
+.wpapp-datatable-layout.with-right-panel .wpapp-col-md-12 {
+    width: 45%;
     flex: 1 1 45%;
+    max-width: 45%;
 }
 
-/* Right Panel */
-.wpapp-right-panel {
-    flex: 0 0 0;
+/* Right panel (Detail panel) - with transition */
+.wpapp-right-panel,
+.wpapp-datatable-layout .wpapp-col-md-5 {
+    position: relative;
+    min-height: 1px;
+    padding-right: 15px;
+    padding-left: 15px;
     background: #fff;
     border: 1px solid #ccd0d4;
     border-radius: 4px;
-    opacity: 0;
-    visibility: hidden;
-    transition: flex 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
-    max-height: 90vh;
+    max-height: calc(100vh - 150px);
     overflow-y: auto;
-    overflow-x: hidden;
+    width: 55%; /* 55% width when visible */
+    flex: 0 0 55%;
+    max-width: 55%;
+    /* NO transition here - let JS handle timing */
 }
 
-/* Right Panel States */
-.wpapp-right-panel.hidden {
-    flex: 0 0 0;
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
+/* Default: Hidden - no display:none, just width:0 */
+.wpapp-right-panel,
+.wpapp-datatable-layout .wpapp-col-md-5 {
+    display: none;
 }
 
-.wpapp-right-panel.visible {
-    flex: 1 1 55%;
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
+/* When panel is visible - simple show */
+.wpapp-right-panel.visible,
+.wpapp-datatable-layout .wpapp-col-md-5.visible {
+    display: block;
 }
 
 /* ===================================================================
@@ -250,110 +275,136 @@ html {
 }
 
 /* ===================================================================
-   STATISTICS CARDS
+   STATISTICS CONTAINER & CARDS - Stacked Layout
+   Properties copied from companies.css to match wp-customer
    =================================================================== */
 
-.wpapp-dashboard-stats {
-    margin: 20px 0;
+.wpapp-statistics-container {
+    margin: 20px 0 20px 0;
 }
 
-.wpapp-stats-container {
+.wpapp-statistics-container .statistics-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 20px;
-    margin: 15px 0;
+    opacity: 1;
+    transition: opacity 0.3s ease;
 }
 
-.wpapp-stat-box {
+/* Override global .hidden for smooth fade-in */
+.wpapp-statistics-container .statistics-cards.hidden {
+    display: grid !important; /* Override global .hidden */
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* Stat Box - Copied from companies.css .stats-card */
+.stats-card {
     background: #fff;
-    border: 1px solid #ccd0d4;
+    border: 1px solid #e0e0e0;
     border-radius: 8px;
     padding: 20px;
     display: flex;
     align-items: center;
     gap: 15px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.wpapp-stat-box:hover {
+.stats-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* Stat Icon */
-.wpapp-stat-icon {
-    width: 50px;
-    height: 50px;
+/* Stat Icon - Copied from companies.css .stats-icon */
+.stats-icon {
+    width: 55px;
+    height: 55px;
+    min-width: 55px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     background: #f0f0f0;
     color: #666;
-    font-size: 24px;
-    flex-shrink: 0;
+    font-size: 26px;
 }
 
-.wpapp-stat-icon .dashicons {
-    font-size: 24px;
-    width: 24px;
-    height: 24px;
-}
-
-/* Stat Content */
-.wpapp-stat-content {
-    flex: 1;
-    min-width: 0;
-}
-
-.wpapp-stat-number {
-    font-size: 28px;
-    font-weight: bold;
-    color: #2c3e50;
-    line-height: 1.2;
-    margin: 0 0 5px 0;
-}
-
-.wpapp-stat-label {
-    font-size: 13px;
-    color: #7f8c8d;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 600;
-    line-height: 1.4;
-}
-
-/* Loading State */
-.wpapp-stat-loading .spinner {
-    float: none;
-    margin: 0;
-}
-
-/* Stat Color Variants */
-.wpapp-stat-box.primary .wpapp-stat-icon {
-    background: #e3f2fd;
-    color: #2196f3;
-}
-
-.wpapp-stat-box.success .wpapp-stat-icon {
+.stats-icon.active {
     background: #d4edda;
     color: #28a745;
 }
 
-.wpapp-stat-box.warning .wpapp-stat-icon {
-    background: #fff3cd;
-    color: #ffc107;
-}
-
-.wpapp-stat-box.danger .wpapp-stat-icon {
-    background: #f8d7da;
-    color: #dc3545;
-}
-
-.wpapp-stat-box.info .wpapp-stat-icon {
+.stats-icon.pusat {
     background: #d1ecf1;
-    color: #17a2b8;
+    color: #0c5460;
+}
+
+.stats-icon.cabang {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.stats-icon .dashicons {
+    font-size: 26px;
+    width: 26px;
+    height: 26px;
+}
+
+/* Stat Content - Copied from companies.css .stats-content */
+.stats-content {
+    flex: 1;
+}
+
+/* Stat Number - Copied from companies.css .stats-number */
+.stats-number {
+    margin: 0 0 5px 0;
+    font-size: 32px;
+    font-weight: 700;
+    color: #2c3e50;
+    line-height: 1;
+}
+
+/* Stat Label - Copied from companies.css .stats-label */
+.stats-label {
+    margin: 0;
+    font-size: 13px;
+    color: #7f8c8d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+}
+
+/* ===================================================================
+   LOADING STATES
+   =================================================================== */
+
+.wpapp-loading-placeholder {
+    display: none; /* Hidden by default - JS will show with delay to prevent flicker */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.wpapp-loading-placeholder.visible {
+    display: flex;
+    opacity: 1;
+}
+
+.wpapp-loading-placeholder .spinner {
+    float: none;
+    margin: 0 0 15px 0;
+}
+
+.wpapp-loading-placeholder p {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
 }
 
 /* ===================================================================
@@ -386,49 +437,78 @@ html {
     }
 }
 
+/* Tab Loading State */
+.wpapp-tab-loading {
+    display: block;
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+}
+
+.wpapp-tab-loading p {
+    margin: 0;
+    font-size: 14px;
+}
+
+/* Tab Loaded Content (hidden until loaded) */
+.wpapp-tab-loaded-content {
+    display: none;
+}
+
+.wpapp-tab-loaded-content.loaded {
+    display: block;
+}
+
+/* Tab Error State */
+.wpapp-tab-error {
+    display: none;
+    text-align: center;
+    padding: 20px;
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    color: #721c24;
+    margin: 20px 0;
+}
+
+.wpapp-tab-error.visible {
+    display: block;
+}
+
+.wpapp-tab-error .wpapp-error-message {
+    margin: 0;
+    font-size: 14px;
+}
+
 /* ===================================================================
    RESPONSIVE DESIGN
    =================================================================== */
 
-@media (max-width: 1280px) {
-    .wpapp-datatable-layout.with-right-panel .wpapp-left-panel {
-        width: 40%;
+@media screen and (max-width: 782px) {
+    .wpapp-statistics-container .statistics-cards {
+        grid-template-columns: 1fr;
     }
 
-    .wpapp-right-panel {
-        width: 60%;
-    }
-}
-
-@media (max-width: 1024px) {
-    .wpapp-datatable-layout {
-        flex-direction: column;
+    .wpapp-datatable-layout .wpapp-row {
+        flex-wrap: wrap; /* Allow wrapping on mobile */
     }
 
-    .wpapp-datatable-layout.with-right-panel .wpapp-left-panel,
-    .wpapp-right-panel {
-        width: 100%;
-        max-height: none;
+    .wpapp-datatable-layout .wpapp-col-md-12,
+    .wpapp-datatable-layout .wpapp-col-md-12.wpapp-col-md-7 {
+        flex: 1 1 100%;
+        max-width: 100%;
     }
 
-    /* Stack navigation split vertically on tablets */
-    .wpapp-navigation-split {
-        flex-direction: column;
+    .wpapp-datatable-layout .wpapp-col-md-5 {
+        flex: 1 1 100%;
+        max-width: 100%;
+        border-left: none;
+        border-top: 2px solid #ccd0d4;
+        margin-top: 20px;
     }
 
-    .wpapp-navigation-left,
-    .wpapp-navigation-right {
-        width: 100%;
-    }
-
-    /* Add spacing between sections when stacked */
-    .wpapp-navigation-right {
-        margin-top: 15px;
-    }
-
-    .wpapp-stats-container {
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 15px;
+    .wpapp-datatable-layout .wpapp-col-md-5.wpapp-hidden {
+        display: none; /* Completely hide on mobile when closed */
     }
 }
 
@@ -441,34 +521,29 @@ html {
         padding: 15px;
     }
 
-    .wpapp-stat-box {
+    .stats-card {
         padding: 15px;
         gap: 12px;
     }
 
-    .wpapp-stat-icon {
+    .stats-icon {
         width: 40px;
         height: 40px;
         font-size: 20px;
     }
 
-    .wpapp-stat-icon .dashicons {
+    .stats-icon .dashicons {
         font-size: 20px;
         width: 20px;
         height: 20px;
     }
 
-    .wpapp-stat-number {
+    .stats-number {
         font-size: 24px;
     }
 
-    .wpapp-stat-label {
+    .stats-label {
         font-size: 12px;
-    }
-
-    .wpapp-stats-container {
-        grid-template-columns: 1fr;
-        gap: 12px;
     }
 }
 

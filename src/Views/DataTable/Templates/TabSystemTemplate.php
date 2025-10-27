@@ -10,6 +10,8 @@
  * @since 1.0.0
  * @author arisciwek
  *
+ * Path: /wp-app-core/src/Views/DataTable/Templates/TabSystemTemplate.php
+ *
  * Tab Structure (following existing wp-customer pattern):
  * ```php
  * [
@@ -90,17 +92,17 @@ class TabSystemTemplate {
          *
          * @example
          * add_filter('wpapp_datatable_tabs', function($tabs, $entity) {
-         *     if ($entity !== 'customer') return $tabs;
+         *     if ($entity !== 'agency') return $tabs;
          *
          *     return [
          *         'details' => [
          *             'title' => 'Details',
-         *             'template' => WP_CUSTOMER_PATH . 'src/Views/customers/tab-details.php',
+         *             'template' => WP_AGENCY_PATH . 'src/Views/agency/tabs/tab-details.php',
          *             'priority' => 10
          *         ],
-         *         'membership' => [
-         *             'title' => 'Membership',
-         *             'template' => WP_CUSTOMER_PATH . 'src/Views/customers/tab-membership.php',
+         *         'divisions' => [
+         *             'title' => 'Divisions',
+         *             'template' => WP_AGENCY_PATH . 'src/Views/agency/tabs/tab-divisions.php',
          *             'priority' => 20
          *         ]
          *     ];
@@ -113,6 +115,8 @@ class TabSystemTemplate {
 
     /**
      * Render tab navigation
+     *
+     * All classes use wpapp- prefix (from wp-app-core)
      *
      * @param array $tabs Tabs array
      * @param string $entity Entity name
@@ -143,6 +147,8 @@ class TabSystemTemplate {
 
     /**
      * Render tab content containers
+     *
+     * All classes use wpapp- prefix (from wp-app-core)
      *
      * @param array $tabs Tabs array
      * @param string $entity Entity name

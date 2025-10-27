@@ -4,7 +4,7 @@
  *
  * @package     WP_App_Core
  * @subpackage  Includes
- * @version     1.1.0
+ * @version     1.1.1
  * @author      arisciwek
  *
  * Path: /wp-app-core/includes/class-dependencies.php
@@ -13,6 +13,13 @@
  *              untuk admin bar dan komponen core lainnya
  *
  * Changelog:
+ * 1.1.1 - 2025-10-26 (TODO-1180)
+ * - Added: Panel handler enqueue (panel-handler.js)
+ * - Added: enqueue_panel_handler() private method
+ * - Added: wpAppCore localized object for panel handler
+ * - Uses wpapp_datatable_allowed_hooks filter for page registration
+ * - Centralized detail panel handling for all plugins
+ *
  * 1.1.0 - 2025-01-18 (Review-04 Fix)
  * - FIXED: Assets now load on BOTH frontend and admin
  * - Reason: Admin bar appears on both, but only admin hooks were registered
@@ -113,5 +120,62 @@ class WP_App_Core_Dependencies {
                 'debug' => (defined('WP_DEBUG') && WP_DEBUG)
             ]
         );
+
+        // Panel Handler - DEPRECATED (TODO-1182)
+        // Replaced by DataTableAssetsController->enqueue_panel_manager()
+        // OLD panel-handler.js conflicts with NEW wpapp-panel-manager.js
+        // Keeping code commented for reference
+        /*
+        if (is_admin()) {
+            $this->enqueue_panel_handler();
+        }
+        */
+    }
+
+    /**
+     * Enqueue panel handler script
+     *
+     * @deprecated 1.1.2 (TODO-1182) Replaced by DataTableAssetsController->enqueue_panel_manager()
+     * @since 1.1.1
+     *
+     * OLD panel-handler.js has been replaced by wpapp-panel-manager.js
+     * This method is kept for reference but no longer called
+     */
+    private function enqueue_panel_handler() {
+        // Get current screen
+        $screen = get_current_screen();
+        if (!$screen) {
+            return;
+        }
+
+        // Get allowed page hooks from filter
+        // Plugins can register their pages via wpapp_datatable_allowed_hooks filter
+        $allowed_hooks = apply_filters('wpapp_datatable_allowed_hooks', []);
+
+        // Check if current screen is in allowed hooks
+        if (!in_array($screen->id, $allowed_hooks)) {
+            return;
+        }
+
+        // Enqueue panel handler script
+        wp_enqueue_script(
+            'wpapp-panel-handler',
+            WP_APP_CORE_PLUGIN_URL . 'assets/js/datatable/panel-handler.js',
+            ['jquery'],
+            '1.0.0',
+            true
+        );
+
+        // Localize with core configuration
+        wp_localize_script('wpapp-panel-handler', 'wpAppCore', [
+            'ajaxurl' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('wpapp_panel_nonce'),
+            'debug' => (defined('WP_DEBUG') && WP_DEBUG)
+        ]);
+
+        // Log for debugging
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('[WP_App_Core] Panel handler enqueued on: ' . $screen->id);
+        }
     }
 }

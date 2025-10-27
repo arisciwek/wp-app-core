@@ -183,10 +183,84 @@
                 tabId: tabId
             });
 
+            // Auto-load tab content if needed
+            this.autoLoadTabContent($targetContent);
+
             // Debug
             if (typeof wpAppConfig !== 'undefined' && wpAppConfig.debug) {
                 console.log('[WPApp Tab] Switched to:', tabId);
             }
+        }
+
+        /**
+         * Auto-load tab content via AJAX if tab has wpapp-tab-autoload class
+         *
+         * @param {jQuery} $tab Tab content element
+         */
+        autoLoadTabContent($tab) {
+            // Check if tab needs auto-loading
+            if (!$tab.hasClass('wpapp-tab-autoload')) {
+                return;
+            }
+
+            // Check if already loaded
+            if ($tab.hasClass('loaded')) {
+                return;
+            }
+
+            // Get data attributes
+            const agencyId = $tab.data('agency-id');
+            const loadAction = $tab.data('load-action');
+            const contentTarget = $tab.data('content-target');
+            const errorMessage = $tab.data('error-message') || 'Failed to load content';
+
+            if (!loadAction || !agencyId) {
+                console.error('[WPApp Tab] Missing required data attributes for auto-load');
+                return;
+            }
+
+            // Show loading state
+            $tab.find('.wpapp-tab-loading').show();
+            $tab.find('.wpapp-tab-loaded-content').hide();
+            $tab.find('.wpapp-tab-error').removeClass('visible');
+
+            // Make AJAX request
+            $.ajax({
+                url: wpAppConfig.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: loadAction,
+                    nonce: wpAppConfig.nonce,
+                    agency_id: agencyId
+                },
+                success: function(response) {
+                    $tab.find('.wpapp-tab-loading').hide();
+
+                    if (response.success && response.data.html) {
+                        // Load content into target
+                        const $content = $tab.find(contentTarget);
+                        $content.html(response.data.html).addClass('loaded').show();
+
+                        // Mark tab as loaded
+                        $tab.addClass('loaded');
+
+                        console.log('[WPApp Tab] Content loaded successfully for:', loadAction);
+                    } else {
+                        // Show error
+                        $tab.find('.wpapp-error-message').text(response.data.message || errorMessage);
+                        $tab.find('.wpapp-tab-error').addClass('visible');
+
+                        console.error('[WPApp Tab] Load failed:', response);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $tab.find('.wpapp-tab-loading').hide();
+                    $tab.find('.wpapp-error-message').text(errorMessage);
+                    $tab.find('.wpapp-tab-error').addClass('visible');
+
+                    console.error('[WPApp Tab] AJAX error:', error);
+                }
+            });
         }
 
         /**

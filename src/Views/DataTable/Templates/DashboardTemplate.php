@@ -94,66 +94,69 @@ class DashboardTemplate {
      *
      * All classes use wpapp- prefix (from wp-app-core)
      *
+     * Simplified structure (TODO-1187):
+     * - Removed outer wpapp-page-header wrapper
+     * - Now consistent with wpapp-statistics-container, wpapp-filters-container
+     *
      * @param array $config Configuration
      * @return void
      */
     private static function render_page_header($config) {
         ?>
-        <div class="wpapp-page-header">
-            <div class="wpapp-page-header-container">
-                <!-- Header Left: Title & Subtitle -->
-                <div class="wpapp-header-left">
-                    <?php
-                    /**
-                     * Action: Page header left content
-                     *
-                     * Plugins should hook here to render title and subtitle
-                     * Each plugin renders their own HTML with their own CSS classes
-                     *
-                     * IMPORTANT: Use plugin-specific CSS classes (e.g., agency-, customer-)
-                     *
-                     * @param array $config Dashboard configuration
-                     * @param string $entity Entity name
-                     *
-                     * @example
-                     * add_action('wpapp_page_header_left', function($config, $entity) {
-                     *     if ($entity !== 'agency') return;
-                     *     echo '<h1 class="agency-title">' . esc_html($config['title']) . '</h1>';
-                     *     echo '<div class="agency-subtitle">Manage agencies</div>';
-                     * }, 10, 2);
-                     */
-                    do_action('wpapp_page_header_left', $config, $config['entity']);
-                    ?>
+        <!-- Page Header Container (Global Scope) -->
+        <div class="wpapp-page-header-container">
+            <!-- Header Left: Title & Subtitle -->
+            <div class="wpapp-header-left">
+                <?php
+                /**
+                 * Action: Page header left content
+                 *
+                 * Plugins should hook here to render title and subtitle
+                 * Each plugin renders their own HTML with their own CSS classes
+                 *
+                 * IMPORTANT: Use plugin-specific CSS classes (e.g., agency-, customer-)
+                 *
+                 * @param array $config Dashboard configuration
+                 * @param string $entity Entity name
+                 *
+                 * @example
+                 * add_action('wpapp_page_header_left', function($config, $entity) {
+                 *     if ($entity !== 'agency') return;
+                 *     echo '<h1 class="agency-title">' . esc_html($config['title']) . '</h1>';
+                 *     echo '<div class="agency-subtitle">Manage agencies</div>';
+                 * }, 10, 2);
+                 */
+                do_action('wpapp_page_header_left', $config, $config['entity']);
+                ?>
 
-                    <?php if (!did_action('wpapp_page_header_left')): ?>
-                        <!-- Default title if no hook registered -->
-                        <h1 class="wp-heading-inline"><?php echo esc_html($config['title']); ?></h1>
-                    <?php endif; ?>
-                </div>
+                <?php if (!did_action('wpapp_page_header_left')): ?>
+                    <!-- Default title if no hook registered -->
+                    <h1 class="wp-heading-inline"><?php echo esc_html($config['title']); ?></h1>
+                <?php endif; ?>
+            </div>
 
-                <!-- Header Right: Action Buttons -->
-                <div class="wpapp-header-right">
-                    <?php
-                    /**
-                     * Action: Page header right content
-                     *
-                     * Plugins should hook here to render action buttons
-                     * Each plugin renders their own HTML with their own CSS classes
-                     *
-                     * IMPORTANT: Use plugin-specific CSS classes (e.g., agency-, customer-)
-                     *
-                     * @param array $config Dashboard configuration
-                     * @param string $entity Entity name
-                     *
-                     * @example
-                     * add_action('wpapp_page_header_right', function($config, $entity) {
-                     *     if ($entity !== 'agency') return;
-                     *     echo '<a href="#" class="button button-primary agency-add-btn">Add New Agency</a>';
-                     * }, 10, 2);
-                     */
-                    do_action('wpapp_page_header_right', $config, $config['entity']);
-                    ?>
-                </div>
+            <!-- Header Right: Action Buttons -->
+            <div class="wpapp-header-right">
+                <?php
+                /**
+                 * Action: Page header right content
+                 *
+                 * Plugins should hook here to render action buttons
+                 * Each plugin renders their own HTML with their own CSS classes
+                 *
+                 * IMPORTANT: Use plugin-specific CSS classes (e.g., agency-, customer-)
+                 *
+                 * @param array $config Dashboard configuration
+                 * @param string $entity Entity name
+                 *
+                 * @example
+                 * add_action('wpapp_page_header_right', function($config, $entity) {
+                 *     if ($entity !== 'agency') return;
+                 *     echo '<a href="#" class="button button-primary agency-add-btn">Add New Agency</a>';
+                 * }, 10, 2);
+                 */
+                do_action('wpapp_page_header_right', $config, $config['entity']);
+                ?>
             </div>
         </div>
 

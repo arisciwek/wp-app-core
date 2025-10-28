@@ -53,14 +53,14 @@ wp-agency files contains `wpapp-*` classes (global scope):
 │     'wpapp_statistics_content'      │
 │   ); ?>                             │
 │                                     │
-│   ┌───────────────────────────┐    │
-│   │ wp-agency (Local Scope)   │    │
-│   │                           │    │
-│   │ <div class="agency-       │    │ ← Full HTML
-│   │   statistics-cards">      │    │
-│   │   <div class="agency-     │    │ ← Full control
-│   │     stat-card">           │    │
-│   └───────────────────────────┘    │
+│   ┌───────────────────────────┐     │
+│   │ wp-agency (Local Scope)   │     │
+│   │                           │     │
+│   │ <div class="agency-       │     │ ← Full HTML
+│   │   statistics-cards">      │     │
+│   │   <div class="agency-     │     │ ← Full control
+│   │     stat-card">           │     │
+│   └───────────────────────────┘     │
 └─────────────────────────────────────┘
 ```
 

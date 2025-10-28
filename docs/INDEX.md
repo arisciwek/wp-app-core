@@ -72,6 +72,8 @@ Complete implementation of server-side DataTables inspired by Perfex CRM.
 - ✅ Hash-based navigation (#entity-123)
 - ✅ Full hook system for extensibility
 - ✅ JavaScript event system
+- ✅ **NEW (v1.1.0)**: Consistent container structure (TODO-1187)
+- ✅ **NEW (v1.1.0)**: Full width utilization with negative margins
 
 **Quick Start:**
 ```php
@@ -84,6 +86,32 @@ DashboardTemplate::render([
     'has_tabs' => true
 ]);
 ```
+
+**HTML Structure (v1.1.0 - Simplified):**
+```html
+<div class="wpapp-datatable-page">
+    <div class="wpapp-page-header-container">...</div>
+    <div class="wpapp-statistics-container">...</div>
+    <div class="wpapp-filters-container">...</div>
+    <div class="wpapp-datatable-container">
+        <div class="wpapp-datatable-layout">...</div>
+    </div>
+</div>
+```
+
+**Full Width Pattern (v1.1.0):**
+All containers use negative margins to extend to full available width:
+```css
+.wpapp-page-header-container   { margin: 0 -15px 0 -15px; }
+.wpapp-statistics-container    { margin: 20px -15px 20px -15px; }
+.wpapp-filters-container       { margin: 0 -15px 20px -15px; }
+.wpapp-datatable-container     { margin: 0 -15px 20px -15px; }
+```
+
+**Benefits:**
+- Perfect alignment of all container boundaries
+- No wasted horizontal space
+- Consistent foundation for all dashboard pages in the application
 
 ---
 
@@ -338,7 +366,16 @@ assets/
 
 ## 📦 Version History
 
-- **v1.0.0** - Initial DataTable system implementation
+- **v1.1.0 (2025-10-28)** - Container Structure Improvements (TODO-1187)
+  - Simplified container structure (removed nested wrappers)
+  - Full width pattern using negative margins (-15px left/right)
+  - Fixed header flexbox alignment
+  - Fixed container boundaries alignment
+  - Added panel spacing (20px top/bottom, 15px gap)
+  - Perfect alignment across all dashboard containers
+  - Foundation for all dashboard pages in the application
+
+- **v1.0.0 (2025-10-23)** - Initial DataTable system implementation
   - Base classes (Model, QueryBuilder, Controller)
   - Filter hooks system
   - Complete documentation
@@ -382,4 +419,4 @@ This documentation provides:
 
 **Happy Coding!** 🚀
 
-*Last Updated: 2025-10-23*
+*Last Updated: 2025-10-28*

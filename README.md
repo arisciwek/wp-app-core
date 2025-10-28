@@ -8,9 +8,15 @@ WP App Core adalah plugin utama yang mengelola aturan global untuk seluruh siste
 
 ## Versi
 
-- **Current Version:** 1.0.0
+- **Current Version:** 1.1.0 (2025-10-28)
 - **Requires WordPress:** 5.0 or higher
 - **PHP Version:** 7.4 or higher
+
+**Changelog v1.1.0:**
+- ✅ Container Structure Improvements (TODO-1187)
+- ✅ Full width pattern using negative margins
+- ✅ Perfect alignment across all dashboard containers
+- ✅ Foundation for all dashboard pages in the application
 
 ## Fitur - Phase 1
 
@@ -37,6 +43,65 @@ WP_App_Core_Admin_Bar_Info::register_plugin('customer', [
     'get_user_info' => 'callback_function_to_get_user_info',
 ]);
 ```
+
+### 3. DataTable Panel System ✅ (v1.1.0)
+
+Sistem reusable untuk membuat halaman dashboard admin dengan panel kiri-kanan (Perfex CRM style) yang konsisten di seluruh aplikasi:
+
+**Fitur Utama:**
+- **Left/Right Panel Layout**: DataTable di kiri, detail panel di kanan dengan smooth transitions
+- **WordPress-style Tab System**: Tab navigation dengan priority-based sorting
+- **Statistics Cards**: Reusable stat boxes dengan loading states
+- **Smooth Animations**: Anti-flicker pattern dengan smooth transitions
+- **Hash Navigation**: Deep linking support (#entity-123&tab=details)
+- **Full Hook System**: Extensible via WordPress filters/actions
+- **JavaScript Event System**: Custom events untuk integrasi
+- **Consistent Container Structure**: Unified spacing dan alignment
+
+**Full Width Pattern (v1.1.0 - TODO-1187):**
+
+Semua container dashboard menggunakan **negative margins** untuk memanfaatkan lebar penuh yang tersedia:
+
+```css
+/* Pattern untuk semua container */
+.wpapp-page-header-container   { margin: 0 -15px 0 -15px; }
+.wpapp-statistics-container    { margin: 20px -15px 20px -15px; }
+.wpapp-filters-container       { margin: 0 -15px 20px -15px; }
+.wpapp-datatable-container     { margin: 0 -15px 20px -15px; }
+```
+
+**Mengapa -15px margin?**
+- WordPress `.wrap` class memiliki 20px padding kiri-kanan secara default
+- Negative 15px margin memperluas container untuk memanfaatkan lebar penuh
+- Menciptakan batas yang konsisten di semua section dashboard
+- Menghilangkan ruang terbuang di sisi kiri dan kanan
+
+**Benefit:**
+- ✅ Perfect alignment di semua container boundaries
+- ✅ Tidak ada ruang horizontal terbuang
+- ✅ Foundation konsisten untuk semua halaman dashboard dalam aplikasi
+- ✅ Mudah dimaintain (fix once, apply everywhere)
+- ✅ UX konsisten di semua plugin (wp-customer, wp-agency, dll)
+
+**Quick Start:**
+
+```php
+use WPAppCore\Views\DataTable\Templates\DashboardTemplate;
+
+// Render dashboard dengan semua fitur
+DashboardTemplate::render([
+    'entity' => 'customer',
+    'title' => __('Customers', 'wp-customer'),
+    'ajax_action' => 'get_customer_details',
+    'has_stats' => true,
+    'has_tabs' => true,
+]);
+```
+
+**Dokumentasi Lengkap:**
+- [Panel System README](src/Views/DataTable/README.md) - Complete guide (1100+ lines)
+- [Quick Reference](src/Views/DataTable/QUICK-REFERENCE.md) - Cheatsheet (400+ lines)
+- [Documentation Index](docs/INDEX.md) - Complete documentation map
 
 ## Struktur File
 

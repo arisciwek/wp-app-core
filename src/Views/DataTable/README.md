@@ -109,7 +109,7 @@ wp-app-core/
 ├── assets/
 │   ├── css/
 │   │   └── datatable/
-│   │       └── wpapp-datatable.css             # Global styles
+│   │       └── wpapp-datatable.css             # Global styles (v1.1.0)
 │   └── js/
 │       └── datatable/
 │           ├── wpapp-panel-manager.js          # Panel open/close
@@ -117,6 +117,58 @@ wp-app-core/
 └── docs/
     └── datatable/                              # Documentation
 ```
+
+**Version 1.1.0 (TODO-1187)**: Simplified container structure for consistent spacing
+
+### Container Structure & Full Width Pattern
+
+All dashboard containers use a consistent pattern with **negative margins** to utilize full available width:
+
+```css
+/* All containers extend to full width using negative margin */
+.wpapp-page-header-container {
+    margin: 0 -15px 0 -15px;  /* Extends 15px on both sides */
+}
+
+.wpapp-statistics-container {
+    margin: 20px -15px 20px -15px;
+}
+
+.wpapp-filters-container {
+    margin: 0 -15px 20px -15px;
+}
+
+.wpapp-datatable-container {
+    margin: 0 -15px 20px -15px;
+}
+```
+
+**Why -15px margin?**
+- WordPress `.wrap` class has 20px left/right padding by default
+- Negative 15px margin extends containers to utilize full width
+- Creates consistent boundaries across all dashboard sections
+- Eliminates wasted space on left and right sides
+
+**Visual Result:**
+```
+┌──────────────────────────────────────────────────────┐
+│ WordPress Admin Wrap (padding: 20px)                 │
+│  ┌────────────────────────────────────────────────┐  │
+│  │ Page Header (margin: 0 -15px)                  │  │
+│  └────────────────────────────────────────────────┘  │
+│  ┌────────────────────────────────────────────────┐  │
+│  │ Statistics (margin: 20px -15px)                │  │
+│  └────────────────────────────────────────────────┘  │
+│  ┌────────────────────────────────────────────────┐  │
+│  │ Filters (margin: 0 -15px 20px)                 │  │
+│  └────────────────────────────────────────────────┘  │
+│  ┌────────────────────────────────────────────────┐  │
+│  │ DataTable (margin: 0 -15px 20px)               │  │
+│  └────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────┘
+```
+
+All containers align perfectly with consistent boundaries.
 
 ### Data Flow
 
@@ -1214,6 +1266,34 @@ add_action('wpapp_datatable_after_enqueue_scripts', function() {
 ---
 
 ## Changelog
+
+### Version 1.1.0 (2025-10-28) - TODO-1187
+- ✅ Simplified container structure for consistency
+- ✅ DashboardTemplate: Removed nested `wpapp-page-header` wrapper
+- ✅ PanelLayoutTemplate: Added `wpapp-datatable-container` wrapper
+- ✅ CSS: Updated all selectors from `.wpapp-page-header .wpapp-*` to `.wpapp-page-header-container .wpapp-*`
+- ✅ CSS: Added `.wpapp-datatable-container` with consistent margin
+- ✅ All containers now have uniform left/right boundaries
+
+**Post-Implementation Reviews:**
+- ✅ Review-01: Fixed header flexbox alignment with increased CSS specificity
+- ✅ Review-02: Fixed container boundaries with offsetting padding
+- ✅ Review-03: Added panel spacing (20px top/bottom, 15px gap)
+- ✅ Review-04: Full width utilization using negative margins (-15px left/right)
+
+**Full Width Pattern:**
+All containers now use `margin: [top] -15px [bottom] -15px` to extend to full available width:
+- `.wpapp-page-header-container`: `margin: 0 -15px 0 -15px`
+- `.wpapp-statistics-container`: `margin: 20px -15px 20px -15px`
+- `.wpapp-filters-container`: `margin: 0 -15px 20px -15px`
+- `.wpapp-datatable-container`: `margin: 0 -15px 20px -15px`
+
+**Breaking Changes**: None - backward compatible
+**Benefits**:
+- Consistent spacing across all dashboard containers
+- Full width utilization, no wasted space
+- Perfect alignment of all container boundaries
+- Foundation for all dashboard pages in the application
 
 ### Version 1.0.0 (2025-10-23)
 - ✅ Initial release

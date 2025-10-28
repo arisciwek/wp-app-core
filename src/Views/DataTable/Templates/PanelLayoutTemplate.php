@@ -37,11 +37,13 @@ class PanelLayoutTemplate {
         error_log('AJAX Action: ' . ($config['ajax_action'] ?? 'NONE'));
         error_log('Has Tabs: ' . ($config['has_tabs'] ? 'YES' : 'NO'));
         ?>
-        <!-- DataTable Layout Container -->
-        <div class="wpapp-datatable-layout"
-             data-entity="<?php echo esc_attr($entity); ?>"
-             data-ajax-action="<?php echo esc_attr($config['ajax_action']); ?>"
-             data-has-tabs="<?php echo $config['has_tabs'] ? 'true' : 'false'; ?>">
+        <!-- DataTable Container (TODO-1187) -->
+        <div class="wpapp-datatable-container">
+            <!-- DataTable Layout Container -->
+            <div class="wpapp-datatable-layout"
+                 data-entity="<?php echo esc_attr($entity); ?>"
+                 data-ajax-action="<?php echo esc_attr($config['ajax_action']); ?>"
+                 data-has-tabs="<?php echo $config['has_tabs'] ? 'true' : 'false'; ?>">
 
             <!-- Sliding Panel Row Container -->
             <div class="wpapp-row" id="wpapp-<?php echo esc_attr($entity); ?>-container">
@@ -72,8 +74,10 @@ class PanelLayoutTemplate {
             </div>
             <!-- End Row Container -->
 
+            </div>
+            <!-- End DataTable Layout -->
         </div>
-        <!-- End DataTable Layout -->
+        <!-- End DataTable Container -->
         <?php
         error_log('=== END PANEL LAYOUT TEMPLATE ===');
     }

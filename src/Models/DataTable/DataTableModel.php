@@ -326,6 +326,10 @@ abstract class DataTableModel {
         // Remove 'app_' prefix if present (optional)
         $table_name = str_replace('app_', '', $table_name);
 
+        // Remove alias if present (e.g., "agencies a" → "agencies")
+        // Split by space and take first part
+        $table_name = preg_replace('/\s+.*$/', '', $table_name);
+
         return "wpapp_datatable_{$table_name}_{$type}";
     }
 

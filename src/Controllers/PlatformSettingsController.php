@@ -54,7 +54,7 @@ class PlatformSettingsController {
         // Menu registration is handled by MenuManager
         add_action('admin_init', [$this, 'registerSettings']);
         $this->registerAjaxHandlers();
-        $this->registerAssets();
+        // Asset registration moved to class-dependencies.php
     }
 
     /**
@@ -162,174 +162,6 @@ class PlatformSettingsController {
         add_action('wp_ajax_generate_platform_staff', [$this, 'handleGeneratePlatformStaff']);
         add_action('wp_ajax_delete_platform_staff', [$this, 'handleDeletePlatformStaff']);
         add_action('wp_ajax_platform_staff_stats', [$this, 'handlePlatformStaffStats']);
-    }
-
-    /**
-     * Register assets
-     */
-    private function registerAssets() {
-        add_action('admin_enqueue_scripts', [$this, 'enqueueAssets']);
-    }
-
-    /**
-     * Enqueue assets
-     */
-    public function enqueueAssets($hook) {
-        if ($hook !== 'toplevel_page_wp-app-core-settings') {
-            return;
-        }
-
-        // Common settings CSS
-        wp_enqueue_style(
-            'wp-app-core-settings',
-            WP_APP_CORE_PLUGIN_URL . 'assets/css/settings/settings.css',
-            [],
-            WP_APP_CORE_VERSION
-        );
-
-        // Common settings JS
-        wp_enqueue_script(
-            'wp-app-core-settings',
-            WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/settings.js',
-            ['jquery'],
-            WP_APP_CORE_VERSION,
-            true
-        );
-
-        // Get current tab
-        $current_tab = isset($_GET['tab']) ? sanitize_key($_GET['tab']) : 'general';
-
-        // Load general tab specific assets
-        if ($current_tab === 'general') {
-            wp_enqueue_script(
-                'wp-app-core-general-tab',
-                WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/general-tab-script.js',
-                ['jquery', 'wp-app-core-settings'],
-                WP_APP_CORE_VERSION,
-                true
-            );
-        }
-
-        // Load email tab specific assets
-        if ($current_tab === 'email') {
-            wp_enqueue_script(
-                'wp-app-core-email-tab',
-                WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/email-tab-script.js',
-                ['jquery', 'wp-app-core-settings'],
-                WP_APP_CORE_VERSION,
-                true
-            );
-        }
-
-        // Load permissions-specific assets
-        if ($current_tab === 'permissions') {
-            wp_enqueue_style(
-                'wp-app-core-permissions-tab',
-                WP_APP_CORE_PLUGIN_URL . 'assets/css/settings/permissions-tab-style.css',
-                ['wp-app-core-settings'],
-                WP_APP_CORE_VERSION
-            );
-
-            wp_enqueue_script(
-                'wp-app-core-permissions-tab',
-                WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/permissions-tab-script.js',
-                ['jquery', 'wp-app-core-settings'],
-                WP_APP_CORE_VERSION,
-                true
-            );
-        }
-
-        // Load demo-data specific assets
-        if ($current_tab === 'demo-data') {
-            wp_enqueue_style(
-                'wp-app-core-demo-data-tab',
-                WP_APP_CORE_PLUGIN_URL . 'assets/css/settings/demo-data-tab-style.css',
-                ['wp-app-core-settings'],
-                WP_APP_CORE_VERSION
-            );
-
-            wp_enqueue_script(
-                'wp-app-core-demo-data-tab',
-                WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/platform-demo-data-tab-script.js',
-                ['jquery', 'wp-app-core-settings'],
-                WP_APP_CORE_VERSION,
-                true
-            );
-        }
-
-        // Load security-authentication specific assets
-        if ($current_tab === 'security-authentication') {
-            wp_enqueue_style(
-                'wp-app-core-security-authentication-tab',
-                WP_APP_CORE_PLUGIN_URL . 'assets/css/settings/security-authentication-tab-style.css',
-                ['wp-app-core-settings'],
-                WP_APP_CORE_VERSION
-            );
-
-            wp_enqueue_script(
-                'wp-app-core-security-authentication-tab',
-                WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/security-authentication-tab-script.js',
-                ['jquery', 'wp-app-core-settings'],
-                WP_APP_CORE_VERSION,
-                true
-            );
-        }
-
-        // Load security-session specific assets
-        if ($current_tab === 'security-session') {
-            wp_enqueue_style(
-                'wp-app-core-security-session-tab',
-                WP_APP_CORE_PLUGIN_URL . 'assets/css/settings/security-session-tab-style.css',
-                ['wp-app-core-settings'],
-                WP_APP_CORE_VERSION
-            );
-
-            wp_enqueue_script(
-                'wp-app-core-security-session-tab',
-                WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/security-session-tab-script.js',
-                ['jquery', 'wp-app-core-settings'],
-                WP_APP_CORE_VERSION,
-                true
-            );
-        }
-
-        // Load security-policy specific assets
-        if ($current_tab === 'security-policy') {
-            wp_enqueue_style(
-                'wp-app-core-security-policy-tab',
-                WP_APP_CORE_PLUGIN_URL . 'assets/css/settings/security-policy-tab-style.css',
-                ['wp-app-core-settings'],
-                WP_APP_CORE_VERSION
-            );
-
-            wp_enqueue_script(
-                'wp-app-core-security-policy-tab',
-                WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/security-policy-tab-script.js',
-                ['jquery', 'wp-app-core-settings'],
-                WP_APP_CORE_VERSION,
-                true
-            );
-        }
-
-        // Localize script with common data
-        wp_localize_script(
-            'wp-app-core-settings',
-            'wpAppCoreSettings',
-            [
-                'ajaxUrl' => admin_url('admin-ajax.php'),
-                'nonce' => wp_create_nonce('wp_app_core_settings_nonce'),
-                'i18n' => [
-                    'saved' => __('Settings saved successfully', 'wp-app-core'),
-                    'error' => __('Error saving settings', 'wp-app-core'),
-                    'confirm' => __('Are you sure?', 'wp-app-core'),
-                    'confirmReset' => __('Are you sure you want to reset all permissions to default? This action cannot be undone.', 'wp-app-core'),
-                    'confirmCreateRoles' => __('Are you sure you want to create platform roles?', 'wp-app-core'),
-                    'confirmDeleteRoles' => __('WARNING: This will permanently delete all platform roles. Are you sure?', 'wp-app-core'),
-                    'confirmDeleteRolesDouble' => __('This action cannot be undone. Continue?', 'wp-app-core'),
-                    'confirmResetCapabilities' => __('Are you sure you want to reset all platform capabilities to default values?', 'wp-app-core'),
-                ]
-            ]
-        );
     }
 
     /**
@@ -544,16 +376,69 @@ class PlatformSettingsController {
      * Handle reset platform permissions
      */
     public function handleResetPlatformPermissions() {
-        check_ajax_referer('wp_app_core_settings_nonce', 'nonce');
+        // CRITICAL: Register shutdown function to catch fatal errors
+        register_shutdown_function(function() {
+            $error = error_get_last();
+            if ($error !== null && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+                error_log('=== FATAL ERROR DETECTED IN RESET PERMISSIONS ===');
+                error_log('Type: ' . $error['type']);
+                error_log('Message: ' . $error['message']);
+                error_log('File: ' . $error['file']);
+                error_log('Line: ' . $error['line']);
+                error_log('=== END FATAL ERROR ===');
+            }
+        });
 
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(['message' => __('Permission denied', 'wp-app-core')]);
-        }
+        // CRITICAL: Start output buffering to prevent contamination from plugin hooks
+        // resetToDefault() triggers WordPress hooks that may init other plugins
+        // which can output to buffer and cause 500 errors
+        ob_start();
 
-        if ($this->permission_model->resetToDefault()) {
-            wp_send_json_success(['message' => __('Permissions reset to default', 'wp-app-core')]);
-        } else {
-            wp_send_json_error(['message' => __('Failed to reset permissions', 'wp-app-core')]);
+        error_log('=== WP-APP-CORE RESET PERMISSIONS START ===');
+        error_log('Received nonce: ' . ($_POST['nonce'] ?? 'NOT SET'));
+        error_log('Current user ID: ' . get_current_user_id());
+        error_log('User can manage_options: ' . (current_user_can('manage_options') ? 'YES' : 'NO'));
+
+        try {
+            check_ajax_referer('wp_app_core_settings_nonce', 'nonce');
+            error_log('Nonce verified successfully');
+
+            if (!current_user_can('manage_options')) {
+                error_log('ERROR: User does not have manage_options capability');
+                error_log('=== WP-APP-CORE RESET PERMISSIONS END (Permission Denied) ===');
+                ob_end_clean(); // Clean buffer before sending JSON
+                wp_send_json_error(['message' => __('Permission denied', 'wp-app-core')]);
+                die(); // Ensure no code runs after wp_send_json
+            }
+
+            error_log('Calling resetToDefault()...');
+            $result = $this->permission_model->resetToDefault();
+            error_log('resetToDefault() returned: ' . ($result ? 'TRUE' : 'FALSE'));
+
+            // CRITICAL: Clean output buffer before sending JSON response
+            // This removes any output from plugin hooks triggered during reset
+            ob_end_clean();
+
+            if ($result) {
+                $success_message = __('Permissions reset to default', 'wp-app-core');
+                error_log('SUCCESS: Sending success response');
+                error_log('SUCCESS: Message being sent: ' . $success_message);
+                error_log('=== WP-APP-CORE RESET PERMISSIONS END (Success) ===');
+                wp_send_json_success(['message' => $success_message]);
+                die(); // Ensure no code runs after wp_send_json
+            } else {
+                error_log('ERROR: resetToDefault() returned false');
+                error_log('=== WP-APP-CORE RESET PERMISSIONS END (Failed) ===');
+                wp_send_json_error(['message' => __('Failed to reset permissions', 'wp-app-core')]);
+                die(); // Ensure no code runs after wp_send_json
+            }
+        } catch (\Exception $e) {
+            error_log('EXCEPTION: ' . $e->getMessage());
+            error_log('Exception trace: ' . $e->getTraceAsString());
+            error_log('=== WP-APP-CORE RESET PERMISSIONS END (Exception) ===');
+            ob_end_clean(); // Clean buffer before sending JSON
+            wp_send_json_error(['message' => $e->getMessage()]);
+            die(); // Ensure no code runs after wp_send_json
         }
     }
 

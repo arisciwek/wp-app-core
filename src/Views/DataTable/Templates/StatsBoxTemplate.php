@@ -8,20 +8,46 @@
  * @package WPAppCore
  * @subpackage Views\DataTable\Templates
  * @since 1.0.0
+ * @version 1.2.0
  * @author arisciwek
  *
  * Path: /wp-app-core/src/Views/DataTable/Templates/StatsBoxTemplate.php
  *
- * Stats Structure:
+ * Changelog:
+ * 1.2.0 - 2025-10-29 (TODO-3089)
+ * - BREAKING: Removed filter-based rendering (over-engineering)
+ * - Deleted: get_stats() method (wpapp_datatable_stats filter)
+ * - Deleted: render_stat_box() method (wpapp-stats-* HTML rendering)
+ * - Deleted: All wpapp-stats-* CSS class usage
+ * - Reason: Same issue as deleted TabViewTemplate - dual rendering mechanism
+ * - Pattern: Now pure infrastructure (container + hook only)
+ * - Plugins render their own HTML with plugin-specific CSS classes
+ * - Impact: No active users, acceptable breaking change
+ *
+ * 1.1.0 - 2025-10-29 (TODO-3089)
+ * - BREAKING: Added wpapp- prefix to all CSS classes
+ * - Changed: statistics-cards → wpapp-statistics-cards
+ * - Changed: stats-card → wpapp-stats-card
+ * - Changed: stats-icon → wpapp-stats-icon
+ * - Changed: stats-content → wpapp-stats-content
+ * - Changed: stats-number → wpapp-stats-number
+ * - Changed: stats-label → wpapp-stats-label
+ * - Reason: Consistent with global scope naming convention (wpapp- = wp-app-core)
+ * - Impact: No active users, acceptable breaking change
+ *
+ * 1.0.0 - Initial version
+ * - Statistics box rendering with hook-based content injection
+ * - No wpapp- prefix (violated scope convention)
+ *
+ * Usage:
  * ```php
- * [
- *     [
- *         'id' => 'total-customers',
- *         'label' => 'Total Customers',
- *         'icon' => 'dashicons-groups',  // Optional
- *         'class' => 'primary'           // Optional: primary, success, warning, danger
- *     ]
- * ]
+ * // In plugin controller:
+ * add_action('wpapp_statistics_cards_content', function($entity) {
+ *     if ($entity !== 'agency') return;
+ *     echo '<div class="agency-statistics-cards">';
+ *     echo '<div class="agency-stat-card">Custom Card</div>';
+ *     echo '</div>';
+ * }, 10);
  * ```
  */
 
@@ -32,137 +58,41 @@ defined('ABSPATH') || exit;
 class StatsBoxTemplate {
 
     /**
-     * Render statistics boxes
+     * Render statistics container with hook
      *
-     * All classes use wpapp- prefix (from wp-app-core)
+     * Provides empty container for plugins to inject statistics.
+     * Each plugin renders their own HTML with plugin-specific CSS classes.
+     *
+     * Pattern: Infrastructure (container + hook), not implementation
      *
      * @param string $entity Entity name
      * @return void
      */
     public static function render($entity) {
-        // Get stats from filter
-        $stats = self::get_stats($entity);
-
-        // Always render container even if no stats (for plugin hooks)
         ?>
-        <!-- Statistics Container -->
+        <!-- Statistics Container (Global Scope) -->
         <div class="wpapp-statistics-container">
             <?php
             /**
              * Action: Statistics cards content
              *
-             * Plugins can hook here to render custom statistics cards
-             * Cards should be rendered inside this container
+             * Plugins should hook here to render custom statistics cards
+             * Each plugin renders their own HTML with their own CSS classes
+             *
+             * IMPORTANT: Use plugin-specific CSS classes (e.g., agency-, customer-)
              *
              * @param string $entity Entity name
              *
              * @example
              * add_action('wpapp_statistics_cards_content', function($entity) {
              *     if ($entity !== 'agency') return;
-             *     echo '<div class="statistics-cards">';
-             *     echo '<div class="stats-card">Custom Card</div>';
+             *     echo '<div class="agency-statistics-cards">';
+             *     echo '<div class="agency-stat-card">Custom Card</div>';
              *     echo '</div>';
-             * });
+             * }, 10);
              */
             do_action('wpapp_statistics_cards_content', $entity);
             ?>
-
-            <?php if (!empty($stats)): ?>
-            <div class="statistics-cards hidden" id="<?php echo esc_attr($entity); ?>-statistics">
-                <?php foreach ($stats as $stat): ?>
-                    <?php self::render_stat_box($stat, $entity); ?>
-                <?php endforeach; ?>
-            </div>
-            <?php endif; ?>
-        </div>
-        <?php
-    }
-
-    /**
-     * Get stats for entity via filter
-     *
-     * @param string $entity Entity name
-     * @return array Stats array
-     */
-    private static function get_stats($entity) {
-        /**
-         * Filter: Register statistics for entity
-         *
-         * Plugins can register stats boxes for their entities
-         *
-         * @param array $stats Stats array
-         * @param string $entity Entity name
-         *
-         * @return array Modified stats array
-         *
-         * @example
-         * add_filter('wpapp_datatable_stats', function($stats, $entity) {
-         *     if ($entity !== 'agency') return $stats;
-         *
-         *     return [
-         *         [
-         *             'id' => 'agency-stat-total',
-         *             'label' => 'Total Disnaker',
-         *             'icon' => 'dashicons-building',
-         *             'class' => 'primary'
-         *         ],
-         *         [
-         *             'id' => 'agency-stat-active',
-         *             'label' => 'Active',
-         *             'icon' => 'dashicons-yes-alt',
-         *             'class' => 'success'
-         *         ]
-         *     ];
-         * }, 10, 2);
-         */
-        $stats = apply_filters('wpapp_datatable_stats', [], $entity);
-
-        return $stats;
-    }
-
-    /**
-     * Render single stat box
-     *
-     * All classes use wpapp- prefix (from wp-app-core)
-     *
-     * @param array $stat Stat configuration
-     * @param string $entity Entity name
-     * @return void
-     */
-    private static function render_stat_box($stat, $entity) {
-        // Parse stat data
-        $id = isset($stat['id']) ? $stat['id'] : '';
-        $label = isset($stat['label']) ? $stat['label'] : '';
-        $icon = isset($stat['icon']) ? $stat['icon'] : 'dashicons-chart-bar';
-        $class = isset($stat['class']) ? $stat['class'] : '';
-
-        if (empty($id) || empty($label)) {
-            return; // Invalid stat
-        }
-
-        ?>
-        <div class="stats-card <?php echo esc_attr($class); ?>"
-             data-stat-id="<?php echo esc_attr($id); ?>"
-             data-entity="<?php echo esc_attr($entity); ?>">
-
-            <!-- Icon -->
-            <?php if (!empty($icon)): ?>
-                <div class="stats-icon">
-                    <span class="dashicons <?php echo esc_attr($icon); ?>"></span>
-                </div>
-            <?php endif; ?>
-
-            <!-- Content -->
-            <div class="stats-content">
-                <!-- Number (loaded via JavaScript) -->
-                <h3 class="stats-number" id="<?php echo esc_attr($id); ?>">0</h3>
-
-                <!-- Label -->
-                <p class="stats-label">
-                    <?php echo esc_html($label); ?>
-                </p>
-            </div>
-
         </div>
         <?php
     }

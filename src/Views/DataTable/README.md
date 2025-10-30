@@ -13,7 +13,7 @@ Author: arisciwek
 - `src/Views/DataTable/Templates/PanelLayoutTemplate.php` - Left/right panel layout
 - `src/Views/DataTable/Templates/TabSystemTemplate.php` - WordPress-style tabs
 - `src/Views/DataTable/Templates/StatsBoxTemplate.php` - Statistics cards
-- `src/Views/DataTable/Templates/NavigationTemplate.php` - Navigation components
+- `src/Views/DataTable/Templates/FiltersTemplate.php` - Filter controls
 
 **Assets:**
 - `assets/css/datatable/wpapp-datatable.css` - Global panel styles

@@ -67,6 +67,9 @@ class WP_App_Core_Dependencies {
         add_action('admin_enqueue_scripts', [$this, 'enqueue_scripts'], 20);
         add_action('wp_enqueue_scripts', [$this, 'enqueue_styles'], 20);
         add_action('wp_enqueue_scripts', [$this, 'enqueue_scripts'], 20);
+
+        // Settings page assets
+        add_action('admin_enqueue_scripts', [$this, 'enqueue_settings_assets']);
     }
 
     /**
@@ -177,5 +180,165 @@ class WP_App_Core_Dependencies {
         if (defined('WP_DEBUG') && WP_DEBUG) {
             error_log('[WP_App_Core] Panel handler enqueued on: ' . $screen->id);
         }
+    }
+
+    /**
+     * Enqueue settings page assets
+     *
+     * @param string $hook Current admin page hook
+     */
+    public function enqueue_settings_assets($hook) {
+        // Only load on settings page
+        if ($hook !== 'toplevel_page_wp-app-core-settings') {
+            return;
+        }
+
+        // Main settings styles
+        wp_enqueue_style(
+            'wp-app-core-settings',
+            WP_APP_CORE_PLUGIN_URL . 'assets/css/settings/settings-style.css',
+            [],
+            $this->version
+        );
+
+        // Common settings JS
+        wp_enqueue_script(
+            'wp-app-core-settings',
+            WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/settings-script.js',
+            ['jquery'],
+            $this->version,
+            true
+        );
+
+        // Get current tab
+        $current_tab = isset($_GET['tab']) ? sanitize_key($_GET['tab']) : 'general';
+
+        // Tab-specific assets
+        switch ($current_tab) {
+            case 'general':
+                wp_enqueue_script(
+                    'wp-app-core-general-tab',
+                    WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/general-tab-script.js',
+                    ['jquery', 'wp-app-core-settings'],
+                    $this->version,
+                    true
+                );
+                break;
+
+            case 'email':
+                wp_enqueue_script(
+                    'wp-app-core-email-tab',
+                    WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/email-tab-script.js',
+                    ['jquery', 'wp-app-core-settings'],
+                    $this->version,
+                    true
+                );
+                break;
+
+            case 'permissions':
+                wp_enqueue_style(
+                    'wp-app-core-permissions-tab',
+                    WP_APP_CORE_PLUGIN_URL . 'assets/css/settings/permissions-tab-style.css',
+                    ['wp-app-core-settings'],
+                    $this->version
+                );
+
+                wp_enqueue_script(
+                    'wp-app-core-permissions-tab',
+                    WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/permissions-tab-script.js',
+                    ['jquery', 'wp-app-core-settings'],
+                    $this->version,
+                    true
+                );
+                break;
+
+            case 'demo-data':
+                wp_enqueue_style(
+                    'wp-app-core-demo-data-tab',
+                    WP_APP_CORE_PLUGIN_URL . 'assets/css/settings/demo-data-tab-style.css',
+                    ['wp-app-core-settings'],
+                    $this->version
+                );
+
+                wp_enqueue_script(
+                    'wp-app-core-demo-data-tab',
+                    WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/platform-demo-data-tab-script.js',
+                    ['jquery', 'wp-app-core-settings'],
+                    $this->version,
+                    true
+                );
+                break;
+
+            case 'security-authentication':
+                wp_enqueue_style(
+                    'wp-app-core-security-authentication-tab',
+                    WP_APP_CORE_PLUGIN_URL . 'assets/css/settings/security-authentication-tab-style.css',
+                    ['wp-app-core-settings'],
+                    $this->version
+                );
+
+                wp_enqueue_script(
+                    'wp-app-core-security-authentication-tab',
+                    WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/security-authentication-tab-script.js',
+                    ['jquery', 'wp-app-core-settings'],
+                    $this->version,
+                    true
+                );
+                break;
+
+            case 'security-session':
+                wp_enqueue_style(
+                    'wp-app-core-security-session-tab',
+                    WP_APP_CORE_PLUGIN_URL . 'assets/css/settings/security-session-tab-style.css',
+                    ['wp-app-core-settings'],
+                    $this->version
+                );
+
+                wp_enqueue_script(
+                    'wp-app-core-security-session-tab',
+                    WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/security-session-tab-script.js',
+                    ['jquery', 'wp-app-core-settings'],
+                    $this->version,
+                    true
+                );
+                break;
+
+            case 'security-policy':
+                wp_enqueue_style(
+                    'wp-app-core-security-policy-tab',
+                    WP_APP_CORE_PLUGIN_URL . 'assets/css/settings/security-policy-tab-style.css',
+                    ['wp-app-core-settings'],
+                    $this->version
+                );
+
+                wp_enqueue_script(
+                    'wp-app-core-security-policy-tab',
+                    WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/security-policy-tab-script.js',
+                    ['jquery', 'wp-app-core-settings'],
+                    $this->version,
+                    true
+                );
+                break;
+        }
+
+        // Localize script with common data
+        wp_localize_script(
+            'wp-app-core-settings',
+            'wpAppCoreSettings',
+            [
+                'ajaxUrl' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('wp_app_core_settings_nonce'),
+                'i18n' => [
+                    'saved' => __('Settings saved successfully', 'wp-app-core'),
+                    'error' => __('Error saving settings', 'wp-app-core'),
+                    'confirm' => __('Are you sure?', 'wp-app-core'),
+                    'confirmReset' => __('Are you sure you want to reset all permissions to default? This action cannot be undone.', 'wp-app-core'),
+                    'confirmCreateRoles' => __('Are you sure you want to create platform roles?', 'wp-app-core'),
+                    'confirmDeleteRoles' => __('WARNING: This will permanently delete all platform roles. Are you sure?', 'wp-app-core'),
+                    'confirmDeleteRolesDouble' => __('This action cannot be undone. Continue?', 'wp-app-core'),
+                    'confirmResetCapabilities' => __('Are you sure you want to reset all platform capabilities to default values?', 'wp-app-core'),
+                ]
+            ]
+        );
     }
 }

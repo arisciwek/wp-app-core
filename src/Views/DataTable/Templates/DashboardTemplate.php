@@ -8,9 +8,20 @@
  * @package WPAppCore
  * @subpackage Views\DataTable\Templates
  * @since 1.0.0
+ * @version 1.1.0
  * @author arisciwek
  *
  * Path: /wp-app-core/src/Views/DataTable/Templates/DashboardTemplate.php
+ *
+ * Changelog:
+ * 1.1.0 - 2025-10-29 (TODO-3089)
+ * - Removed NavigationTemplate wrapper (over-engineering)
+ * - Direct calls to StatsBoxTemplate and FiltersTemplate
+ * - Simpler, clearer code flow
+ * - No functionality change, just simplified architecture
+ *
+ * 1.0.0 - Initial version
+ * - Used NavigationTemplate as orchestrator
  *
  * Usage:
  * ```php
@@ -66,8 +77,13 @@ class DashboardTemplate {
             do_action('wpapp_dashboard_before_content', $config, $config['entity']);
             ?>
 
-            <!-- Navigation Container (Delegated to NavigationTemplate) -->
-            <?php NavigationTemplate::render($config); ?>
+            <!-- Statistics Section (if enabled) -->
+            <?php if (!empty($config['has_stats'])): ?>
+                <?php StatsBoxTemplate::render($config['entity']); ?>
+            <?php endif; ?>
+
+            <!-- Filters Section -->
+            <?php FiltersTemplate::render($config['entity'], $config); ?>
 
             <!-- Main Panel Layout -->
             <?php

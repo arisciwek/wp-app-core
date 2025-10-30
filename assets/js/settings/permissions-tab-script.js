@@ -3,19 +3,29 @@
  *
  * @package     WP_App_Core
  * @subpackage  Assets/JS/Settings
- * @version     1.1.0
+ * @version     1.2.0
  * @author      arisciwek
  *
  * Path: /wp-app-core/assets/js/settings/permissions-tab-script.js
  *
  * Description: Handler untuk matrix permission
  *              Menangani update dan reset permission matrix
+ *              INCLUDES RACE CONDITION PROTECTION
  *
  * Dependencies:
  * - jQuery
  * - wpAppCoreSettings (localized from controller)
  *
  * Changelog:
+ * 1.2.0 - 2025-10-30
+ * - CRITICAL HOTFIX: Fixed checkbox disable timing bug (TODO-3091)
+ * - Split lockPage() into lockPageForSave() and lockPageForReset()
+ * - lockPageForSave(): Disables buttons only (checkboxes must be enabled for form submit)
+ * - lockPageForReset(): Disables everything (safe for AJAX operation)
+ * - Fixed bug: disabled checkboxes were not being submitted in POST data
+ * - Removed 1.5s delay - immediate reload after reset
+ * - Now permissions save correctly
+ *
  * 1.1.0 - 2025-10-19
  * - Added: Disable save button during reset to prevent conflicts
  * - Enhanced: Re-enable save button on reset error
@@ -37,10 +47,53 @@
             this.initResetButton();
         },
 
+        /**
+         * Lock page for form submission
+         * Disables buttons only - checkboxes must remain enabled for form data
+         */
+        lockPageForSave() {
+            // Disable ALL buttons (reset + save)
+            $('.button-reset-permissions, button[type="submit"]').prop('disabled', true);
+
+            // DO NOT disable checkboxes - they need to be submitted!
+            // Add visual loading indicator to body
+            $('body').addClass('permission-operation-in-progress');
+        },
+
+        /**
+         * Lock page for reset operation
+         * Disables everything including checkboxes (AJAX operation, no form submit)
+         */
+        lockPageForReset() {
+            // Disable ALL buttons (reset + save)
+            $('.button-reset-permissions, button[type="submit"]').prop('disabled', true);
+
+            // Disable ALL checkboxes (safe for AJAX, not form submit)
+            $('.permission-checkbox').prop('disabled', true);
+
+            // Add visual loading indicator to body
+            $('body').addClass('permission-operation-in-progress');
+        },
+
+        /**
+         * Unlock page (for error recovery only)
+         */
+        unlockPage() {
+            $('.button-reset-permissions, button[type="submit"]').prop('disabled', false);
+            $('.permission-checkbox').prop('disabled', false);
+            $('body').removeClass('permission-operation-in-progress');
+        },
+
         bindEvents() {
-            // Disable submit button on form submission
-            $('.permissions-section form').on('submit', function() {
-                $(this).find('button[type="submit"]').prop('disabled', true);
+            const self = this;
+
+            // Handle form submission with race condition protection
+            $('.permissions-section form').on('submit', function(e) {
+                // Lock page for save (buttons only, NOT checkboxes)
+                // Checkboxes must remain enabled so browser can serialize form data
+                self.lockPageForSave();
+
+                // Note: Form will continue submitting, page will be locked until reload
             });
         },
 
@@ -67,15 +120,14 @@
         performReset($button) {
             const self = this;
             const originalText = $button.text();
-            const $submitButton = $('.permissions-section form #submit, .permissions-section form [type="submit"]');
+
+            // CRITICAL: Lock entire page to prevent race conditions
+            // Use lockPageForReset() - disables checkboxes too (safe for AJAX)
+            self.lockPageForReset();
 
             // Set loading state for reset button
             $button.addClass('loading')
-                   .prop('disabled', true)
                    .html('<span class="dashicons dashicons-update"></span> Resetting...');
-
-            // Disable save button to prevent conflicts
-            $submitButton.prop('disabled', true).addClass('disabled');
 
             // Perform AJAX reset
             $.ajax({
@@ -87,33 +139,37 @@
                 },
                 success: function(response) {
                     if (response.success) {
-                        // Show success notice
-                        self.showNotice(response.data.message || 'Permissions reset successfully', 'success');
-                        // Reload page after short delay
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 1500);
+                        // Reload page with parameter to clear stale notices
+                        // Remove old save notice and mark as reset operation
+                        const url = new URL(window.location.href);
+                        url.searchParams.delete('settings-updated'); // Remove old save notice
+                        url.searchParams.set('permissions-reset', '1'); // Mark as reset operation
+                        window.location.href = url.toString();
                     } else {
                         self.showNotice(response.data.message || 'Failed to reset permissions', 'error');
-                        // Reset button states
+                        // Unlock page on error
+                        self.unlockPage();
+                        // Reset button state
                         $button.removeClass('loading')
-                               .prop('disabled', false)
                                .html('<span class="dashicons dashicons-image-rotate"></span> ' + originalText);
-                        $submitButton.prop('disabled', false).removeClass('disabled');
                     }
                 },
                 error: function(xhr, status, error) {
                     self.showNotice('Server error while resetting permissions', 'error');
-                    // Reset button states
+                    // Unlock page on error
+                    self.unlockPage();
+                    // Reset button state
                     $button.removeClass('loading')
-                           .prop('disabled', false)
                            .html('<span class="dashicons dashicons-image-rotate"></span> ' + originalText);
-                    $submitButton.prop('disabled', false).removeClass('disabled');
                 }
             });
         },
 
         showNotice(message, type) {
+            // IMPORTANT: Remove all existing notices first (both PHP and JS generated)
+            // This prevents old "save success" notices from showing after reset errors
+            $('.wrap .notice').remove();
+
             const noticeClass = type === 'success' ? 'notice-success' : 'notice-error';
             const $notice = $('<div class="notice ' + noticeClass + ' is-dismissible"><p>' + message + '</p></div>');
 

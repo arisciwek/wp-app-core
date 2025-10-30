@@ -6,7 +6,32 @@
  *
  * @package WPAppCore
  * @since 1.0.0
+ * @version 1.2.0
  * @author arisciwek
+ *
+ * Changelog:
+ * 1.2.0 - 2025-10-29 (TODO-3089)
+ * - BREAKING: Removed all wpapp-stats-* CSS selectors (no longer needed)
+ * - Deleted: .wpapp-stats-card, .wpapp-stats-icon, .wpapp-stats-content
+ * - Deleted: .wpapp-stats-number, .wpapp-stats-label
+ * - Reason: StatsBoxTemplate now pure infrastructure (hook only, no rendering)
+ * - Pattern: Plugins provide their own HTML + CSS with plugin-specific classes
+ * - Impact: Global statistics styling removed, each plugin owns implementation
+ *
+ * 1.1.0 - 2025-10-29 (TODO-3089)
+ * - BREAKING: Added wpapp- prefix to statistics CSS classes
+ * - Changed: .statistics-cards → .wpapp-statistics-cards
+ * - Changed: .stats-card → .wpapp-stats-card
+ * - Changed: .stats-icon → .wpapp-stats-icon
+ * - Changed: .stats-content → .wpapp-stats-content
+ * - Changed: .stats-number → .wpapp-stats-number
+ * - Changed: .stats-label → .wpapp-stats-label
+ * - Reason: Consistent with global scope convention (wpapp- = wp-app-core)
+ * - Impact: All plugins using statistics must update class names
+ *
+ * 1.0.0 - Initial version
+ * - Base panel layout, statistics, tabs, filters
+ * - Some classes without wpapp- prefix (violated convention)
  */
 
 /* ===================================================================
@@ -297,7 +322,7 @@ html {
     margin: 20px -15px 20px -15px; /* TODO-1187 Review-04: Extend to use full width */
 }
 
-.wpapp-statistics-container .statistics-cards {
+.wpapp-statistics-container .wpapp-statistics-cards {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 20px;
@@ -306,88 +331,11 @@ html {
 }
 
 /* Override global .hidden for smooth fade-in */
-.wpapp-statistics-container .statistics-cards.hidden {
+.wpapp-statistics-container .wpapp-statistics-cards.hidden {
     display: grid !important; /* Override global .hidden */
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
-}
-
-/* Stat Box - Copied from companies.css .stats-card */
-.stats-card {
-    background: #fff;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    padding: 20px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.stats-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-/* Stat Icon - Copied from companies.css .stats-icon */
-.stats-icon {
-    width: 55px;
-    height: 55px;
-    min-width: 55px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #f0f0f0;
-    color: #666;
-    font-size: 26px;
-}
-
-.stats-icon.active {
-    background: #d4edda;
-    color: #28a745;
-}
-
-.stats-icon.pusat {
-    background: #d1ecf1;
-    color: #0c5460;
-}
-
-.stats-icon.cabang {
-    background: #fff3cd;
-    color: #856404;
-}
-
-.stats-icon .dashicons {
-    font-size: 26px;
-    width: 26px;
-    height: 26px;
-}
-
-/* Stat Content - Copied from companies.css .stats-content */
-.stats-content {
-    flex: 1;
-}
-
-/* Stat Number - Copied from companies.css .stats-number */
-.stats-number {
-    margin: 0 0 5px 0;
-    font-size: 32px;
-    font-weight: 700;
-    color: #2c3e50;
-    line-height: 1;
-}
-
-/* Stat Label - Copied from companies.css .stats-label */
-.stats-label {
-    margin: 0;
-    font-size: 13px;
-    color: #7f8c8d;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 500;
 }
 
 /* ===================================================================

@@ -17,11 +17,11 @@
  *
  * Dependencies:
  * - WordPress Admin CSS
- * - settings.css (for common settings styles)
+ * - settings-style.css (for common settings styles)
  *
  * Note: This file should only contain styles specific to the permissions
  * matrix functionality. Common components like tab navigation should be
- * in settings.css
+ * in settings-style.css
  *
  * Changelog:
  * 1.1.0 - 2025-10-19

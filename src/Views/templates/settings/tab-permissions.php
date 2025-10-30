@@ -67,10 +67,17 @@ $all_roles = get_editable_roles();
 
 // Display ONLY platform roles (exclude other plugin roles and standard WP roles)
 // Platform permissions are specifically for platform staff management
+// Exclude base role 'platform_staff' to avoid confusion (it only has 'read' capability)
 $displayed_roles = [];
 if ($platform_roles_exist) {
     // Show only platform roles with the admin-generic icon indicator
+    // Skip base role 'platform_staff' - it's for dual-role pattern, not for direct assignment
     foreach ($existing_platform_roles as $role_slug) {
+        // Skip base role 'platform_staff'
+        if ($role_slug === 'platform_staff') {
+            continue;
+        }
+
         if (isset($all_roles[$role_slug])) {
             $displayed_roles[$role_slug] = $all_roles[$role_slug];
         }
@@ -136,6 +143,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         );
     }
 }
+
+// Handle reset success notice
+if (isset($_GET['permissions-reset']) && $_GET['permissions-reset'] === '1') {
+    // Clear any old settings errors EXCEPT our plugin messages
+    global $wp_settings_errors;
+    if (isset($wp_settings_errors)) {
+        $wp_settings_errors = array_filter($wp_settings_errors, function($error) {
+            return $error['setting'] === 'wp_app_core_messages';
+        });
+    }
+
+    add_settings_error(
+        'wp_app_core_messages',
+        'permissions_reset',
+        __('Hak akses Platform berhasil direset ke pengaturan default.', 'wp-app-core'),
+        'success'
+    );
+}
 ?>
 
 <div class="wrap">
@@ -164,7 +189,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     <h2 class="nav-tab-wrapper wp-clearfix">
         <?php foreach ($capability_groups as $tab_key => $group): ?>
             <a href="<?php echo add_query_arg(['tab' => 'permissions', 'permission_tab' => $tab_key]); ?>"
-               class="nav-tab <?php echo $current_tab === $tab_key ? 'nav-tab-active' : ''; ?>">
+               class="nav-tab <?php echo $current_tab === $tab_key ? 'nav-tab-active' : ''; ?>"
+               title="<?php echo esc_attr($group['description'] ?? $group['title']); ?>">
                 <?php echo esc_html($group['title']); ?>
             </a>
         <?php endforeach; ?>
@@ -189,14 +215,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     <div class="settings-section" style="background: #fff; border: 1px solid #ccd0d4; padding: 20px; margin-top: 20px;">
         <button type="button" class="button button-secondary button-reset-permissions">
             <span class="dashicons dashicons-image-rotate"></span>
-            <?php _e('Reset to Default', 'wp-app-core'); ?>
+            <?php _e('Reset All Permissions to Default', 'wp-app-core'); ?>
         </button>
         <p class="description">
             <?php
-            printf(
-                __('Reset <strong>%s</strong> permissions to plugin defaults. This will restore the original capability settings for all roles in this group.', 'wp-app-core'),
-                esc_html($capability_groups[$current_tab]['title'])
-            );
+            _e('<strong>Warning:</strong> This will reset <strong>ALL platform permissions</strong> (across all tabs) to plugin defaults. This will restore the original capability settings for all roles and all permission groups. This action cannot be undone.', 'wp-app-core');
             ?>
         </p>
     </div>

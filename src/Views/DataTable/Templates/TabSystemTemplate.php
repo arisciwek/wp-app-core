@@ -3,22 +3,50 @@
  * Tab System Template - Base
  *
  * Provides WordPress-style tab navigation for detail panels.
- * Follows existing pattern: title, template, priority
+ * Supports two rendering patterns:
+ *
+ * 1. Direct Inclusion Pattern: 'template' key provided, file included directly
+ * 2. Hook-Based AJAX Pattern: No 'template' key, content loaded via AJAX + hooks
  *
  * @package WPAppCore
  * @subpackage Views\DataTable\Templates
  * @since 1.0.0
+ * @version 1.1.0
  * @author arisciwek
  *
  * Path: /wp-app-core/src/Views/DataTable/Templates/TabSystemTemplate.php
  *
- * Tab Structure (following existing wp-customer pattern):
+ * Changelog:
+ * 1.1.0 - 2025-10-29 (TODO-3089)
+ * - Support hook-based pattern (no 'template' key required)
+ * - 'template' key is now OPTIONAL (was required)
+ * - No error if 'template' key missing (entity uses AJAX pattern)
+ * - Added wpapp_tab_empty_container hook for empty containers
+ *
+ * 1.0.0 - Initial version
+ * - Direct inclusion pattern only
+ * - 'template' key required
+ *
+ * Tab Structure:
+ *
+ * Pattern 1 - Direct Inclusion (Legacy):
  * ```php
  * [
  *     'tab-id' => [
  *         'title' => 'Tab Title',
- *         'template' => '/path/to/template.php',
+ *         'template' => '/path/to/template.php',  // ← File included directly
  *         'priority' => 10
+ *     ]
+ * ]
+ * ```
+ *
+ * Pattern 2 - Hook-Based AJAX (Modern):
+ * ```php
+ * [
+ *     'tab-id' => [
+ *         'title' => 'Tab Title',
+ *         'priority' => 10
+ *         // No 'template' key - content loaded via AJAX + hooks
  *     ]
  * ]
  * ```
@@ -197,7 +225,7 @@ class TabSystemTemplate {
                 error_log("Template path for #{$tab_id}: " . ($template_path ?: 'NONE'));
                 error_log("Template exists: " . (file_exists($template_path) ? 'YES' : 'NO'));
 
-                // Include template if exists
+                // Include template if exists (direct inclusion pattern)
                 if (!empty($template_path) && file_exists($template_path)) {
                     error_log("Including template for #{$tab_id}");
 
@@ -220,9 +248,9 @@ class TabSystemTemplate {
                     do_action('wpapp_after_tab_template', $tab_id, $entity);
 
                     error_log("Template included for #{$tab_id}");
-                } else {
-                    error_log("ERROR: Template not found for #{$tab_id}: {$template_path}");
-                    // Template not found
+                } elseif (!empty($template_path)) {
+                    // Template path provided but file not found - ERROR
+                    error_log("ERROR: Template file not found for #{$tab_id}: {$template_path}");
                     ?>
                     <div class="notice notice-error">
                         <p>
@@ -235,6 +263,15 @@ class TabSystemTemplate {
                         </p>
                     </div>
                     <?php
+                } else {
+                    // No template path - Entity uses hook-based pattern (content loaded via AJAX)
+                    error_log("No template path for #{$tab_id} - Entity uses hook-based pattern (AJAX content)");
+
+                    /**
+                     * Hook for entities using hook-based pattern
+                     * Content will be loaded via AJAX and injected dynamically
+                     */
+                    do_action('wpapp_tab_empty_container', $tab_id, $entity);
                 }
                 ?>
 

@@ -159,10 +159,10 @@ class DataTableController {
             $controller->handle_ajax_request($model_class);
         });
 
-        // Log registration in debug mode
-        if (defined('WP_DEBUG') && WP_DEBUG && defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
-            error_log("DataTable AJAX registered: wp_ajax_{$action} -> {$model_class}");
-        }
+        // Log registration in debug mode (commented out - too verbose)
+        // if (defined('WP_DEBUG') && WP_DEBUG && defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
+        //     error_log("DataTable AJAX registered: wp_ajax_{$action} -> {$model_class}");
+        // }
     }
 
     /**

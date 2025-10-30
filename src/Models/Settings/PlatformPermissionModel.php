@@ -157,7 +157,8 @@ class PlatformPermissionModel {
      */
     private $capability_groups = [
         'platform_management' => [
-            'title' => 'Platform Management',
+            'title' => 'Platform',
+            'description' => 'Platform Management',
             'caps' => [
                 'view_platform_dashboard',
                 'manage_platform_settings',
@@ -168,7 +169,8 @@ class PlatformPermissionModel {
             ]
         ],
         'user_role_management' => [
-            'title' => 'User & Role Management',
+            'title' => 'User & Role',
+            'description' => 'User & Role Management',
             'caps' => [
                 'view_platform_users',
                 'create_platform_users',
@@ -179,7 +181,8 @@ class PlatformPermissionModel {
             ]
         ],
         'tenant_management' => [
-            'title' => 'Tenant Management',
+            'title' => 'Tenant',
+            'description' => 'Tenant Management',
             'caps' => [
                 'view_all_tenants',
                 'approve_tenant_registration',
@@ -190,7 +193,8 @@ class PlatformPermissionModel {
             ]
         ],
         'financial_billing' => [
-            'title' => 'Financial & Billing',
+            'title' => 'Financial',
+            'description' => 'Financial & Billing',
             'caps' => [
                 'view_financial_reports',
                 'manage_pricing_plans',
@@ -202,7 +206,8 @@ class PlatformPermissionModel {
             ]
         ],
         'support_helpdesk' => [
-            'title' => 'Support & Helpdesk',
+            'title' => 'Support',
+            'description' => 'Support & Helpdesk',
             'caps' => [
                 'view_support_tickets',
                 'respond_support_tickets',
@@ -213,7 +218,8 @@ class PlatformPermissionModel {
             ]
         ],
         'reports_analytics' => [
-            'title' => 'Reports & Analytics',
+            'title' => 'Reports',
+            'description' => 'Reports & Analytics',
             'caps' => [
                 'view_platform_analytics',
                 'view_usage_statistics',
@@ -224,7 +230,8 @@ class PlatformPermissionModel {
             ]
         ],
         'content_resources' => [
-            'title' => 'Content & Resources',
+            'title' => 'Content',
+            'description' => 'Content & Resources',
             'caps' => [
                 'manage_announcements',
                 'manage_documentation',
@@ -234,7 +241,8 @@ class PlatformPermissionModel {
             ]
         ],
         'wp_customer_management' => [
-            'title' => 'WP Customer - Customer Management',
+            'title' => 'Customer',
+            'description' => 'WP Customer - Customer Management',
             'caps' => [
                 'view_customer_list',
                 'view_customer_detail',
@@ -246,7 +254,8 @@ class PlatformPermissionModel {
             ]
         ],
         'wp_customer_branch' => [
-            'title' => 'WP Customer - Branch Management',
+            'title' => 'Branch',
+            'description' => 'WP Customer - Branch Management',
             'caps' => [
                 'view_customer_branch_list',
                 'view_customer_branch_detail',
@@ -258,7 +267,8 @@ class PlatformPermissionModel {
             ]
         ],
         'wp_customer_employee' => [
-            'title' => 'WP Customer - Employee Management',
+            'title' => 'Employee',
+            'description' => 'WP Customer - Employee Management',
             'caps' => [
                 'view_customer_employee_list',
                 'view_customer_employee_detail',
@@ -270,7 +280,8 @@ class PlatformPermissionModel {
             ]
         ],
         'wp_customer_invoice' => [
-            'title' => 'WP Customer - Membership Invoice',
+            'title' => 'Invoice',
+            'description' => 'WP Customer - Membership Invoice',
             'caps' => [
                 'view_customer_membership_invoice_list',
                 'view_customer_membership_invoice_detail',
@@ -283,7 +294,8 @@ class PlatformPermissionModel {
             ]
         ],
         'wp_customer_invoice_payment' => [
-            'title' => 'WP Customer - Invoice Payment',
+            'title' => 'Payment',
+            'description' => 'WP Customer - Invoice Payment',
             'caps' => [
                 'pay_all_customer_membership_invoices',
                 'pay_own_customer_membership_invoices',
@@ -418,60 +430,95 @@ class PlatformPermissionModel {
      * @return bool
      */
     public function resetToDefault(): bool {
+        global $wpdb;
+
         try {
+            error_log('[PlatformPermissionModel] resetToDefault() START - Using direct DB manipulation');
+
+            // CRITICAL: Increase execution limits
+            $old_time_limit = ini_get('max_execution_time');
+            @set_time_limit(120);
+            error_log('[PlatformPermissionModel] Time limit set to 120 seconds');
+
             // Require Role Manager
             require_once WP_APP_CORE_PLUGIN_DIR . 'includes/class-role-manager.php';
 
-            // Get all roles
-            foreach (get_editable_roles() as $role_name => $role_info) {
-                $role = get_role($role_name);
-                if (!$role) continue;
+            // Get WordPress roles option from database
+            $wp_user_roles = $wpdb->get_var("SELECT option_value FROM {$wpdb->options} WHERE option_name = '{$wpdb->prefix}user_roles'");
+            $roles = maybe_unserialize($wp_user_roles);
+            error_log('[PlatformPermissionModel] Retrieved ' . count($roles) . ' roles from database');
 
-                // BUG FIX (Task-2172): Only remove capabilities from platform roles + administrator
-                // Do NOT remove from agency/customer/other plugin roles!
+            $modified = false;
+
+            foreach ($roles as $role_name => $role_data) {
+                error_log('[PlatformPermissionModel] Processing role: ' . $role_name);
+
+                // Only process platform roles + administrator
                 $is_platform_role = \WP_App_Core_Role_Manager::isPluginRole($role_name);
                 $is_admin = $role_name === 'administrator';
 
                 if (!$is_platform_role && !$is_admin) {
-                    // Skip non-platform roles - don't touch their capabilities
+                    error_log('[PlatformPermissionModel] Skipping ' . $role_name);
                     continue;
                 }
 
-                // Remove all platform capabilities first (only from platform roles + admin)
+                // Remove all platform capabilities
+                error_log('[PlatformPermissionModel] Removing platform capabilities from ' . $role_name);
                 foreach (array_keys($this->available_capabilities) as $cap) {
-                    $role->remove_cap($cap);
-                }
-
-                // Administrator gets all capabilities
-                if ($role_name === 'administrator') {
-                    foreach (array_keys($this->available_capabilities) as $cap) {
-                        $role->add_cap($cap);
+                    if (isset($roles[$role_name]['capabilities'][$cap])) {
+                        unset($roles[$role_name]['capabilities'][$cap]);
+                        $modified = true;
                     }
-                    continue;
                 }
 
-                // Platform roles get their default capabilities
-                if ($is_platform_role) {
-                    // Add 'read' capability explicitly - required for wp-admin access
-                    $role->add_cap('read');
+                // Add capabilities back
+                if ($role_name === 'administrator') {
+                    error_log('[PlatformPermissionModel] Adding all capabilities to administrator');
+                    foreach (array_keys($this->available_capabilities) as $cap) {
+                        $roles[$role_name]['capabilities'][$cap] = true;
+                        $modified = true;
+                    }
+                } else if ($is_platform_role) {
+                    error_log('[PlatformPermissionModel] Adding default capabilities to ' . $role_name);
+                    // Add read capability
+                    $roles[$role_name]['capabilities']['read'] = true;
 
+                    // Add default capabilities
                     $default_caps = $this->getDefaultCapabilitiesForRole($role_name);
                     foreach ($default_caps as $cap => $enabled) {
-                        // Skip 'read' as it's already added above
-                        if ($cap === 'read') {
-                            continue;
-                        }
-
                         if ($enabled && isset($this->available_capabilities[$cap])) {
-                            $role->add_cap($cap);
+                            $roles[$role_name]['capabilities'][$cap] = true;
+                            $modified = true;
                         }
                     }
                 }
+                error_log('[PlatformPermissionModel] Completed processing ' . $role_name);
             }
+
+            // Save back to database if modified
+            if ($modified) {
+                error_log('[PlatformPermissionModel] Saving modified roles to database');
+                $updated = update_option($wpdb->prefix . 'user_roles', $roles);
+                error_log('[PlatformPermissionModel] Database update result: ' . ($updated ? 'SUCCESS' : 'NO CHANGE'));
+            }
+
+            error_log('[PlatformPermissionModel] All roles processed successfully');
+            error_log('[PlatformPermissionModel] resetToDefault() END - returning TRUE');
+
+            // Restore time limit
+            @set_time_limit($old_time_limit);
 
             return true;
         } catch (\Exception $e) {
-            error_log('Error resetting platform permissions: ' . $e->getMessage());
+            error_log('[PlatformPermissionModel] EXCEPTION in resetToDefault(): ' . $e->getMessage());
+            error_log('[PlatformPermissionModel] Stack trace: ' . $e->getTraceAsString());
+
+            // Restore time limit
+            if (isset($old_time_limit)) {
+                @set_time_limit($old_time_limit);
+            }
+
+            error_log('[PlatformPermissionModel] resetToDefault() END - returning FALSE');
             return false;
         }
     }

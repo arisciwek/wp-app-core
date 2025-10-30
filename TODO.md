@@ -1,5 +1,103 @@
 # TODO List for WP App Core Plugin
 
+## TODO-3089: Simplify Architecture - Remove TabViewTemplate & NavigationTemplate ✅ COMPLETED
+
+**Status**: ✅ COMPLETED
+**Created**: 2025-10-29
+**Completed**: 2025-10-29
+**Priority**: HIGH
+**Category**: Architecture Simplification, Code Cleanup
+**Related**: Task-3086 (Pembahasan-05), TODO-1188, TODO-1186
+
+**Summary**: Architectural decision to remove TabViewTemplate and NavigationTemplate classes from wp-app-core. Based on "no active users + still development" principle, allowing breaking changes for simpler boilerplate with proper scope separation.
+
+**Problem Analysis (Pembahasan-05)**:
+1. ❌ TabViewTemplate class was NOT USED by wp-agency
+2. ❌ NavigationTemplate was just orchestrator without visual container
+3. ❌ StatsBoxTemplate had dual rendering (hook + filter) - only hook used
+4. ❌ Over-engineering: wrapper classes without value
+5. ❌ CSS prefix violations: statistics classes lacked wpapp- prefix
+
+**Changes Made**:
+
+**Phase 1: Cleanup wp-agency**
+- Removed 'template' key from register_tabs() (not used)
+- Updated docblocks to "entity-owned hook pattern"
+- No TabViewTemplate references
+
+**Phase 2: Cleanup wp-app-core**
+- ❌ DELETED: TabViewTemplate.php (202 lines)
+- ❌ DELETED: NavigationTemplate.php
+- ❌ DELETED: docs/datatable/TabViewTemplate.md (683 lines)
+- ✅ DashboardTemplate: Direct calls to StatsBoxTemplate + FiltersTemplate
+
+**Hotfix: TabSystemTemplate**
+- Added support for 2 patterns:
+  1. Direct Inclusion (with 'template' key)
+  2. Hook-Based AJAX (without 'template' key)
+- Version: 1.0.0 → 1.1.0
+
+**CSS Prefix Fix**:
+- Added wpapp- prefix to ALL statistics classes
+- StatsBoxTemplate: statistics-cards → wpapp-statistics-cards
+- wpapp-datatable.css: All .stats-* → .wpapp-stats-*
+- Version: 1.0.0 → 1.1.0
+
+**StatsBoxTemplate Simplification**:
+- ❌ DELETED: get_stats() method (wpapp_datatable_stats filter)
+- ❌ DELETED: render_stat_box() method (HTML rendering)
+- ❌ DELETED: All wpapp-stats-* CSS selectors (76 lines)
+- ✅ NOW: Pure infrastructure (container + hook only)
+- Plugins render with local scope classes (agency-*, customer-*)
+- Version: 1.1.0 → 1.2.0
+- Code reduction: 187 → 90 lines (-52%)
+
+**Final Architecture**:
+
+**Entity-Owned Hook Pattern** (Simple):
+```php
+// AgencyDashboardController provides hooks directly
+do_action('wpapp_tab_view_content', 'agency', $tab_id, $data);
+do_action('wpapp_tab_view_after_content', 'agency', $tab_id, $data);
+
+// StatsBoxTemplate provides container + hook only
+<div class="wpapp-statistics-container">
+    <?php do_action('wpapp_statistics_cards_content', $entity); ?>
+</div>
+```
+
+**Benefits Achieved**:
+- ✅ No dead code (TabViewTemplate, NavigationTemplate deleted)
+- ✅ Simpler architecture (no wrapper classes)
+- ✅ Clear ownership (entities own hooks)
+- ✅ Proper scope separation (wpapp- = global, plugin- = local)
+- ✅ Infrastructure vs Implementation pattern enforced
+- ✅ Total code reduction: 1,000+ lines removed
+
+**Files Modified/Deleted**:
+- wp-agency: AgencyDashboardController.php (docblocks updated)
+- wp-app-core: TabViewTemplate.php (DELETED)
+- wp-app-core: NavigationTemplate.php (DELETED)
+- wp-app-core: DashboardTemplate.php (v1.1.0)
+- wp-app-core: TabSystemTemplate.php (v1.1.0)
+- wp-app-core: StatsBoxTemplate.php (v1.2.0, simplified)
+- wp-app-core: wpapp-datatable.css (v1.2.0, removed stats selectors)
+
+**Design Philosophy**:
+> **"No active users + still development"** → Simplify aggressively
+> - Remove dead code
+> - Entities own their hooks
+> - No forced patterns
+> - Simple > Abstraction
+
+**Related TODOs**:
+- TODO-1188: ❌ OBSOLETE (TabViewTemplate deleted)
+- TODO-1186: ❌ OBSOLETE (TabViewTemplate deleted)
+
+See: [wp-agency/TODO/TODO-3089-simplify-remove-tabviewtemplate.md](/home/mkt01/Public/wppm/public_html/wp-content/plugins/wp-agency/TODO/TODO-3089-simplify-remove-tabviewtemplate.md)
+
+---
+
 ## TODO-1187: Simplify Container Structure for Consistent Spacing ✅ COMPLETED
 
 **Status**: ✅ COMPLETED
@@ -82,74 +180,56 @@ See: [TODO/TODO-1187-simplify-container-structure.md](TODO/TODO-1187-simplify-co
 
 ---
 
-## TODO-1186: Implement TabViewTemplate System ✅ COMPLETED
+## TODO-1186: Implement TabViewTemplate System ❌ OBSOLETE
 
-**Status**: ✅ COMPLETED
+**Status**: ❌ OBSOLETE - System Deleted (2025-10-29)
 **Created**: 2025-10-27
 **Completed**: 2025-10-27
+**Deleted**: 2025-10-29
 **Priority**: HIGH
 **Category**: Architecture, Template System
 **Dependencies**: TODO-1185 (Scope Separation)
+**Superseded By**: TODO-3089 (Entity-Owned Hook Pattern)
 
-**Summary**: Implementasi TabViewTemplate system untuk menyediakan reusable container dengan hook-based content injection pattern. Memungkinkan multiple plugins (wp-agency, wp-customer, wp-company) menggunakan container yang sama dengan content yang berbeda.
+**Summary**: Implementasi TabViewTemplate system yang berhasil dibuat namun kemudian dihapus karena over-engineering. Entities (wp-agency) tidak menggunakan TabViewTemplate karena sudah menyediakan hook langsung di controller.
 
-**Architecture Pattern - Container + Hook**:
-```
-wp-app-core (GLOBAL):
-  <div class="wpapp-tab-view-container">
-    <?php do_action('wpapp_tab_view_content', $entity, $tab_id, $data); ?>
-  </div>
+**Why Deleted**:
+1. ❌ TabViewTemplate NOT USED by wp-agency (tab files use pure HTML pattern)
+2. ❌ Over-engineered wrapper class without value
+3. ❌ Entities provide hooks directly in controllers (simpler)
+4. ✅ "No active users" allows breaking changes for simplification
 
-wp-agency (LOCAL):
-  add_action('wpapp_tab_view_content', function($entity, $tab_id, $data) {
-    if ($entity !== 'agency') return;
-    // Render content dengan agency-* classes
-  });
-```
+**What Replaced It**:
 
-**Implementation**:
-1. ✅ Created `TabViewTemplate.php` (202 lines)
-   - `render($entity, $tab_id, $data)` - Main method
-   - `has_content()` - Check if content registered
-   - `render_empty_state()` - Fallback
-
-2. ✅ Created `TabViewTemplate.md` (683 lines)
-   - Complete usage guide
-   - Hook reference
-   - Migration examples
-   - Scope separation rules
-
-**Hook Fired**:
+**Entity-Owned Hook Pattern** (Simpler, No Wrapper):
 ```php
-do_action('wpapp_tab_view_content', $entity, $tab_id, $data);
+// AgencyDashboardController::render_tab_contents()
+// Entity provides hooks directly (no TabViewTemplate needed)
+do_action('wpapp_tab_view_content', 'agency', $tab_id, $data);
+do_action('wpapp_tab_view_after_content', 'agency', $tab_id, $data);
 ```
 
-**Benefits Achieved**:
-- ✅ Reusability: Multiple plugins use same container
-- ✅ Flexibility: Each plugin controls own content
-- ✅ Maintainability: Clear separation (container vs content)
-- ✅ Scalability: Easy to add new plugins
-- ✅ Consistency: Follows wpapp_page_header_right pattern
+**Files Deleted**:
+- ❌ `src/Views/DataTable/Templates/TabViewTemplate.php` (202 lines)
+- ❌ `docs/datatable/TabViewTemplate.md` (683 lines)
+- **Total**: 885 lines removed
 
-**Scope Separation Rules**:
-- Global (wp-app-core): `wpapp-tab-view-container` (container only)
-- Local (plugins): `agency-tab-*`, `customer-tab-*` (content)
+**Lessons Learned**:
+- ✅ Hook-based pattern is correct
+- ✅ Scope separation principle is correct
+- ❌ Wrapper class was over-engineering
+- ❌ Forced pattern when entities can choose
+- ✅ "wp-app-core provides OPTIONAL utilities, not mandatory frameworks"
 
-**Integration Status**:
-- ✅ wp-agency (TODO-3082)
-- ⏳ wp-customer (pending)
-- ⏳ wp-company (pending)
+**Benefits of Deletion**:
+- ✅ Simpler architecture (no wrapper class)
+- ✅ Clear ownership (entity owns hooks)
+- ✅ No unused code
+- ✅ Same extensibility
 
-**Files Created**:
-- `src/Views/DataTable/Templates/TabViewTemplate.php`
-- `docs/datatable/TabViewTemplate.md`
-- `/TODO/TODO-1186-implement-tabview-template-system.md`
-
-**Code Quality**:
-- Centralized system ✅
-- Hook-based ✅
-- Documented ✅
-- Proven pattern ✅
+**Related**:
+- TODO-3089: Complete removal documentation (Pembahasan-05, Phase 2)
+- TODO-1188: Extension hook (now obsolete, class deleted)
 
 See: [TODO/TODO-1186-implement-tabview-template-system.md](TODO/TODO-1186-implement-tabview-template-system.md)
 

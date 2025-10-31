@@ -72,6 +72,13 @@ class DataTableQueryBuilder {
     private $joins = [];
 
     /**
+     * GROUP BY clause
+     *
+     * @var string
+     */
+    private $group_by = '';
+
+    /**
      * Search value from DataTables
      *
      * @var string
@@ -197,6 +204,22 @@ class DataTableQueryBuilder {
     }
 
     /**
+     * Set GROUP BY clause
+     *
+     * @param string $group_by Column(s) to group by
+     * @return self For method chaining
+     * @since 1.1.0
+     *
+     * @example
+     * $builder->set_group_by('customer_id');
+     * $builder->set_group_by('c.id, c.company_name');
+     */
+    public function set_group_by($group_by) {
+        $this->group_by = $group_by;
+        return $this;
+    }
+
+    /**
      * Set search value for DataTables global search
      *
      * @param string $search_value Search term
@@ -302,6 +325,20 @@ class DataTableQueryBuilder {
     }
 
     /**
+     * Build GROUP BY clause
+     *
+     * @return string SQL GROUP BY clause
+     * @since 1.1.0
+     */
+    private function build_group_by() {
+        if (empty($this->group_by)) {
+            return '';
+        }
+
+        return "GROUP BY {$this->group_by}";
+    }
+
+    /**
      * Build ORDER BY clause
      *
      * @return string SQL ORDER BY clause
@@ -355,8 +392,15 @@ class DataTableQueryBuilder {
     private function build_query($with_limit = true) {
         $query = $this->build_select() . ' ' .
                  $this->build_from() . ' ' .
-                 $this->build_where() . ' ' .
-                 $this->build_order();
+                 $this->build_where();
+
+        // Add GROUP BY if set
+        $group_by = $this->build_group_by();
+        if (!empty($group_by)) {
+            $query .= ' ' . $group_by;
+        }
+
+        $query .= ' ' . $this->build_order();
 
         if ($with_limit) {
             $query .= ' ' . $this->build_limit();
@@ -396,8 +440,15 @@ class DataTableQueryBuilder {
      * @since 1.0.0
      */
     public function count_total() {
+        // When using GROUP BY, use COUNT(DISTINCT ...) on the grouped column
+        if (!empty($this->group_by)) {
+            $count_column = "COUNT(DISTINCT {$this->group_by})";
+        } else {
+            $count_column = "COUNT({$this->index_column})";
+        }
+
         // Build count query with only base WHERE conditions (no search)
-        $query = "SELECT COUNT({$this->index_column}) as total FROM {$this->table}";
+        $query = "SELECT {$count_column} as total FROM {$this->table}";
 
         // Add JOINs if needed for count
         if (!empty($this->joins)) {
@@ -426,7 +477,14 @@ class DataTableQueryBuilder {
      * @since 1.0.0
      */
     public function count_filtered() {
-        $query = "SELECT COUNT({$this->index_column}) as total " .
+        // When using GROUP BY, use COUNT(DISTINCT ...) on the grouped column
+        if (!empty($this->group_by)) {
+            $count_column = "COUNT(DISTINCT {$this->group_by})";
+        } else {
+            $count_column = "COUNT({$this->index_column})";
+        }
+
+        $query = "SELECT {$count_column} as total " .
                  $this->build_from() . ' ' .
                  $this->build_where();
 

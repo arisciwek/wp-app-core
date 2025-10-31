@@ -198,26 +198,44 @@
          * @param {jQuery} $tab Tab content element
          */
         autoLoadTabContent($tab) {
+            console.log('[WPApp Tab] autoLoadTabContent called');
+            console.log('[WPApp Tab] Tab element:', $tab);
+            console.log('[WPApp Tab] Has wpapp-tab-autoload:', $tab.hasClass('wpapp-tab-autoload'));
+            console.log('[WPApp Tab] Has loaded:', $tab.hasClass('loaded'));
+
             // Check if tab needs auto-loading
             if (!$tab.hasClass('wpapp-tab-autoload')) {
+                console.log('[WPApp Tab] Tab does NOT have wpapp-tab-autoload class - skipping');
                 return;
             }
 
             // Check if already loaded
             if ($tab.hasClass('loaded')) {
+                console.log('[WPApp Tab] Tab already loaded - skipping');
                 return;
             }
 
-            // Get data attributes
-            const agencyId = $tab.data('agency-id');
-            const loadAction = $tab.data('load-action');
-            const contentTarget = $tab.data('content-target');
-            const errorMessage = $tab.data('error-message') || 'Failed to load content';
+            // Get data attributes (use .attr() to avoid jQuery .data() caching)
+            const agencyId = $tab.attr('data-agency-id');
+            const loadAction = $tab.attr('data-load-action');
+            const contentTarget = $tab.attr('data-content-target');
+            const errorMessage = $tab.attr('data-error-message') || 'Failed to load content';
+
+            console.log('[WPApp Tab] Data attributes:', {
+                agencyId: agencyId,
+                loadAction: loadAction,
+                contentTarget: contentTarget,
+                errorMessage: errorMessage
+            });
 
             if (!loadAction || !agencyId) {
                 console.error('[WPApp Tab] Missing required data attributes for auto-load');
+                console.error('[WPApp Tab] loadAction:', loadAction);
+                console.error('[WPApp Tab] agencyId:', agencyId);
                 return;
             }
+
+            console.log('[WPApp Tab] Starting AJAX request for:', loadAction);
 
             // Show loading state
             $tab.find('.wpapp-tab-loading').show();
@@ -234,17 +252,24 @@
                     agency_id: agencyId
                 },
                 success: function(response) {
+                    console.log('[WPApp Tab] AJAX Success Response:', response);
                     $tab.find('.wpapp-tab-loading').hide();
 
                     if (response.success && response.data.html) {
                         // Load content into target
+                        console.log('[WPApp Tab] Loading HTML into:', contentTarget);
+                        console.log('[WPApp Tab] HTML length:', response.data.html.length);
+
                         const $content = $tab.find(contentTarget);
+                        console.log('[WPApp Tab] Target element found:', $content.length);
+
                         $content.html(response.data.html).addClass('loaded').show();
 
                         // Mark tab as loaded
                         $tab.addClass('loaded');
 
                         console.log('[WPApp Tab] Content loaded successfully for:', loadAction);
+                        console.log('[WPApp Tab] HTML preview:', response.data.html.substring(0, 200));
                     } else {
                         // Show error
                         $tab.find('.wpapp-error-message').text(response.data.message || errorMessage);
@@ -312,10 +337,10 @@
             if (tabId) {
                 this.switchTab(tabId);
             } else {
-                // Set first tab as current
+                // Switch to first tab as default
                 const $firstTab = this.tabWrapper.find('.nav-tab').first();
                 if ($firstTab.length > 0) {
-                    this.currentTab = $firstTab.data('tab');
+                    this.switchTab($firstTab.data('tab'));
                 }
             }
         }

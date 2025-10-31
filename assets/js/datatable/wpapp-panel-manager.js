@@ -566,6 +566,47 @@
 
                     if ($tab.length > 0) {
                         console.log('[WPApp Panel] Updating tab #' + tabId + ' with content length:', content.length);
+
+                        // Create temporary element to parse content
+                        const $temp = $('<div>').html(content);
+                        const $firstChild = $temp.children().first();
+
+                        // If content has a wrapper div, copy its classes and data-attributes to tab
+                        if ($firstChild.length > 0) {
+                            // Copy classes (except wpapp-tab-content which tab already has)
+                            const classes = $firstChild.attr('class');
+                            if (classes) {
+                                const classArray = classes.split(/\s+/);
+                                classArray.forEach(function(cls) {
+                                    if (cls && cls !== 'wpapp-tab-content' && !$tab.hasClass(cls)) {
+                                        $tab.addClass(cls);
+                                        console.log('[WPApp Panel] Added class to tab:', cls);
+                                    }
+                                });
+                            }
+
+                            // Copy data-attributes
+                            $.each($firstChild[0].attributes, function(idx, attr) {
+                                if (attr.name.startsWith('data-')) {
+                                    $tab.attr(attr.name, attr.value);
+                                    console.log('[WPApp Panel] Added attribute:', attr.name, '=', attr.value);
+                                }
+                            });
+                        }
+
+                        // Destroy any DataTables in this tab before replacing content
+                        $tab.find('table').each(function() {
+                            if ($.fn.DataTable && $.fn.DataTable.isDataTable(this)) {
+                                console.log('[WPApp Panel] Destroying DataTable:', $(this).attr('id'));
+                                $(this).DataTable().destroy();
+                            }
+                        });
+
+                        // Remove 'loaded' class to allow re-initialization of autoload tabs
+                        $tab.removeClass('loaded');
+                        console.log('[WPApp Panel] Removed "loaded" class from tab:', tabId);
+
+                        // Inject content
                         $tab.html(content);
                         updatedCount++;
                     } else {

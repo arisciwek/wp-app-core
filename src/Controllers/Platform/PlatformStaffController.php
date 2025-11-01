@@ -4,7 +4,7 @@
  *
  * @package     WP_App_Core
  * @subpackage  Controllers/Platform
- * @version     1.0.8
+ * @version     1.0.9
  * @author      arisciwek
  *
  * Path: /wp-app-core/src/Controllers/Platform/PlatformStaffController.php
@@ -17,6 +17,12 @@
  *              Includes permission validation dan error handling.
  *
  * Changelog:
+ * 1.0.9 - 2025-11-01 (TODO-1191: Separation of Concerns)
+ * - REMOVED: Menu registration (moved to MenuManager)
+ * - REMOVED: Asset enqueue (moved to class-dependencies.php)
+ * - Controller now focuses only on business logic
+ * - Follows wp-app-core architectural pattern
+ *
  * 1.0.8 - 2025-11-01 (TODO-1190: Static ID Hook Pattern)
  * - Added wp_app_core_staff_user_before_insert filter hook
  * - Handle static WordPress user ID injection in createStaff()
@@ -48,7 +54,7 @@ class PlatformStaffController {
         $this->cache = new PlatformCacheManager();
         $this->validator = new PlatformStaffValidator();
 
-        // Register AJAX endpoints
+        // Register AJAX endpoints ONLY
         add_action('wp_ajax_handle_platform_staff_datatable', [$this, 'handleDataTableRequest']);
         add_action('wp_ajax_get_platform_staff_stats', [$this, 'getStatistics']);
         add_action('wp_ajax_get_platform_staff_details', [$this, 'getStaffDetails']);
@@ -60,112 +66,6 @@ class PlatformStaffController {
         \WPAppCore\Controllers\DataTable\DataTableController::register_ajax_action(
             'platform_staff_datatable_test',
             'WPAppCore\\Models\\Platform\\PlatformStaffDataTableModel'
-        );
-
-        // Register menu page
-        add_action('admin_menu', [$this, 'registerMenu'], 20);
-
-        // Register assets
-        add_action('admin_enqueue_scripts', [$this, 'enqueueAssets']);
-    }
-
-    /**
-     * Register admin menu
-     */
-    public function registerMenu() {
-        add_menu_page(
-            __('Platform Staff', 'wp-app-core'),
-            __('Platform Staff', 'wp-app-core'),
-            'manage_options', // Administrator can access
-            'wp-app-core-platform-staff',
-            [$this, 'renderDashboard'],
-            'dashicons-groups',
-            25
-        );
-
-        // Add submenu for DataTable Test
-        add_submenu_page(
-            'wp-app-core-platform-staff',
-            __('DataTable Test', 'wp-app-core'),
-            __('🧪 DataTable Test', 'wp-app-core'),
-            'manage_options',
-            'wp-app-core-datatable-test',
-            [$this, 'renderDataTableTest']
-        );
-    }
-
-    /**
-     * Enqueue assets
-     */
-    public function enqueueAssets($hook) {
-        if ($hook !== 'toplevel_page_wp-app-core-platform-staff') {
-            return;
-        }
-
-        // DataTables library from CDN
-        wp_enqueue_style(
-            'datatables',
-            'https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css',
-            [],
-            '1.13.7'
-        );
-
-        wp_enqueue_script(
-            'datatables',
-            'https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js',
-            ['jquery'],
-            '1.13.7',
-            true
-        );
-
-        // CSS
-        wp_enqueue_style(
-            'wp-app-core-platform-staff',
-            WP_APP_CORE_PLUGIN_URL . 'assets/css/platform/platform-staff-style.css',
-            ['datatables'],
-            WP_APP_CORE_VERSION
-        );
-
-        wp_enqueue_style(
-            'wp-app-core-platform-staff-datatable',
-            WP_APP_CORE_PLUGIN_URL . 'assets/css/platform/platform-staff-datatable-style.css',
-            ['wp-app-core-platform-staff'],
-            WP_APP_CORE_VERSION
-        );
-
-        // JavaScript
-        wp_enqueue_script(
-            'wp-app-core-platform-staff',
-            WP_APP_CORE_PLUGIN_URL . 'assets/js/platform/platform-staff-script.js',
-            ['jquery', 'datatables'],
-            WP_APP_CORE_VERSION,
-            true
-        );
-
-        wp_enqueue_script(
-            'wp-app-core-platform-staff-datatable',
-            WP_APP_CORE_PLUGIN_URL . 'assets/js/platform/platform-staff-datatable-script.js',
-            ['jquery', 'datatables', 'wp-app-core-platform-staff'],
-            WP_APP_CORE_VERSION,
-            true
-        );
-
-        // Localize script
-        wp_localize_script(
-            'wp-app-core-platform-staff',
-            'wpAppCoreStaffData',
-            [
-                'ajaxUrl' => admin_url('admin-ajax.php'),
-                'nonce' => wp_create_nonce('wp_app_core_platform_staff_nonce'),
-                'i18n' => [
-                    'confirmDelete' => __('Apakah Anda yakin ingin menghapus staff ini?', 'wp-app-core'),
-                    'deleteSuccess' => __('Staff berhasil dihapus', 'wp-app-core'),
-                    'deleteError' => __('Gagal menghapus staff', 'wp-app-core'),
-                    'saveSuccess' => __('Data staff berhasil disimpan', 'wp-app-core'),
-                    'saveError' => __('Gagal menyimpan data staff', 'wp-app-core'),
-                    'loadError' => __('Gagal memuat data', 'wp-app-core'),
-                ]
-            ]
         );
     }
 

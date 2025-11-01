@@ -4,7 +4,7 @@
  *
  * @package     WP_App_Core
  * @subpackage  Controllers
- * @version     2.0.0
+ * @version     2.1.0
  * @author      arisciwek
  *
  * Path: /wp-app-core/src/Controllers/MenuManager.php
@@ -13,6 +13,11 @@
  *              Manages all admin menus and submenus
  *
  * Changelog:
+ * 2.1.0 - 2025-11-01 (TODO-1191: Separation of Concerns)
+ * - Added: Platform Staff menu registration
+ * - Added: staff_controller property
+ * - Centralized menu management for all controllers
+ *
  * 2.0.0 - 2025-10-19
  * - Migrated to WPAppCore namespace
  * - Updated for platform settings
@@ -25,16 +30,19 @@
 namespace WPAppCore\Controllers;
 
 use WPAppCore\Controllers\PlatformSettingsController;
+use WPAppCore\Controllers\Platform\PlatformStaffController;
 
 class MenuManager {
     private $plugin_name;
     private $version;
     private $settings_controller;
+    private $staff_controller;
 
     public function __construct($plugin_name, $version) {
         $this->plugin_name = $plugin_name;
         $this->version = $version;
         $this->settings_controller = new PlatformSettingsController();
+        $this->staff_controller = new PlatformStaffController();
     }
 
     public function init() {
@@ -54,15 +62,25 @@ class MenuManager {
             60
         );
 
-        // You can add more submenus here in the future
-        // Example:
-        // add_submenu_page(
-        //     'wp-app-core-settings',
-        //     __('Users', 'wp-app-core'),
-        //     __('Users', 'wp-app-core'),
-        //     'manage_platform_users',
-        //     'wp-app-core-users',
-        //     [$this->user_controller, 'renderPage']
-        // );
+        // Platform Staff Menu
+        add_menu_page(
+            __('Platform Staff', 'wp-app-core'),
+            __('Platform Staff', 'wp-app-core'),
+            'manage_options',
+            'wp-app-core-platform-staff',
+            [$this->staff_controller, 'renderDashboard'],
+            'dashicons-groups',
+            25
+        );
+
+        // DataTable Test Submenu (under Platform Staff)
+        add_submenu_page(
+            'wp-app-core-platform-staff',
+            __('DataTable Test', 'wp-app-core'),
+            __('🧪 DataTable Test', 'wp-app-core'),
+            'manage_options',
+            'wp-app-core-datatable-test',
+            [$this->staff_controller, 'renderDataTableTest']
+        );
     }
 }

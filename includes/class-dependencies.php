@@ -4,7 +4,7 @@
  *
  * @package     WP_App_Core
  * @subpackage  Includes
- * @version     1.1.1
+ * @version     1.2.0
  * @author      arisciwek
  *
  * Path: /wp-app-core/includes/class-dependencies.php
@@ -13,6 +13,12 @@
  *              untuk admin bar dan komponen core lainnya
  *
  * Changelog:
+ * 1.2.0 - 2025-11-01 (TODO-1191: Separation of Concerns)
+ * - Added: Platform Staff assets enqueue
+ * - Added: enqueue_platform_staff_assets() method
+ * - Centralized all asset loading (admin bar, settings, platform staff)
+ * - Follows separation of concerns pattern
+ *
  * 1.1.1 - 2025-10-26 (TODO-1180)
  * - Added: Panel handler enqueue (panel-handler.js)
  * - Added: enqueue_panel_handler() private method
@@ -70,6 +76,9 @@ class WP_App_Core_Dependencies {
 
         // Settings page assets
         add_action('admin_enqueue_scripts', [$this, 'enqueue_settings_assets']);
+
+        // Platform Staff assets
+        add_action('admin_enqueue_scripts', [$this, 'enqueue_platform_staff_assets']);
     }
 
     /**
@@ -337,6 +346,85 @@ class WP_App_Core_Dependencies {
                     'confirmDeleteRoles' => __('WARNING: This will permanently delete all platform roles. Are you sure?', 'wp-app-core'),
                     'confirmDeleteRolesDouble' => __('This action cannot be undone. Continue?', 'wp-app-core'),
                     'confirmResetCapabilities' => __('Are you sure you want to reset all platform capabilities to default values?', 'wp-app-core'),
+                ]
+            ]
+        );
+    }
+
+    /**
+     * Enqueue Platform Staff assets
+     *
+     * @param string $hook Current admin page hook
+     */
+    public function enqueue_platform_staff_assets($hook) {
+        // Only load on platform staff pages
+        if ($hook !== 'toplevel_page_wp-app-core-platform-staff' &&
+            $hook !== 'platform-staff_page_wp-app-core-datatable-test') {
+            return;
+        }
+
+        // DataTables library from CDN
+        wp_enqueue_style(
+            'datatables',
+            'https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css',
+            [],
+            '1.13.7'
+        );
+
+        wp_enqueue_script(
+            'datatables',
+            'https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js',
+            ['jquery'],
+            '1.13.7',
+            true
+        );
+
+        // Platform Staff CSS
+        wp_enqueue_style(
+            'wp-app-core-platform-staff',
+            WP_APP_CORE_PLUGIN_URL . 'assets/css/platform/platform-staff-style.css',
+            ['datatables'],
+            $this->version
+        );
+
+        wp_enqueue_style(
+            'wp-app-core-platform-staff-datatable',
+            WP_APP_CORE_PLUGIN_URL . 'assets/css/platform/platform-staff-datatable-style.css',
+            ['wp-app-core-platform-staff'],
+            $this->version
+        );
+
+        // Platform Staff JavaScript
+        wp_enqueue_script(
+            'wp-app-core-platform-staff',
+            WP_APP_CORE_PLUGIN_URL . 'assets/js/platform/platform-staff-script.js',
+            ['jquery', 'datatables'],
+            $this->version,
+            true
+        );
+
+        wp_enqueue_script(
+            'wp-app-core-platform-staff-datatable',
+            WP_APP_CORE_PLUGIN_URL . 'assets/js/platform/platform-staff-datatable-script.js',
+            ['jquery', 'datatables', 'wp-app-core-platform-staff'],
+            $this->version,
+            true
+        );
+
+        // Localize script
+        wp_localize_script(
+            'wp-app-core-platform-staff',
+            'wpAppCoreStaffData',
+            [
+                'ajaxUrl' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('wp_app_core_platform_staff_nonce'),
+                'i18n' => [
+                    'confirmDelete' => __('Apakah Anda yakin ingin menghapus staff ini?', 'wp-app-core'),
+                    'deleteSuccess' => __('Staff berhasil dihapus', 'wp-app-core'),
+                    'deleteError' => __('Gagal menghapus staff', 'wp-app-core'),
+                    'saveSuccess' => __('Data staff berhasil disimpan', 'wp-app-core'),
+                    'saveError' => __('Gagal menyimpan data staff', 'wp-app-core'),
+                    'loadError' => __('Gagal memuat data', 'wp-app-core'),
                 ]
             ]
         );

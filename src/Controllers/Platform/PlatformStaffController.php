@@ -4,7 +4,7 @@
  *
  * @package     WP_App_Core
  * @subpackage  Controllers/Platform
- * @version     1.0.0
+ * @version     1.0.8
  * @author      arisciwek
  *
  * Path: /wp-app-core/src/Controllers/Platform/PlatformStaffController.php
@@ -17,6 +17,11 @@
  *              Includes permission validation dan error handling.
  *
  * Changelog:
+ * 1.0.8 - 2025-11-01 (TODO-1190: Static ID Hook Pattern)
+ * - Added wp_app_core_staff_user_before_insert filter hook
+ * - Handle static WordPress user ID injection in createStaff()
+ * - Follows wp-agency/wp-customer pattern for user static IDs
+ *
  * 1.0.0 - 2025-10-19
  * - Initial implementation
  * - CRUD operations
@@ -348,14 +353,58 @@ class PlatformStaffController {
             }
 
             // Step 1: Create WordPress User
+
+            // Prepare user data
+            $user_data = [
+                'user_login' => $user_login,
+                'user_email' => $user_email,
+                'user_pass' => wp_generate_password(12, true, true),
+                'display_name' => $full_name
+            ];
+
+            // HOOK: Apply filter before user creation (allows static ID injection)
+            $user_data = apply_filters(
+                'wp_app_core_staff_user_before_insert',
+                $user_data,
+                $data,
+                'platform_staff'
+            );
+
+            // Handle static ID if requested
+            $static_user_id = null;
+            if (isset($user_data['ID'])) {
+                $static_user_id = $user_data['ID'];
+                unset($user_data['ID']); // Remove before wp_create_user
+            }
+
             $user_id = wp_create_user(
-                $user_login,
-                wp_generate_password(12, true, true), // Auto-generate secure password
-                $user_email
+                $user_data['user_login'],
+                $user_data['user_pass'],
+                $user_data['user_email']
             );
 
             if (is_wp_error($user_id)) {
                 throw new \Exception($user_id->get_error_message());
+            }
+
+            // Update to static ID if requested
+            if ($static_user_id !== null && $static_user_id != $user_id) {
+                global $wpdb;
+                $existing = $wpdb->get_var($wpdb->prepare(
+                    "SELECT ID FROM {$wpdb->users} WHERE ID = %d",
+                    $static_user_id
+                ));
+
+                if (!$existing) {
+                    $wpdb->query('SET FOREIGN_KEY_CHECKS=0');
+                    $wpdb->update($wpdb->users, ['ID' => $static_user_id], ['ID' => $user_id], ['%d'], ['%d']);
+                    $wpdb->update($wpdb->usermeta, ['user_id' => $static_user_id], ['user_id' => $user_id], ['%d'], ['%d']);
+                    $wpdb->query('SET FOREIGN_KEY_CHECKS=1');
+                    $user_id = $static_user_id;
+
+                    // Clear WordPress user caches
+                    clean_user_cache($user_id);
+                }
             }
 
             // Update user display name

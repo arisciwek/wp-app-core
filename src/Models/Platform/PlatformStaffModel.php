@@ -4,7 +4,7 @@
  *
  * @package     WP_App_Core
  * @subpackage  Models/Platform
- * @version     1.0.0
+ * @version     1.0.11
  * @author      arisciwek
  *
  * Path: /wp-app-core/src/Models/Platform/PlatformStaffModel.php
@@ -23,6 +23,12 @@
  * - WordPress $wpdb
  *
  * Changelog:
+ * 1.0.11 - 2025-11-01 (TODO-1190: Static ID Hook Pattern)
+ * - Added wp_app_core_platform_staff_before_insert filter hook
+ * - Reorder $insert_data if 'id' field injected via hook
+ * - Rebuild format array to match data order (prevents column mismatch)
+ * - Follows wp-agency/wp-customer pattern for entity static IDs
+ *
  * 1.0.0 - 2025-10-19
  * - Initial implementation
  * - CRUD operations
@@ -217,7 +223,30 @@ class PlatformStaffModel {
             'status' => !empty($data['status']) ? $data['status'] : 'aktif',
         ];
 
-        $format = ['%d', '%s', '%s', '%s', '%s', '%s', '%s'];
+        // HOOK: Allow static ID injection via filter
+        $insert_data = apply_filters('wp_app_core_platform_staff_before_insert', $insert_data, $data);
+
+        // If 'id' field was injected via filter, reorder to put it first
+        if (isset($insert_data['id'])) {
+            $static_id = $insert_data['id'];
+            unset($insert_data['id']);
+            $insert_data = array_merge(['id' => $static_id], $insert_data);
+        }
+
+        // Prepare format array (must match key order after reordering)
+        $format = [];
+        if (isset($insert_data['id'])) {
+            $format[] = '%d';  // id (if injected)
+        }
+        $format = array_merge($format, [
+            '%d',  // user_id
+            '%s',  // employee_id
+            '%s',  // full_name
+            '%s',  // department
+            '%s',  // hire_date
+            '%s',  // phone
+            '%s',  // status
+        ]);
 
         $result = $wpdb->insert($this->table, $insert_data, $format);
 

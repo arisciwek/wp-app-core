@@ -4,7 +4,7 @@
  *
  * @package     WP_App_Core
  * @subpackage  Database/Demo
- * @version     1.0.0
+ * @version     1.0.8
  * @author      arisciwek
  *
  * Path: /wp-app-core/src/Database/Demo/PlatformDemoData.php
@@ -12,6 +12,7 @@
  * Description: Generate demo data untuk platform staff users.
  *              Creates WordPress users dan platform staff records.
  *              20 users total across 7 platform roles.
+ *              Uses filter hooks for static ID injection.
  *
  * Methods:
  * - generate()           : Generate all platform staff users
@@ -19,6 +20,12 @@
  * - generateSingleUser() : Generate single user
  *
  * Changelog:
+ * 1.0.8 - 2025-11-01 (TODO-1190: Static ID Hook Pattern)
+ * - Added wp_app_core_platform_staff_before_insert filter hook
+ * - Changed to use WPUserGenerator instance method (generateUser)
+ * - Pass _demo_entity_id for entity static ID injection
+ * - Follows wp-agency/wp-customer pattern
+ *
  * 1.0.0 - 2025-10-19
  * - Initial creation
  * - Bulk user generation
@@ -52,32 +59,41 @@ class PlatformDemoData {
         try {
             $wpdb->query('START TRANSACTION');
 
-            $platform_staff_table = $wpdb->prefix . 'app_platform_staff';
+            // Add filter hook to inject static entity IDs for demo data
+            add_filter('wp_app_core_platform_staff_before_insert', function($insert_data, $data) {
+                if (isset($data['_demo_entity_id'])) {
+                    $insert_data['id'] = $data['_demo_entity_id'];
+                    error_log("PlatformDemoData: Injecting static staff ID: {$insert_data['id']}");
+                }
+                return $insert_data;
+            }, 10, 2);
+
             $user_data = PlatformUsersData::getData();
+            $user_generator = new WPUserGenerator();
+            $staff_model = new \WPAppCore\Models\Platform\PlatformStaffModel();
 
             foreach ($user_data as $data) {
-                // Create WordPress user
-                $user_result = WPUserGenerator::createUser(
-                    $data['id'],
-                    $data['username'],
-                    $data['display_name'],
-                    $data['email'],
-                    $data['roles'],
-                    'password123' // Default password untuk demo
-                );
+                // Create WordPress user using instance method
+                try {
+                    $user_id = $user_generator->generateUser([
+                        'id' => $data['id'],
+                        'username' => $data['username'],
+                        'display_name' => $data['display_name'],
+                        'email' => $data['email'],
+                        'roles' => $data['roles']
+                    ]);
 
-                if (is_wp_error($user_result)) {
+                    $results['users_created']++;
+                } catch (\Exception $e) {
                     $results['errors'][] = sprintf(
                         'Failed to create user %s: %s',
                         $data['username'],
-                        $user_result->get_error_message()
+                        $e->getMessage()
                     );
                     continue;
                 }
 
-                $results['users_created']++;
-
-                // Create platform staff record
+                // Create platform staff record via Model (with static ID injection)
                 $staff_data = [
                     'user_id' => $data['id'],
                     'employee_id' => $data['employee_id'],
@@ -85,17 +101,12 @@ class PlatformDemoData {
                     'department' => $data['department'],
                     'hire_date' => $data['hire_date'],
                     'phone' => $data['phone'],
-                    'created_at' => current_time('mysql'),
-                    'updated_at' => current_time('mysql')
+                    '_demo_entity_id' => $data['id']  // Pass for hook injection
                 ];
 
-                $inserted = $wpdb->insert(
-                    $platform_staff_table,
-                    $staff_data,
-                    ['%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s']
-                );
+                $staff_id = $staff_model->create($staff_data);
 
-                if ($inserted === false) {
+                if (!$staff_id) {
                     $results['errors'][] = sprintf(
                         'Failed to create staff record for user ID %d: %s',
                         $data['id'],

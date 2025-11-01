@@ -265,14 +265,20 @@
 
             this.loading(true);
 
+            console.log('[WPApp Modal] Loading content from:', url);
+
             $.ajax({
                 url: url,
                 method: 'GET',
                 success: function(response) {
+                    console.log('[WPApp Modal] Response received, length:', response.length);
+                    console.log('[WPApp Modal] Response preview:', response.substring(0, 200));
                     self.setContent(response);
                 },
                 error: function(xhr, status, error) {
                     console.error('[WPApp Modal] AJAX load failed:', error);
+                    console.error('[WPApp Modal] Status:', xhr.status);
+                    console.error('[WPApp Modal] Response:', xhr.responseText);
                     self.setContent('<p class="error">Failed to load content.</p>');
                 }
             });

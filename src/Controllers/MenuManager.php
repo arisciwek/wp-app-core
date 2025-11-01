@@ -30,19 +30,19 @@
 namespace WPAppCore\Controllers;
 
 use WPAppCore\Controllers\PlatformSettingsController;
-use WPAppCore\Controllers\Platform\PlatformStaffController;
+use WPAppCore\Controllers\Platform\PlatformStaffDashboardController;
 
 class MenuManager {
     private $plugin_name;
     private $version;
     private $settings_controller;
-    private $staff_controller;
+    private $staff_dashboard_controller;
 
     public function __construct($plugin_name, $version) {
         $this->plugin_name = $plugin_name;
         $this->version = $version;
         $this->settings_controller = new PlatformSettingsController();
-        $this->staff_controller = new PlatformStaffController();
+        $this->staff_dashboard_controller = new PlatformStaffDashboardController();
     }
 
     public function init() {
@@ -62,25 +62,15 @@ class MenuManager {
             60
         );
 
-        // Platform Staff Menu
+        // Platform Staff Menu (TODO-1192: Using Dashboard Controller)
         add_menu_page(
             __('Platform Staff', 'wp-app-core'),
             __('Platform Staff', 'wp-app-core'),
-            'manage_options',
+            'view_platform_users',
             'wp-app-core-platform-staff',
-            [$this->staff_controller, 'renderDashboard'],
+            [$this->staff_dashboard_controller, 'renderDashboard'],
             'dashicons-groups',
             25
-        );
-
-        // DataTable Test Submenu (under Platform Staff)
-        add_submenu_page(
-            'wp-app-core-platform-staff',
-            __('DataTable Test', 'wp-app-core'),
-            __('🧪 DataTable Test', 'wp-app-core'),
-            'manage_options',
-            'wp-app-core-datatable-test',
-            [$this->staff_controller, 'renderDataTableTest']
         );
     }
 }

@@ -63,45 +63,37 @@ class DataTableAssetsController {
      * @return void
      */
     public function enqueue_assets($hook) {
-        error_log('=== DataTableAssetsController::enqueue_assets ===');
-        error_log('Current hook: ' . $hook);
+        /**
+         * REFACTORED (TODO-1192): Plug & Play Pattern
+         *
+         * Assets sekarang di-load secara OTOMATIS oleh DashboardTemplate::render()
+         * Plugin TIDAK PERLU register hooks atau modifikasi core
+         *
+         * Method ini hanya untuk manual override jika diperlukan
+         */
 
-        // Only load on specific admin pages with DataTable
-        // Allow filtering for extensibility
-        $allowed_hooks = apply_filters('wpapp_datatable_allowed_hooks', [
-            'toplevel_page_wp-customer',
-            'toplevel_page_wp-agency',
-            'toplevel_page_wp-agency-disnaker',  // Agency Disnaker dashboard
-            'wp-customer_page_wp-customer-companies',
-            'wp-customer_page_wp-customer-company-invoice',
-            'wp-agency_page_wp-agency-employees',
-            // Add more hooks as needed
-        ]);
+        // Allow manual override via filter (untuk kasus edge case)
+        $force_load = apply_filters('wpapp_datatable_force_load_assets', false, $hook);
 
-        error_log('Allowed hooks: ' . print_r($allowed_hooks, true));
-
-        // Check if current page should load DataTable assets
-        $should_load = in_array($hook, $allowed_hooks, true);
-        error_log('Hook in allowed list: ' . ($should_load ? 'YES' : 'NO'));
-
-        // Allow manual override via filter
-        $should_load = apply_filters('wpapp_datatable_should_load_assets', $should_load, $hook);
-        error_log('After filter, should load: ' . ($should_load ? 'YES' : 'NO'));
-
-        if (!$should_load) {
-            error_log('Skipping asset load - hook not in whitelist');
-            return;
+        if ($force_load) {
+            $this->load_assets();
         }
 
-        error_log('✅ Loading DataTable assets for hook: ' . $hook);
+        // Note: Normal case - assets loaded by DashboardTemplate::ensure_assets_loaded()
+        // Tidak perlu enqueue di sini
+    }
 
-        // Enqueue CSS
+    /**
+     * Load all DataTable assets
+     *
+     * Loads CSS, JavaScript, and localizations
+     * Called by DashboardTemplate::ensure_assets_loaded() or force_enqueue()
+     *
+     * @return void
+     */
+    private function load_assets() {
         $this->enqueue_styles();
-
-        // Enqueue JavaScript
         $this->enqueue_scripts();
-
-        // Localize scripts
         $this->localize_scripts();
     }
 
@@ -233,16 +225,14 @@ class DataTableAssetsController {
     /**
      * Public API: Force enqueue assets
      *
-     * Manually enqueue assets regardless of page/hook.
-     * Useful when DataTable is loaded via AJAX or shortcode.
+     * Called by DashboardTemplate::ensure_assets_loaded() untuk auto-loading.
+     * Juga bisa dipanggil manual jika diperlukan (edge cases).
      *
      * @return void
      */
     public static function force_enqueue() {
         $instance = new self();
-        $instance->enqueue_styles();
-        $instance->enqueue_scripts();
-        $instance->localize_scripts();
+        $instance->load_assets();
     }
 
     /**

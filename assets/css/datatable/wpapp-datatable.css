@@ -6,10 +6,16 @@
  *
  * @package WPAppCore
  * @since 1.0.0
- * @version 1.2.0
+ * @version 1.3.0
  * @author arisciwek
  *
  * Changelog:
+ * 1.3.0 - 2025-11-01 (TODO-1192)
+ * - Added: CSS Custom Properties (CSS Variables) for global theming
+ * - Added: DataTable-specific variables (spacing, colors, borders)
+ * - Pattern: Plugins inherit variables automatically (true plug & play)
+ * - Benefit: Consistent theming across all plugins without duplication
+ *
  * 1.2.0 - 2025-10-29 (TODO-3089)
  * - BREAKING: Removed all wpapp-stats-* CSS selectors (no longer needed)
  * - Deleted: .wpapp-stats-card, .wpapp-stats-icon, .wpapp-stats-content
@@ -33,6 +39,306 @@
  * - Base panel layout, statistics, tabs, filters
  * - Some classes without wpapp- prefix (violated convention)
  */
+
+/* ===================================================================
+   CSS CUSTOM PROPERTIES - Global Theme Variables
+   Scope: :root (available to ALL plugins automatically)
+   =================================================================== */
+
+:root {
+    /* ===== DataTable Spacing ===== */
+    --wpapp-dt-padding: 10px;
+    --wpapp-dt-margin: 0 0 20px 0;
+    --wpapp-dt-border-radius: 4px;
+
+    /* ===== DataTable Colors ===== */
+    --wpapp-dt-bg: #fff;
+    --wpapp-dt-border-color: #ddd;
+    --wpapp-dt-header-bg: #f9f9f9;
+    --wpapp-dt-header-color: #333;
+
+    /* ===== DataTable Controls (length, search, pagination) ===== */
+    --wpapp-dt-control-padding: 8px 12px;
+    --wpapp-dt-control-font-size: 13px;
+    --wpapp-dt-control-border: 1px solid #ddd;
+    --wpapp-dt-control-border-radius: 3px;
+    --wpapp-dt-control-bg: #fff;
+
+    /* ===== DataTable Typography ===== */
+    --wpapp-dt-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    --wpapp-dt-font-size: 13px;
+    --wpapp-dt-line-height: 1.5;
+
+    /* ===== Panel Layout ===== */
+    --wpapp-panel-gap: 15px;
+    --wpapp-panel-padding: 20px;
+    --wpapp-panel-bg: #fff;
+    --wpapp-panel-border: 1px solid #ddd;
+
+    /* ===== Filter Controls ===== */
+    --wpapp-filter-padding: 10px 15px;
+    --wpapp-filter-margin: 0 0 15px 0;
+    --wpapp-filter-gap: 10px;
+    --wpapp-filter-label-font-weight: 600;
+    --wpapp-filter-select-width: 200px;
+
+    /* ===== Pagination Buttons ===== */
+    --wpapp-paginate-button-padding: 6px 12px;
+    --wpapp-paginate-button-margin: 0 2px;
+    --wpapp-paginate-button-bg: #fff;
+    --wpapp-paginate-button-color: #2271b1;
+    --wpapp-paginate-button-border: 1px solid #2271b1;
+    --wpapp-paginate-button-border-radius: 3px;
+    --wpapp-paginate-button-font-size: 13px;
+
+    /* Pagination - Hover State */
+    --wpapp-paginate-button-hover-bg: #f0f0f0;
+    --wpapp-paginate-button-hover-color: #135e96;
+    --wpapp-paginate-button-hover-border: 1px solid #135e96;
+
+    /* Pagination - Active/Current State */
+    --wpapp-paginate-button-current-bg: #2271b1;
+    --wpapp-paginate-button-current-color: #fff;
+    --wpapp-paginate-button-current-border: 1px solid #2271b1;
+
+    /* Pagination - Disabled State */
+    --wpapp-paginate-button-disabled-opacity: 0.5;
+    --wpapp-paginate-button-disabled-cursor: not-allowed;
+
+    /* Pagination - Transitions */
+    --wpapp-transition-speed: 0.2s;
+    --wpapp-transition-easing: ease-in-out;
+}
+
+/* ===================================================================
+   DATATABLES CONTROLS - Global Styling using CSS Variables
+   Applies to ALL DataTables across ALL plugins automatically
+   Prefix: .dataTables_ (from DataTables library)
+   =================================================================== */
+
+/* DataTables Length (Show X entries) */
+.dataTables_length {
+    padding: var(--wpapp-dt-control-padding);
+    margin: var(--wpapp-dt-margin);
+}
+
+.dataTables_length label {
+    font-size: var(--wpapp-dt-control-font-size);
+    font-weight: normal;
+    margin: 0;
+}
+
+.dataTables_length select {
+    padding: var(--wpapp-dt-control-padding);
+    font-size: var(--wpapp-dt-control-font-size);
+    border: var(--wpapp-dt-control-border);
+    border-radius: var(--wpapp-dt-control-border-radius);
+    background: var(--wpapp-dt-control-bg);
+    margin: 0 5px;
+}
+
+/* DataTables Filter (Search box) */
+.dataTables_filter {
+    padding: var(--wpapp-dt-control-padding);
+    margin: var(--wpapp-dt-margin);
+}
+
+.dataTables_filter label {
+    font-size: var(--wpapp-dt-control-font-size);
+    font-weight: normal;
+    margin: 0;
+}
+
+.dataTables_filter input {
+    padding: var(--wpapp-dt-control-padding);
+    font-size: var(--wpapp-dt-control-font-size);
+    border: var(--wpapp-dt-control-border);
+    border-radius: var(--wpapp-dt-control-border-radius);
+    background: var(--wpapp-dt-control-bg);
+    margin-left: 5px;
+}
+
+/* DataTables Info (Showing X to Y of Z entries) */
+.dataTables_info {
+    padding: var(--wpapp-dt-control-padding);
+    font-size: var(--wpapp-dt-control-font-size);
+    color: #666;
+}
+
+/* DataTables Pagination Container */
+.dataTables_paginate {
+    padding: var(--wpapp-dt-control-padding);
+    display: inline-flex;
+    gap: var(--wpapp-paginate-button-margin);
+}
+
+/* Pagination Buttons - Base State */
+.dataTables_paginate .paginate_button {
+    padding: var(--wpapp-paginate-button-padding);
+    margin: var(--wpapp-paginate-button-margin);
+    font-size: var(--wpapp-paginate-button-font-size);
+    border: var(--wpapp-paginate-button-border);
+    border-radius: var(--wpapp-paginate-button-border-radius);
+    background: var(--wpapp-paginate-button-bg);
+    color: var(--wpapp-paginate-button-color);
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: all var(--wpapp-transition-speed) var(--wpapp-transition-easing);
+    font-weight: 500;
+    line-height: 1;
+}
+
+/* Pagination Buttons - Hover State */
+.dataTables_paginate .paginate_button:hover {
+    background: var(--wpapp-paginate-button-hover-bg);
+    color: var(--wpapp-paginate-button-hover-color);
+    border: var(--wpapp-paginate-button-hover-border);
+    text-decoration: none;
+}
+
+/* Pagination Buttons - Active/Current State */
+.dataTables_paginate .paginate_button.current {
+    background: var(--wpapp-paginate-button-current-bg);
+    color: var(--wpapp-paginate-button-current-color);
+    border: var(--wpapp-paginate-button-current-border);
+    font-weight: 600;
+}
+
+/* Pagination Buttons - Current Hover (no change) */
+.dataTables_paginate .paginate_button.current:hover {
+    background: var(--wpapp-paginate-button-current-bg);
+    color: var(--wpapp-paginate-button-current-color);
+    border: var(--wpapp-paginate-button-current-border);
+    cursor: default;
+}
+
+/* Pagination Buttons - Disabled State */
+.dataTables_paginate .paginate_button.disabled {
+    opacity: var(--wpapp-paginate-button-disabled-opacity);
+    cursor: var(--wpapp-paginate-button-disabled-cursor);
+    pointer-events: none;
+}
+
+/* Pagination Buttons - Focus State (Accessibility) */
+.dataTables_paginate .paginate_button:focus {
+    outline: 2px solid var(--wpapp-paginate-button-color);
+    outline-offset: 2px;
+}
+
+/* Pagination - Previous/Next Buttons */
+.dataTables_paginate .paginate_button.previous,
+.dataTables_paginate .paginate_button.next {
+    font-weight: 600;
+}
+
+/* Pagination - Ellipsis */
+.dataTables_paginate .ellipsis {
+    padding: var(--wpapp-paginate-button-padding);
+    color: #666;
+    cursor: default;
+}
+
+/* ========================================
+   Filter Controls Styling
+   Uses: --wpapp-filter-* variables
+   Applied to: .wpapp-filters-container and descendants
+======================================== */
+
+/* Filter Container */
+.wpapp-filters-container {
+    padding: var(--wpapp-filter-padding);
+    margin: var(--wpapp-filter-margin);
+    background: var(--wpapp-dt-bg);
+    border: var(--wpapp-dt-control-border);
+    border-radius: var(--wpapp-dt-border-radius);
+}
+
+/* Filter Inner Wrapper */
+.wpapp-datatable-filters {
+    display: flex;
+    align-items: center;
+    gap: var(--wpapp-filter-gap);
+    flex-wrap: wrap;
+}
+
+/* Filter Group (label + control) */
+.wpapp-filter-group,
+.wpapp-status-filter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Filter Labels */
+.wpapp-filter-label {
+    font-weight: var(--wpapp-filter-label-font-weight);
+    font-size: var(--wpapp-dt-control-font-size);
+    color: var(--wpapp-dt-header-color);
+    margin: 0;
+}
+
+/* Filter Select Dropdowns */
+.wpapp-filter-select,
+.wpapp-filter-control.wpapp-filter-select {
+    width: var(--wpapp-filter-select-width);
+    padding: var(--wpapp-dt-control-padding);
+    font-size: var(--wpapp-dt-control-font-size);
+    border: var(--wpapp-dt-control-border);
+    border-radius: var(--wpapp-dt-control-border-radius);
+    background: var(--wpapp-dt-control-bg);
+    transition: border-color var(--wpapp-transition-speed) var(--wpapp-transition-easing);
+}
+
+.wpapp-filter-select:focus,
+.wpapp-filter-control.wpapp-filter-select:focus {
+    outline: none;
+    border-color: var(--wpapp-paginate-button-current-bg);
+    box-shadow: 0 0 0 1px var(--wpapp-paginate-button-current-bg);
+}
+
+/* Filter Search Input */
+.wpapp-filter-control.wpapp-filter-search {
+    padding: var(--wpapp-dt-control-padding);
+    font-size: var(--wpapp-dt-control-font-size);
+    border: var(--wpapp-dt-control-border);
+    border-radius: var(--wpapp-dt-control-border-radius);
+    background: var(--wpapp-dt-control-bg);
+    min-width: 250px;
+    transition: border-color var(--wpapp-transition-speed) var(--wpapp-transition-easing);
+}
+
+.wpapp-filter-control.wpapp-filter-search:focus {
+    outline: none;
+    border-color: var(--wpapp-paginate-button-current-bg);
+    box-shadow: 0 0 0 1px var(--wpapp-paginate-button-current-bg);
+}
+
+/* DataTable Wrapper */
+.dataTables_wrapper {
+    font-family: var(--wpapp-dt-font-family);
+    font-size: var(--wpapp-dt-font-size);
+    line-height: var(--wpapp-dt-line-height);
+}
+
+/* DataTable Main Table */
+.dataTables_wrapper table.dataTable {
+    border: var(--wpapp-dt-control-border);
+    border-radius: var(--wpapp-dt-border-radius);
+    background: var(--wpapp-dt-bg);
+}
+
+.dataTables_wrapper table.dataTable thead th {
+    background: var(--wpapp-dt-header-bg);
+    color: var(--wpapp-dt-header-color);
+    padding: var(--wpapp-dt-padding);
+    border-bottom: 2px solid var(--wpapp-dt-border-color);
+}
+
+.dataTables_wrapper table.dataTable tbody td {
+    padding: var(--wpapp-dt-padding);
+    border-bottom: 1px solid var(--wpapp-dt-border-color);
+}
 
 /* ===================================================================
    PAGE HEADER - Global Container (Scope Global - wp-app-core)

@@ -56,8 +56,13 @@ class DashboardTemplate {
         // Validate config
         $config = self::validate_config($config);
 
-        // Note: Assets are enqueued by DataTableAssetsController
-        // See: wp-app-core/src/Controllers/DataTable/DataTableAssetsController.php
+        // AUTO-LOAD ASSETS (Plug & Play Pattern)
+        // Container detects usage and loads assets automatically
+        // Plugin tidak perlu register hooks atau modifikasi core
+        self::ensure_assets_loaded();
+
+        // Fire action untuk tracking
+        do_action('wpapp_dashboard_template_rendered', $config);
 
         // Start rendering
         ?>
@@ -103,6 +108,29 @@ class DashboardTemplate {
         </div>
         </div>
         <?php
+    }
+
+    /**
+     * Ensure DataTable assets are loaded
+     *
+     * Auto-detection pattern: Container loads assets automatically
+     * when DashboardTemplate is used. Plugin tidak perlu register hooks.
+     *
+     * @return void
+     */
+    private static function ensure_assets_loaded() {
+        // Check if assets already loaded
+        if (wp_script_is('wpapp-panel-manager', 'enqueued')) {
+            return; // Already loaded
+        }
+
+        // Check if assets already printed (late enqueue scenario)
+        if (wp_script_is('wpapp-panel-manager', 'done')) {
+            return; // Already printed
+        }
+
+        // Force enqueue assets
+        \WPAppCore\Controllers\DataTable\DataTableAssetsController::force_enqueue();
     }
 
     /**

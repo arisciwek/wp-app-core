@@ -132,63 +132,6 @@ class WP_App_Core_Dependencies {
                 'debug' => (defined('WP_DEBUG') && WP_DEBUG)
             ]
         );
-
-        // Panel Handler - DEPRECATED (TODO-1182)
-        // Replaced by DataTableAssetsController->enqueue_panel_manager()
-        // OLD panel-handler.js conflicts with NEW wpapp-panel-manager.js
-        // Keeping code commented for reference
-        /*
-        if (is_admin()) {
-            $this->enqueue_panel_handler();
-        }
-        */
-    }
-
-    /**
-     * Enqueue panel handler script
-     *
-     * @deprecated 1.1.2 (TODO-1182) Replaced by DataTableAssetsController->enqueue_panel_manager()
-     * @since 1.1.1
-     *
-     * OLD panel-handler.js has been replaced by wpapp-panel-manager.js
-     * This method is kept for reference but no longer called
-     */
-    private function enqueue_panel_handler() {
-        // Get current screen
-        $screen = get_current_screen();
-        if (!$screen) {
-            return;
-        }
-
-        // Get allowed page hooks from filter
-        // Plugins can register their pages via wpapp_datatable_allowed_hooks filter
-        $allowed_hooks = apply_filters('wpapp_datatable_allowed_hooks', []);
-
-        // Check if current screen is in allowed hooks
-        if (!in_array($screen->id, $allowed_hooks)) {
-            return;
-        }
-
-        // Enqueue panel handler script
-        wp_enqueue_script(
-            'wpapp-panel-handler',
-            WP_APP_CORE_PLUGIN_URL . 'assets/js/datatable/panel-handler.js',
-            ['jquery'],
-            '1.0.0',
-            true
-        );
-
-        // Localize with core configuration
-        wp_localize_script('wpapp-panel-handler', 'wpAppCore', [
-            'ajaxurl' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('wpapp_panel_nonce'),
-            'debug' => (defined('WP_DEBUG') && WP_DEBUG)
-        ]);
-
-        // Log for debugging
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('[WP_App_Core] Panel handler enqueued on: ' . $screen->id);
-        }
     }
 
     /**
@@ -379,52 +322,55 @@ class WP_App_Core_Dependencies {
             true
         );
 
-        // Platform Staff CSS
+        // Platform Staff CSS (TODO-1192)
         wp_enqueue_style(
-            'wp-app-core-platform-staff',
-            WP_APP_CORE_PLUGIN_URL . 'assets/css/platform/platform-staff-style.css',
+            'wp-app-core-platform-staff-header-cards',
+            WP_APP_CORE_PLUGIN_URL . 'assets/css/platform/platform-staff-header-cards.css',
             ['datatables'],
             $this->version
         );
 
         wp_enqueue_style(
-            'wp-app-core-platform-staff-datatable',
-            WP_APP_CORE_PLUGIN_URL . 'assets/css/platform/platform-staff-datatable-style.css',
-            ['wp-app-core-platform-staff'],
+            'wp-app-core-platform-staff-filter',
+            WP_APP_CORE_PLUGIN_URL . 'assets/css/platform/platform-staff-filter.css',
+            ['wp-app-core-platform-staff-header-cards'],
             $this->version
         );
 
-        // Platform Staff JavaScript
+        // Platform Staff JavaScript (TODO-1192)
         wp_enqueue_script(
-            'wp-app-core-platform-staff',
-            WP_APP_CORE_PLUGIN_URL . 'assets/js/platform/platform-staff-script.js',
+            'wp-app-core-platform-staff-datatable',
+            WP_APP_CORE_PLUGIN_URL . 'assets/js/platform/platform-staff-datatable.js',
             ['jquery', 'datatables'],
             $this->version,
             true
         );
 
-        wp_enqueue_script(
-            'wp-app-core-platform-staff-datatable',
-            WP_APP_CORE_PLUGIN_URL . 'assets/js/platform/platform-staff-datatable-script.js',
-            ['jquery', 'datatables', 'wp-app-core-platform-staff'],
-            $this->version,
-            true
-        );
-
-        // Localize script
+        // Localize script for DataTable
         wp_localize_script(
-            'wp-app-core-platform-staff',
-            'wpAppCoreStaffData',
+            'wp-app-core-platform-staff-datatable',
+            'wpAppCorePlatformStaff',
             [
-                'ajaxUrl' => admin_url('admin-ajax.php'),
-                'nonce' => wp_create_nonce('wp_app_core_platform_staff_nonce'),
+                'ajaxurl' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('wpapp_panel_nonce'),
                 'i18n' => [
-                    'confirmDelete' => __('Apakah Anda yakin ingin menghapus staff ini?', 'wp-app-core'),
-                    'deleteSuccess' => __('Staff berhasil dihapus', 'wp-app-core'),
-                    'deleteError' => __('Gagal menghapus staff', 'wp-app-core'),
-                    'saveSuccess' => __('Data staff berhasil disimpan', 'wp-app-core'),
-                    'saveError' => __('Gagal menyimpan data staff', 'wp-app-core'),
-                    'loadError' => __('Gagal memuat data', 'wp-app-core'),
+                    'employee_id' => __('Employee ID', 'wp-app-core'),
+                    'full_name' => __('Full Name', 'wp-app-core'),
+                    'department' => __('Department', 'wp-app-core'),
+                    'hire_date' => __('Hire Date', 'wp-app-core'),
+                    'actions' => __('Actions', 'wp-app-core'),
+                    'processing' => __('Processing...', 'wp-app-core'),
+                    'search' => __('Search:', 'wp-app-core'),
+                    'lengthMenu' => __('Show _MENU_ entries', 'wp-app-core'),
+                    'info' => __('Showing _START_ to _END_ of _TOTAL_ entries', 'wp-app-core'),
+                    'infoEmpty' => __('Showing 0 to 0 of 0 entries', 'wp-app-core'),
+                    'infoFiltered' => __('(filtered from _MAX_ total entries)', 'wp-app-core'),
+                    'zeroRecords' => __('No matching records found', 'wp-app-core'),
+                    'emptyTable' => __('No data available in table', 'wp-app-core'),
+                    'first' => __('First', 'wp-app-core'),
+                    'previous' => __('Previous', 'wp-app-core'),
+                    'next' => __('Next', 'wp-app-core'),
+                    'last' => __('Last', 'wp-app-core'),
                 ]
             ]
         );

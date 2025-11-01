@@ -1,0 +1,95 @@
+/**
+ * Platform Staff Filter Styles
+ *
+ * Scope: Local (wp-app-core plugin)
+ * Prefix: platform-staff-* (indicates local scope)
+ *
+ * @package WP_App_Core
+ * @since 1.0.0
+ * @version 1.0.0 (TODO-1192)
+ *
+ * Description: Styling untuk filter controls di platform staff dashboard
+ */
+
+/* ===================================================================
+   PLATFORM STAFF FILTERS (Scope Local)
+   =================================================================== */
+
+.platform-staff-filters-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin: 15px 0;
+    padding: 15px;
+    background: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+}
+
+.platform-staff-filter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.platform-staff-filter-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #646970;
+    white-space: nowrap;
+}
+
+.platform-staff-filter-select {
+    min-width: 150px;
+    padding: 6px 12px;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #2c3338;
+    background-color: #fff;
+    line-height: 2;
+}
+
+.platform-staff-filter-select:focus {
+    border-color: #2271b1;
+    outline: 2px solid transparent;
+    box-shadow: 0 0 0 1px #2271b1;
+}
+
+.platform-staff-filter-button {
+    padding: 6px 12px;
+    border: 1px solid #2271b1;
+    border-radius: 4px;
+    background: #2271b1;
+    color: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.platform-staff-filter-button:hover {
+    background: #135e96;
+    border-color: #135e96;
+}
+
+.platform-staff-filter-button:active {
+    background: #0a4b78;
+    border-color: #0a4b78;
+}
+
+/* Responsive */
+@media screen and (max-width: 782px) {
+    .platform-staff-filters-container {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .platform-staff-filter-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .platform-staff-filter-select {
+        width: 100%;
+    }
+}

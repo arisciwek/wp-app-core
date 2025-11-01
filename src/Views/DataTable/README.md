@@ -2,9 +2,27 @@
 
 **Comprehensive Documentation**
 
-Version: 1.0.0
-Last Updated: 2025-10-23
+Version: 1.2.1
+Last Updated: 2025-11-01
 Author: arisciwek
+
+---
+
+## 🚀 Quick Start
+
+**New to DataTable system?**
+
+1. **Read:** [STEP-BY-STEP-GUIDE.md](STEP-BY-STEP-GUIDE.md) (30 min walkthrough)
+2. **Implement:** Follow the guide step by step
+3. **Debug:** Check [COMMON-ISSUES.md](COMMON-ISSUES.md) if you encounter problems
+
+**Already familiar?**
+
+- Reference: [QUICK-REFERENCE.md](QUICK-REFERENCE.md)
+- Migration: [MIGRATION-EXAMPLE.md](MIGRATION-EXAMPLE.md)
+- Full docs: Continue reading below
+
+---
 
 ## File Reference
 
@@ -21,6 +39,8 @@ Author: arisciwek
 - `assets/js/datatable/wpapp-tab-manager.js` - Tab switching
 
 **Quick Reference:**
+- `src/Views/DataTable/STEP-BY-STEP-GUIDE.md` - ⭐ **START HERE** - Complete walkthrough (30 min)
+- `src/Views/DataTable/COMMON-ISSUES.md` - ⭐ **Troubleshooting** - Solutions to frequent problems
 - `src/Views/DataTable/QUICK-REFERENCE.md` - Common tasks quick lookup
 - `src/Views/DataTable/MIGRATION-EXAMPLE.md` - Real migration example
 
@@ -420,6 +440,159 @@ add_filter('wpapp_datatable_stats', function($stats, $entity) {
 
 ---
 
+### 5. FiltersTemplate
+
+Reusable filter controls for DataTable filtering.
+
+**File:** `src/Views/DataTable/Templates/FiltersTemplate.php`
+
+**Two Integration Methods:**
+
+#### Method 1: Filter Hook (Recommended)
+
+Register filters declaratively via filter hook:
+
+```php
+add_filter('wpapp_datatable_filters', function($filters, $entity) {
+    if ($entity !== 'customer') return $filters;
+
+    return [
+        'status' => [
+            'type' => 'select',
+            'label' => __('Filter Status:', 'wp-customer'),
+            'id' => 'customer-status-filter',
+            'options' => [
+                'all' => __('All Status', 'wp-customer'),
+                'active' => __('Active', 'wp-customer'),
+                'inactive' => __('Inactive', 'wp-customer')
+            ],
+            'default' => 'active',
+            'class' => 'custom-filter-class' // Optional
+        ],
+        'search' => [
+            'type' => 'search',
+            'label' => __('Search:', 'wp-customer'),
+            'id' => 'customer-search',
+            'placeholder' => __('Search customers...', 'wp-customer')
+        ]
+    ];
+}, 10, 2);
+```
+
+**Filter Structure:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `type` | string | ✅ Yes | Filter type: `select`, `search`, `date_range` |
+| `label` | string | ❌ No | Display label |
+| `id` | string | ❌ No | HTML element ID (auto-generated if not provided) |
+| `options` | array | ✅ Yes (select) | Key-value pairs for select options |
+| `default` | string | ❌ No | Default selected value |
+| `placeholder` | string | ❌ No | Placeholder text (search type) |
+| `class` | string | ❌ No | Additional CSS classes |
+
+**Supported Filter Types:**
+- `select` - Dropdown filter (fully implemented)
+- `search` - Search input (future enhancement)
+- `date_range` - Date picker (future enhancement)
+
+#### Method 2: Action Hook (Backward Compatibility)
+
+Render custom filter HTML via action hook:
+
+```php
+add_action('wpapp_dashboard_filters', function($config, $entity) {
+    if ($entity !== 'customer') return;
+
+    // Include custom filter partial
+    include WP_CUSTOMER_PATH . 'src/Views/partials/status-filter.php';
+}, 10, 2);
+```
+
+**Example Custom Filter Partial:**
+
+```php
+<?php
+// File: src/Views/partials/status-filter.php
+
+$entity = $config['entity'] ?? 'generic';
+$entity_slug = str_replace('_', '-', $entity);
+$current_status = isset($_GET['status_filter']) ? sanitize_text_field($_GET['status_filter']) : 'active';
+?>
+
+<div class="<?php echo esc_attr($entity_slug); ?>-status-filter-group wpapp-status-filter-group">
+    <label for="<?php echo esc_attr($entity_slug); ?>-status-filter" class="wpapp-filter-label">
+        <?php esc_html_e('Filter Status:', 'text-domain'); ?>
+    </label>
+    <select id="<?php echo esc_attr($entity_slug); ?>-status-filter"
+            class="wpapp-filter-select"
+            data-current="<?php echo esc_attr($current_status); ?>">
+        <option value="all" <?php selected($current_status, 'all'); ?>>
+            <?php esc_html_e('All Status', 'text-domain'); ?>
+        </option>
+        <option value="active" <?php selected($current_status, 'active'); ?>>
+            <?php esc_html_e('Active', 'text-domain'); ?>
+        </option>
+        <option value="inactive" <?php selected($current_status, 'inactive'); ?>>
+            <?php esc_html_e('Inactive', 'text-domain'); ?>
+        </option>
+    </select>
+</div>
+```
+
+**JavaScript Integration:**
+
+Handle filter changes and reload DataTable:
+
+```javascript
+// Listen for filter changes
+$(document).on('change', '#customer-status-filter', function() {
+    const filterValue = $(this).val();
+
+    // Reload DataTable with new filter
+    if (customerDataTable) {
+        customerDataTable.ajax.reload();
+    }
+});
+
+// DataTable AJAX configuration
+ajax: {
+    url: wpAppConfig.ajaxUrl,
+    type: 'POST',
+    data: function(d) {
+        d.action = 'get_customers_datatable';
+        d.nonce = wpAppConfig.nonce;
+        d.status_filter = $('#customer-status-filter').val() || 'active';
+    }
+}
+```
+
+**Server-Side Filtering:**
+
+Process filter value in DataTable model:
+
+```php
+public function get_where(): array {
+    global $wpdb;
+    $where = [];
+
+    // Status filter
+    $status_filter = isset($_POST['status_filter']) ? sanitize_text_field($_POST['status_filter']) : 'active';
+
+    if ($status_filter !== 'all') {
+        $where[] = $wpdb->prepare('c.status = %s', $status_filter);
+    }
+
+    return $where;
+}
+```
+
+**Hooks Provided:**
+- `wpapp_datatable_filters` (filter) - Register filter controls (recommended)
+- `wpapp_dashboard_filters` (action) - Render custom filter HTML (backward compatibility)
+
+---
+
 ## Hook System
 
 ### Complete Hook Reference
@@ -459,6 +632,13 @@ add_filter('wpapp_datatable_stats', function($stats, $entity) {
 | Hook | Type | Parameters | Description |
 |------|------|------------|-------------|
 | `wpapp_datatable_stats` | filter | `$stats, $entity` | Register stats |
+
+#### Filter Hooks
+
+| Hook | Type | Parameters | Description |
+|------|------|------------|-------------|
+| `wpapp_datatable_filters` | filter | `$filters, $entity` | Register filter controls (recommended) |
+| `wpapp_dashboard_filters` | action | `$config, $entity` | Render filters (backward compatibility) |
 
 #### Asset Hooks
 
@@ -1010,6 +1190,40 @@ Ensure proper ARIA attributes:
 </div>
 ```
 
+### 9. File Permissions
+
+Ensure correct permissions for template directories:
+
+```bash
+# Template directories must be readable by web server
+chmod 755 /path/to/plugin/src/Views/
+chmod 755 /path/to/plugin/src/Views/DataTable/
+chmod 755 /path/to/plugin/src/Views/DataTable/Templates/
+chmod 755 /path/to/plugin/src/Views/DataTable/Templates/partials/
+
+# Template files
+chmod 644 /path/to/plugin/src/Views/**/*.php
+```
+
+**Common Issue:** Directory created with `700` permission causes `file_exists()` to return false for web server user (www-data/apache), even though file exists on filesystem.
+
+**Symptoms:**
+- Filter not displaying despite code being correct
+- `file_exists()` returns `false` in error logs
+- File is accessible via CLI but not via web
+
+**Solution:**
+```bash
+# Check current permissions
+ls -la /path/to/partials/
+
+# Fix if showing drwx------ (700)
+chmod 755 /path/to/partials/
+
+# Clear OPcache
+wp eval 'if (function_exists("opcache_reset")) { opcache_reset(); }'
+```
+
 ---
 
 ## Troubleshooting
@@ -1112,6 +1326,80 @@ add_action('wp_ajax_get_customer_stats', function() {
     ]);
 });
 ```
+
+---
+
+### Issue: Filter Not Displaying
+
+**Symptom:** Filter dropdown doesn't appear on dashboard page.
+
+**Causes:**
+1. Directory permissions incorrect (700 instead of 755)
+2. Filter partial file doesn't exist
+3. Hook not registered properly
+4. `wpapp_dashboard_filters` action not firing
+
+**Solution:**
+
+**Step 1: Check directory permissions**
+```bash
+# Check permissions
+ls -la /path/to/wp-app-core/src/Views/DataTable/Templates/partials/
+
+# Should show: drwxr-xr-x (755)
+# If showing: drwx------ (700) - FIX IT:
+chmod 755 /path/to/wp-app-core/src/Views/DataTable/Templates/partials/
+```
+
+**Step 2: Verify file exists**
+```bash
+ls -la /path/to/wp-app-core/src/Views/DataTable/Templates/partials/status-filter.php
+# Should exist and be readable (644 or 664)
+```
+
+**Step 3: Add debug logging**
+```php
+// In controller's render_filters() method
+public function render_filters($config, $entity): void {
+    error_log('render_filters called for entity: ' . $entity);
+
+    if ($entity !== 'platform_staff') {
+        return;
+    }
+
+    $filter_file = WP_APP_CORE_PATH . 'src/Views/DataTable/Templates/partials/status-filter.php';
+    error_log('Filter file: ' . $filter_file);
+    error_log('File exists: ' . (file_exists($filter_file) ? 'YES' : 'NO'));
+
+    if (file_exists($filter_file)) {
+        include $filter_file;
+    }
+}
+```
+
+**Step 4: Check debug log**
+```bash
+tail -f /path/to/wp-content/debug.log | grep -i filter
+```
+
+Expected output:
+```
+render_filters called for entity: platform_staff
+Filter file: /path/to/.../status-filter.php
+File exists: YES
+```
+
+**Step 5: Clear all caches**
+```bash
+wp cache flush
+wp eval 'if (function_exists("opcache_reset")) { opcache_reset(); }'
+```
+
+**Common Root Causes:**
+- ❌ Directory permission `700` - web server can't read
+- ❌ File doesn't exist or wrong path
+- ❌ Hook priority conflict
+- ❌ Entity name mismatch in condition check
 
 ---
 
@@ -1266,6 +1554,48 @@ add_action('wpapp_datatable_after_enqueue_scripts', function() {
 ---
 
 ## Changelog
+
+### Version 1.2.1 (2025-11-01) - Post TODO-2187
+- ✅ **STEP-BY-STEP-GUIDE.md**: Added complete 30-minute implementation walkthrough
+- ✅ **COMMON-ISSUES.md**: Added comprehensive troubleshooting guide with real solutions
+- ✅ **Email Column Issues**: Documented JOIN patterns for email from related tables
+- ✅ **AJAX 403 Solutions**: Documented duplicate handler conflicts and nonce issues
+- ✅ **Table Layout Fixes**: Documented column overlap solutions with CSS + JS
+- ✅ **Empty Tab Solutions**: Documented $data variable passing pattern
+- ✅ **DataTable Model Best Practices**: Complete working example with comments
+- ✅ **Implementation Checklist**: Step-by-step checklist for all phases
+- ✅ **Quick Debug Commands**: Added bash commands for common debugging tasks
+
+**Based on:** TODO-2187 (WP Customer Migration) - Real-world issues and solutions
+
+**Benefits:**
+- Developers can implement DataTable page in 30 minutes without issues
+- All common problems pre-documented with solutions
+- Complete working code examples (copy-paste ready)
+- Reduced support burden (self-service troubleshooting)
+
+### Version 1.2.0 (2025-11-01) - TODO-1192
+- ✅ **FiltersTemplate**: Added comprehensive filter controls system
+- ✅ **Filter Integration**: Two methods - filter hook (recommended) and action hook (backward compat)
+- ✅ **Generic Status Filter**: Created reusable status-filter.php partial template
+- ✅ **Documentation**: Added complete FiltersTemplate section with examples
+- ✅ **Troubleshooting**: Added "Filter Not Displaying" issue with permission debugging
+- ✅ **Best Practices**: Added file permissions section (chmod 755 for directories)
+- ✅ **Platform Staff**: Migrated to centralized DataTable system with filter support
+
+**Filter Features:**
+- Declarative filter registration via `wpapp_datatable_filters` hook
+- Support for multiple filter types: `select` (implemented), `search` (future), `date_range` (future)
+- Generic entity-agnostic partial templates
+- JavaScript integration for DataTable reload on filter change
+- Server-side filtering in DataTable models
+
+**Breaking Changes**: None - backward compatible
+**Benefits**:
+- Reusable filter controls across all entities
+- Consistent filter UI/UX
+- Easy integration with DataTable system
+- Reduced code duplication
 
 ### Version 1.1.0 (2025-10-28) - TODO-1187
 - ✅ Simplified container structure for consistency

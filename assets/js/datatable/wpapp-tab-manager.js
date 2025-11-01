@@ -6,7 +6,17 @@
  *
  * @package WPAppCore
  * @since 1.0.0
+ * @version 1.1.0
  * @author arisciwek
+ *
+ * Changelog:
+ * 1.1.0 - 2025-11-01 (Generic Entity Support)
+ * - Made entity ID detection generic (not hardcoded to 'agency')
+ * - Reads data-entity-type from panel (defaults to 'agency' for backward compatibility)
+ * - Dynamically builds entity ID attribute name (data-{entity}-id)
+ * - Dynamically sends {entity}_id parameter in AJAX requests
+ * - Supports multiple entities: agency, customer, or any future entity
+ * - Backward compatible: existing wp-agency code works without changes
  *
  * Features:
  * - Tab switching without page reload
@@ -14,6 +24,20 @@
  * - Smooth fade animations
  * - Event system for extensibility
  * - Keyboard navigation support
+ * - Generic entity support (not tied to specific entity type)
+ *
+ * Entity Configuration:
+ * - Set data-entity-type on .wpapp-panel element
+ * - Tab views must have data-{entity}-id attribute
+ * - AJAX handlers receive {entity}_id parameter
+ *
+ * Example:
+ * ```html
+ * <div class="wpapp-panel" data-entity-type="customer">
+ *   <div class="wpapp-tab-content wpapp-tab-autoload"
+ *        data-customer-id="123"
+ *        data-load-action="load_customer_branches_tab">
+ * ```
  *
  * Events Triggered:
  * - wpapp:tab-switching - Before tab switches
@@ -215,23 +239,30 @@
                 return;
             }
 
+            // Get entity type from panel (default to 'agency' for backward compatibility)
+            const $panel = $('.wpapp-panel');
+            const entityType = $panel.attr('data-entity-type') || this.currentEntity || 'agency';
+            const entityIdAttr = 'data-' + entityType + '-id';
+
             // Get data attributes (use .attr() to avoid jQuery .data() caching)
-            const agencyId = $tab.attr('data-agency-id');
+            const entityId = $tab.attr(entityIdAttr);
             const loadAction = $tab.attr('data-load-action');
             const contentTarget = $tab.attr('data-content-target');
             const errorMessage = $tab.attr('data-error-message') || 'Failed to load content';
 
             console.log('[WPApp Tab] Data attributes:', {
-                agencyId: agencyId,
+                entityType: entityType,
+                entityIdAttr: entityIdAttr,
+                entityId: entityId,
                 loadAction: loadAction,
                 contentTarget: contentTarget,
                 errorMessage: errorMessage
             });
 
-            if (!loadAction || !agencyId) {
+            if (!loadAction || !entityId) {
                 console.error('[WPApp Tab] Missing required data attributes for auto-load');
                 console.error('[WPApp Tab] loadAction:', loadAction);
-                console.error('[WPApp Tab] agencyId:', agencyId);
+                console.error('[WPApp Tab] ' + entityIdAttr + ':', entityId);
                 return;
             }
 
@@ -242,15 +273,18 @@
             $tab.find('.wpapp-tab-loaded-content').hide();
             $tab.find('.wpapp-tab-error').removeClass('visible');
 
+            // Build AJAX data with dynamic entity ID parameter
+            const ajaxData = {
+                action: loadAction,
+                nonce: wpAppConfig.nonce
+            };
+            ajaxData[entityType + '_id'] = entityId;
+
             // Make AJAX request
             $.ajax({
                 url: wpAppConfig.ajaxUrl,
                 type: 'POST',
-                data: {
-                    action: loadAction,
-                    nonce: wpAppConfig.nonce,
-                    agency_id: agencyId
-                },
+                data: ajaxData,
                 success: function(response) {
                     console.log('[WPApp Tab] AJAX Success Response:', response);
                     $tab.find('.wpapp-tab-loading').hide();

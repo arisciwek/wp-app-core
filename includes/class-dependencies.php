@@ -122,6 +122,40 @@ class WP_App_Core_Dependencies {
             true
         );
 
+        // DataTable Auto-Refresh System
+        // Load on admin pages where DataTables might be used
+        if (is_admin()) {
+            wp_enqueue_script(
+                'wpapp-datatable-auto-refresh',
+                WP_APP_CORE_PLUGIN_URL . 'assets/js/datatable/wpapp-datatable-auto-refresh.js',
+                ['jquery'],
+                $this->version,
+                true
+            );
+
+            // Leaflet.js for Map Picker (Global)
+            wp_enqueue_style('leaflet', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', [], '1.9.4');
+            wp_enqueue_script('leaflet', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', [], '1.9.4', true);
+
+            // WPApp Map Picker (Global Shared Component)
+            wp_enqueue_script(
+                'wpapp-map-picker',
+                WP_APP_CORE_PLUGIN_URL . 'assets/js/map/wpapp-map-picker.js',
+                ['jquery', 'leaflet'],
+                $this->version,
+                true
+            );
+
+            // WPApp Map Adapter (Global Integration Adapter)
+            wp_enqueue_script(
+                'wpapp-map-adapter',
+                WP_APP_CORE_PLUGIN_URL . 'assets/js/map/wpapp-map-adapter.js',
+                ['jquery', 'leaflet', 'wpapp-map-picker'],
+                $this->version,
+                true
+            );
+        }
+
         // Localize script for future AJAX use
         wp_localize_script(
             'wp-app-core-admin-bar',

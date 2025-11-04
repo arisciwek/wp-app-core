@@ -117,4 +117,28 @@ defined('ABSPATH') || exit;
         endif;
         ?>
     </div>
+
+    <?php
+    /**
+     * Hook: wp_app_core_admin_bar_dropdown_content
+     *
+     * Allows plugins to inject additional content into admin bar dropdown.
+     * Useful for completeness indicators, notifications, quick stats, etc.
+     *
+     * @param int $user_id WordPress user ID
+     * @param WP_User $user WordPress user object
+     * @param array|null $user_info User entity information array
+     *
+     * @since 2.1.0 (TODO-1195)
+     *
+     * Example usage:
+     * add_action('wp_app_core_admin_bar_dropdown_content', function($user_id, $user, $user_info) {
+     *     echo '<div class="info-section">';
+     *     echo '<strong>Profile Status:</strong><br>';
+     *     // Render completeness bar or other plugin-specific content
+     *     echo '</div>';
+     * }, 10, 3);
+     */
+    do_action('wp_app_core_admin_bar_dropdown_content', $user_id, $user, $user_info);
+    ?>
 </div>

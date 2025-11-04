@@ -6,7 +6,22 @@
  *
  * @package WPAppCore
  * @since 1.0.0
+ * @version 1.1.1
  * @author arisciwek
+ *
+ * Changelog:
+ * 1.1.1 - 2025-01-02
+ * - Fixed: Row click in nested DataTable (employee/branch) no longer triggers panel
+ * - Added: Nested entity prevention for row click handler
+ * - Impact: Clicking employee/branch row in tab stays at #customer-123&tab=xxx
+ * - Previously: Row click changed URL to #customer-5 (using nested entity ID)
+ *
+ * 1.1.0 - 2025-01-02
+ * - Added: Nested entity prevention to avoid URL collision
+ * - Added: Auto-detect buttons inside .wpapp-tab-content (nested context)
+ * - Added: Support for data-nested="true" flag on buttons
+ * - Fixed: Nested entity buttons no longer trigger parent panel
+ * - Security: Prevent unintended panel opening from nested DataTables
  *
  * Features:
  * - Smooth panel open/close animations
@@ -14,6 +29,16 @@
  * - Hash-based navigation (#entity-123)
  * - Event system for extensibility
  * - Close button handling
+ * - Nested entity prevention (prevents URL collision)
+ *
+ * Nested Entity Prevention:
+ * - Buttons with class .wpapp-panel-trigger inside .wpapp-tab-content are ignored
+ * - Buttons with data-nested="true" are ignored
+ * - Recommendation: Use .wpapp-nested-trigger class for nested entities
+ *
+ * Button Class Convention:
+ * - .wpapp-panel-trigger → Opens right panel (parent entity only)
+ * - .wpapp-nested-trigger → For nested entities (handled by custom code)
  *
  * Events Triggered:
  * - wpapp:panel-opening - Before panel opens
@@ -29,6 +54,19 @@
  * jQuery(document).on('wpapp:panel-data-loaded', function(e, data) {
  *     console.log('Panel loaded:', data.entity, data.id);
  * });
+ * ```
+ *
+ * Nested Entity Example:
+ * ```html
+ * <!-- Parent entity (opens panel) -->
+ * <button class="wpapp-panel-trigger" data-id="123" data-entity="customer">
+ *     View Customer
+ * </button>
+ *
+ * <!-- Nested entity (ignored by panel manager) -->
+ * <button class="wpapp-nested-trigger" data-id="5" data-entity="branch">
+ *     View Branch
+ * </button>
  * ```
  */
 
@@ -116,7 +154,19 @@
                     return;
                 }
 
+                // ✅ NESTED ENTITY PREVENTION
+                // Check if row is inside a tab content (nested context)
                 const $row = $(this);
+                const isNested = $row.closest('.wpapp-tab-content').length > 0;
+
+                if (isNested) {
+                    console.warn('[WPApp Panel] Nested entity row clicked - ignoring panel trigger', {
+                        rowId: $row.attr('id'),
+                        suggestion: 'Row clicks only work for parent entity DataTables'
+                    });
+                    return; // Don't trigger panel for nested entities
+                }
+
                 const entityId = $row.data('id');
 
                 if (entityId) {
@@ -131,6 +181,20 @@
 
                 const entityId = $(this).data('id');
                 const entity = $(this).data('entity');
+
+                // ✅ NESTED ENTITY PREVENTION
+                // Check if button is inside a tab content (nested context)
+                const isNested = $(this).closest('.wpapp-tab-content').length > 0;
+                const isNestedFlag = $(this).data('nested') === true;
+
+                if (isNested || isNestedFlag) {
+                    console.warn('[WPApp Panel] Nested entity button detected - ignoring panel trigger', {
+                        entity: entity,
+                        id: entityId,
+                        suggestion: 'Use .wpapp-nested-trigger class for nested entities'
+                    });
+                    return; // Don't trigger panel for nested entities
+                }
 
                 // Verify entity matches current panel entity
                 if (entity === self.currentEntity && entityId) {

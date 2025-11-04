@@ -20,8 +20,9 @@ This guide covers the complete implementation of the DataTable system in `wp-app
 
 **Assets:**
 - `assets/css/datatable/wpapp-datatable.css` - Global panel styles
-- `assets/js/datatable/wpapp-panel-manager.js` - Panel open/close, AJAX handling
+- `assets/js/datatable/wpapp-panel-manager.js` (v1.1.1) - Panel open/close, AJAX handling, nested entity prevention
 - `assets/js/datatable/wpapp-tab-manager.js` - Tab switching functionality
+- `assets/js/datatable/wpapp-datatable-auto-refresh.js` (v1.1.0) - Auto-refresh system with debouncing & nested awareness
 
 ---
 

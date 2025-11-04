@@ -3,7 +3,7 @@
  * Plugin Name: WP App Core
  * Plugin URI: https://example.com/wp-app-core
  * Description: Core plugin untuk mengelola fitur global aplikasi marketplace. Menyediakan user profile management, membership system, dan fitur shared lainnya.
- * Version: 1.0.2
+ * Version: 1.0.4
  * Author: arisciwek
  * Author URI: https://example.com
  * License: GPL v2 or later
@@ -19,6 +19,21 @@
  *              dan fitur dari WP App Core plugin.
  *
  * Changelog:
+ * 1.0.4 - 2025-11-02 (Complete Global Map Integration)
+ * - Added: wpapp-map-adapter.js - Global generic adapter for map integration
+ * - File: assets/js/map/wpapp-map-adapter.js
+ * - Supports multiple contexts: modal, inline forms, tabs, etc
+ * - Event-driven architecture for loose coupling
+ * - Eliminates need for plugin-specific adapters
+ * - All wp-app-* plugins get map integration automatically
+ *
+ * 1.0.3 - 2025-11-02 (Global Shared Components)
+ * - Added: wpapp-map-picker.js - Global Leaflet map picker component
+ * - File: assets/js/map/wpapp-map-picker.js
+ * - Shared across all wp-app-* plugins (wp-customer, wp-agency, etc)
+ * - Prevents code duplication and version conflicts
+ * - Leaflet.js (1.9.4) now loaded globally
+ *
  * 1.0.2 - 2025-10-19
  * - Implemented base role system (platform_staff) for wp-admin access
  * - All platform users now get dual roles: platform_staff + platform_xxx
@@ -39,7 +54,7 @@
 defined('ABSPATH') || exit;
 
 // Define plugin constants
-define('WP_APP_CORE_VERSION', '1.0.2');
+define('WP_APP_CORE_VERSION', '1.0.4');
 define('WP_APP_CORE_PATH', plugin_dir_path(__FILE__));
 define('WP_APP_CORE_PLUGIN_DIR', plugin_dir_path(__FILE__)); // Backward compatibility
 define('WP_APP_CORE_PLUGIN_URL', plugin_dir_url(__FILE__));

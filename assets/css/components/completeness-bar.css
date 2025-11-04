@@ -1,0 +1,642 @@
+/**
+ * Completeness Progress Bar Component Styles
+ *
+ * @package     WPAppCore
+ * @subpackage  Assets/CSS/Components
+ * @version     1.0.0
+ * @author      arisciwek
+ *
+ * Path: /wp-app-core/assets/css/components/completeness-bar.css
+ *
+ * Description: Styling for reusable completeness progress bar component.
+ *              Responsive, accessible design with color-coded progress indicators.
+ *              Used across all plugins (customer, surveyor, association).
+ *
+ * Color Scheme:
+ * - Success (>=80%): Green (#46b450)
+ * - Warning (50-79%): Orange (#ffb900)
+ * - Danger (<50%): Red (#dc3232)
+ *
+ * Features:
+ * - Smooth animations
+ * - Responsive layout
+ * - Accessible (ARIA labels, keyboard navigation)
+ * - WordPress admin color scheme integration
+ * - Print-friendly styles
+ *
+ * Changelog:
+ * 1.0.0 - 2025-11-01 (TODO-1195)
+ * - Initial implementation
+ * - Color-coded progress states
+ * - Responsive design
+ * - Expandable details section
+ * - Animation support
+ */
+
+/* ============================================
+   Container & Layout
+   ============================================ */
+
+.wpapp-completeness-container {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s ease;
+}
+
+.wpapp-completeness-container:hover {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* ============================================
+   Header Section
+   ============================================ */
+
+.wpapp-completeness-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.wpapp-completeness-title {
+    flex: 1;
+}
+
+.wpapp-completeness-title h4 {
+    margin: 0 0 5px 0;
+    padding: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #23282d;
+    line-height: 1.4;
+}
+
+.wpapp-completeness-status-text {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.wpapp-completeness-status-text.progress-success {
+    background: #ecf7ed;
+    color: #46b450;
+}
+
+.wpapp-completeness-status-text.progress-warning {
+    background: #fff8e5;
+    color: #d97706;
+}
+
+.wpapp-completeness-status-text.progress-danger {
+    background: #fce8e8;
+    color: #dc3232;
+}
+
+/* Percentage Badge */
+.wpapp-completeness-percentage-badge {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    min-width: 70px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-weight: 700;
+    background: #f7f7f7;
+    border: 2px solid #ddd;
+    transition: all 0.3s ease;
+}
+
+.wpapp-completeness-percentage-badge .percentage-number {
+    font-size: 28px;
+    line-height: 1;
+}
+
+.wpapp-completeness-percentage-badge .percentage-symbol {
+    font-size: 16px;
+    margin-left: 2px;
+    opacity: 0.7;
+}
+
+.wpapp-completeness-percentage-badge.progress-success {
+    background: #ecf7ed;
+    border-color: #46b450;
+    color: #46b450;
+}
+
+.wpapp-completeness-percentage-badge.progress-warning {
+    background: #fff8e5;
+    border-color: #ffb900;
+    color: #d97706;
+}
+
+.wpapp-completeness-percentage-badge.progress-danger {
+    background: #fce8e8;
+    border-color: #dc3232;
+    color: #dc3232;
+}
+
+/* ============================================
+   Progress Bar
+   ============================================ */
+
+.wpapp-progress-bar-container {
+    position: relative;
+    width: 100%;
+    height: 28px;
+    background: #f0f0f0;
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 15px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.wpapp-progress-bar {
+    height: 100%;
+    border-radius: 14px;
+    transition: width 0.6s ease, background-color 0.3s ease;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Animated gradient background */
+.wpapp-progress-bar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+    );
+    animation: progressShine 2s infinite;
+}
+
+@keyframes progressShine {
+    0% {
+        left: -100%;
+    }
+    100% {
+        left: 200%;
+    }
+}
+
+.wpapp-progress-label {
+    position: relative;
+    z-index: 1;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.95);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    white-space: nowrap;
+    padding: 0 10px;
+}
+
+/* Progress bar colors */
+.wpapp-progress-bar.progress-success {
+    background: linear-gradient(90deg, #46b450, #5bc560);
+}
+
+.wpapp-progress-bar.progress-warning {
+    background: linear-gradient(90deg, #ffb900, #ffc933);
+}
+
+.wpapp-progress-bar.progress-danger {
+    background: linear-gradient(90deg, #dc3232, #e74c3c);
+}
+
+/* ============================================
+   Warning Message
+   ============================================ */
+
+.wpapp-completeness-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 15px;
+    margin: 15px 0;
+    background: #fff8e5;
+    border-left: 4px solid #ffb900;
+    border-radius: 4px;
+}
+
+.wpapp-completeness-warning .dashicons {
+    color: #d97706;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.wpapp-completeness-warning .warning-text {
+    flex: 1;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #7c5e10;
+}
+
+/* ============================================
+   Missing Fields Section
+   ============================================ */
+
+.wpapp-completeness-missing {
+    margin: 15px 0;
+    padding: 15px;
+    border-radius: 4px;
+}
+
+.wpapp-completeness-missing.required {
+    background: #fce8e8;
+    border-left: 4px solid #dc3232;
+}
+
+.wpapp-completeness-missing.optional {
+    background: #e8f4f8;
+    border-left: 4px solid #2271b1;
+}
+
+.wpapp-completeness-missing h5 {
+    margin: 0 0 10px 0;
+    padding: 0;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.wpapp-completeness-missing.required h5 {
+    color: #b32d2e;
+}
+
+.wpapp-completeness-missing.optional h5 {
+    color: #1e5a7e;
+}
+
+.wpapp-completeness-missing h5 .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.wpapp-missing-fields-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.wpapp-missing-fields-list li {
+    padding: 6px 0 6px 24px;
+    position: relative;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.wpapp-completeness-missing.required .wpapp-missing-fields-list li {
+    color: #7c2d2d;
+}
+
+.wpapp-completeness-missing.optional .wpapp-missing-fields-list li {
+    color: #1e5a7e;
+}
+
+.wpapp-missing-fields-list li .dashicons {
+    position: absolute;
+    left: 0;
+    top: 7px;
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    opacity: 0.6;
+}
+
+/* ============================================
+   Detailed Breakdown
+   ============================================ */
+
+.wpapp-completeness-details {
+    margin: 15px 0 0 0;
+    border-top: 1px solid #e0e0e0;
+    padding-top: 15px;
+}
+
+.wpapp-completeness-details summary {
+    cursor: pointer;
+    padding: 10px;
+    background: #f7f7f7;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 13px;
+    color: #2271b1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.2s ease;
+    user-select: none;
+}
+
+.wpapp-completeness-details summary:hover {
+    background: #f0f0f0;
+}
+
+.wpapp-completeness-details summary:focus {
+    outline: 2px solid #2271b1;
+    outline-offset: 2px;
+}
+
+.wpapp-completeness-details summary .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+.wpapp-completeness-details summary .toggle-icon {
+    margin-left: auto;
+    transition: transform 0.3s ease;
+}
+
+.wpapp-completeness-details[open] summary .toggle-icon {
+    transform: rotate(180deg);
+}
+
+/* Remove default marker */
+.wpapp-completeness-details summary {
+    list-style: none;
+}
+
+.wpapp-completeness-details summary::-webkit-details-marker {
+    display: none;
+}
+
+/* Breakdown Content */
+.wpapp-completeness-breakdown {
+    padding: 15px 10px 5px 10px;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.category-item {
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.category-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.category-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.category-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #23282d;
+}
+
+.category-score {
+    font-size: 12px;
+    color: #666;
+}
+
+.category-percentage {
+    font-weight: 600;
+    margin-left: 5px;
+}
+
+.category-percentage.progress-success {
+    color: #46b450;
+}
+
+.category-percentage.progress-warning {
+    color: #d97706;
+}
+
+.category-percentage.progress-danger {
+    color: #dc3232;
+}
+
+/* Category Progress Bar */
+.category-progress-bar-container {
+    width: 100%;
+    height: 8px;
+    background: #f0f0f0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.category-progress-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s ease;
+}
+
+.category-progress-bar.progress-success {
+    background: #46b450;
+}
+
+.category-progress-bar.progress-warning {
+    background: #ffb900;
+}
+
+.category-progress-bar.progress-danger {
+    background: #dc3232;
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media screen and (max-width: 782px) {
+    .wpapp-completeness-container {
+        padding: 15px;
+    }
+
+    .wpapp-completeness-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .wpapp-completeness-percentage-badge {
+        align-self: flex-end;
+    }
+
+    .wpapp-completeness-title h4 {
+        font-size: 15px;
+    }
+
+    .wpapp-progress-bar-container {
+        height: 24px;
+    }
+
+    .wpapp-progress-label {
+        font-size: 10px;
+    }
+
+    .category-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .wpapp-completeness-container {
+        padding: 12px;
+    }
+
+    .wpapp-completeness-percentage-badge .percentage-number {
+        font-size: 24px;
+    }
+
+    .wpapp-completeness-percentage-badge .percentage-symbol {
+        font-size: 14px;
+    }
+
+    .wpapp-progress-bar-container {
+        height: 20px;
+        border-radius: 10px;
+    }
+
+    .wpapp-progress-bar {
+        border-radius: 10px;
+    }
+}
+
+/* ============================================
+   Accessibility
+   ============================================ */
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .wpapp-completeness-container {
+        border: 2px solid #000;
+    }
+
+    .wpapp-progress-bar-container {
+        border: 1px solid #000;
+    }
+
+    .wpapp-completeness-details summary:focus {
+        outline: 3px solid #000;
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .wpapp-progress-bar,
+    .category-progress-bar,
+    .wpapp-completeness-details summary .toggle-icon {
+        transition: none;
+    }
+
+    .wpapp-progress-bar::before {
+        animation: none;
+    }
+
+    .wpapp-completeness-breakdown {
+        animation: none;
+    }
+}
+
+/* Focus visible for keyboard navigation */
+.wpapp-completeness-details summary:focus-visible {
+    outline: 2px solid #2271b1;
+    outline-offset: 2px;
+}
+
+/* ============================================
+   Print Styles
+   ============================================ */
+
+@media print {
+    .wpapp-completeness-container {
+        box-shadow: none;
+        border: 1px solid #000;
+        page-break-inside: avoid;
+    }
+
+    .wpapp-progress-bar::before {
+        display: none;
+    }
+
+    .wpapp-completeness-details[open] summary .toggle-icon {
+        display: none;
+    }
+
+    .wpapp-completeness-breakdown {
+        display: block !important;
+    }
+}
+
+/* ============================================
+   Dark Mode Support (if WordPress implements)
+   ============================================ */
+
+@media (prefers-color-scheme: dark) {
+    .wpapp-completeness-container {
+        background: #1e1e1e;
+        border-color: #3a3a3a;
+        color: #e0e0e0;
+    }
+
+    .wpapp-completeness-title h4 {
+        color: #e0e0e0;
+    }
+
+    .wpapp-progress-bar-container {
+        background: #2a2a2a;
+    }
+
+    .wpapp-completeness-details summary {
+        background: #2a2a2a;
+        color: #4a9eff;
+    }
+
+    .wpapp-completeness-details summary:hover {
+        background: #333;
+    }
+
+    .category-name {
+        color: #e0e0e0;
+    }
+
+    .category-score {
+        color: #b0b0b0;
+    }
+}

@@ -4,15 +4,22 @@
  *
  * @package     WP_App_Core
  * @subpackage  Models/Settings
- * @version     1.0.0
+ * @version     2.0.0
  * @author      arisciwek
  *
  * Path: /wp-app-core/src/Models/Settings/EmailSettingsModel.php
  *
- * Description: Model untuk mengelola email dan notification settings
- *              SMTP configuration, email templates, dan notification preferences
+ * Description: Model untuk mengelola email dan notification settings.
+ *              SMTP configuration, email templates, dan notification preferences.
+ *              REFACTORED: Now extends AbstractSettingsModel.
  *
  * Changelog:
+ * 2.0.0 - 2025-01-09 (TODO-1203)
+ * - BREAKING: Now extends AbstractSettingsModel
+ * - CHANGED: Uses AbstractCacheManager via PlatformCacheManager
+ * - REMOVED: Duplicate methods (getSettings, saveSettings inherited)
+ * - REDUCED: ~140 lines eliminated
+ * - KEPT: Custom sanitizeSettings and testSMTPConnection
  * 1.0.0 - 2025-10-19
  * - Initial release
  * - SMTP configuration
@@ -22,11 +29,28 @@
 
 namespace WPAppCore\Models\Settings;
 
-class EmailSettingsModel {
+use WPAppCore\Models\AbstractSettingsModel;
+use WPAppCore\Cache\Abstract\AbstractCacheManager;
+use WPAppCore\Cache\PlatformCacheManager;
 
-    private $option_name = 'wp_app_core_email_settings';
+class EmailSettingsModel extends AbstractSettingsModel {
 
-    private $default_settings = [
+    private PlatformCacheManager $cacheManager;
+
+    public function __construct() {
+        $this->cacheManager = new PlatformCacheManager();
+    }
+
+    protected function getOptionName(): string {
+        return 'wpapp_email_settings';
+    }
+
+    protected function getCacheManager() {
+        return $this->cacheManager;
+    }
+
+    protected function getDefaultSettings(): array {
+        return [
         // SMTP Configuration
         'smtp_enabled' => false,
         'smtp_host' => '',
@@ -68,68 +92,14 @@ class EmailSettingsModel {
         // Email Settings
         'email_footer_text' => '',
         'unsubscribe_enabled' => true,
-    ];
-
-    /**
-     * Get email settings
-     *
-     * @return array
-     */
-    public function getSettings(): array {
-        $cache_key = 'wp_app_core_email_settings';
-        $cache_group = 'wp_app_core';
-
-        $settings = wp_cache_get($cache_key, $cache_group);
-
-        if (false === $settings) {
-            $settings = get_option($this->option_name, []);
-            $settings = wp_parse_args($settings, $this->default_settings);
-            wp_cache_set($cache_key, $settings, $cache_group);
-        }
-
-        // Default from email to admin email if empty
-        if (empty($settings['smtp_from_email'])) {
-            $settings['smtp_from_email'] = get_option('admin_email');
-        }
-
-        if (empty($settings['notification_from_email'])) {
-            $settings['notification_from_email'] = get_option('admin_email');
-        }
-
-        return $settings;
+        ];
     }
 
-    /**
-     * Save email settings
-     *
-     * @param array $input
-     * @return bool
-     */
-    public function saveSettings(array $input): bool {
-        if (empty($input)) {
-            return false;
-        }
-
-        wp_cache_delete('wp_app_core_email_settings', 'wp_app_core');
-
-        $sanitized = $this->sanitizeSettings($input);
-
-        if (!empty($sanitized)) {
-            $result = update_option($this->option_name, $sanitized);
-
-            if ($result) {
-                wp_cache_set(
-                    'wp_app_core_email_settings',
-                    $sanitized,
-                    'wp_app_core'
-                );
-            }
-
-            return $result;
-        }
-
-        return false;
-    }
+    // ✅ getSettings() - inherited from AbstractSettingsModel
+    // ✅ getSetting($key) - inherited from AbstractSettingsModel
+    // ✅ saveSettings($settings) - inherited from AbstractSettingsModel
+    // ✅ updateSetting($key, $value) - inherited from AbstractSettingsModel
+    // ✅ clearCache() - inherited from AbstractSettingsModel
 
     /**
      * Sanitize email settings
@@ -287,26 +257,7 @@ class EmailSettingsModel {
             $sanitized['unsubscribe_enabled'] = (bool) $settings['unsubscribe_enabled'];
         }
 
-        return wp_parse_args($sanitized, $this->default_settings);
-    }
-
-    /**
-     * Get default settings
-     *
-     * @return array
-     */
-    public function getDefaultSettings(): array {
-        return $this->default_settings;
-    }
-
-    /**
-     * Delete settings
-     *
-     * @return bool
-     */
-    public function deleteSettings(): bool {
-        wp_cache_delete('wp_app_core_email_settings', 'wp_app_core');
-        return delete_option($this->option_name);
+        return wp_parse_args($sanitized, $this->getDefaultSettings());
     }
 
     /**

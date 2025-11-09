@@ -4,29 +4,47 @@
  *
  * @package     WP_App_Core
  * @subpackage  Models/Settings
- * @version     1.0.0
+ * @version     2.0.0
  * @author      arisciwek
  *
  * Path: /wp-app-core/src/Models/Settings/SecurityPolicyModel.php
  *
- * Description: Model untuk Security Policies & Audit settings
- *              Data security, activity logging, audit & compliance
+ * Description: Model untuk Security Policies & Audit settings.
+ *              REFACTORED: Now extends AbstractSettingsModel.
  *
  * Changelog:
+ * 2.0.0 - 2025-01-09 (TODO-1203)
+ * - BREAKING: Now extends AbstractSettingsModel
+ * - Uses PlatformCacheManager via AbstractCacheManager
+ * - ~110 lines eliminated
  * 1.0.0 - 2025-10-19
  * - Initial release
- * - Data security settings
- * - Activity logging settings
- * - Audit & compliance settings
  */
 
 namespace WPAppCore\Models\Settings;
 
-class SecurityPolicyModel {
+use WPAppCore\Models\AbstractSettingsModel;
+use WPAppCore\Cache\Abstract\AbstractCacheManager;
+use WPAppCore\Cache\PlatformCacheManager;
 
-    private $option_name = 'wp_app_core_security_policy';
+class SecurityPolicyModel extends AbstractSettingsModel {
 
-    private $default_settings = [
+    private PlatformCacheManager $cacheManager;
+
+    public function __construct() {
+        $this->cacheManager = new PlatformCacheManager();
+    }
+
+    protected function getOptionName(): string {
+        return 'wpapp_security_policy';
+    }
+
+    protected function getCacheManager() {
+        return $this->cacheManager;
+    }
+
+    protected function getDefaultSettings(): array {
+        return [
         // Data Security
         'data_encryption_enabled' => false,
         'force_ssl_admin' => true,
@@ -67,59 +85,14 @@ class SecurityPolicyModel {
         'referrer_policy' => 'strict-origin-when-cross-origin',
         'database_backup_enabled' => false,
         'auto_security_updates' => true,
-    ];
-
-    /**
-     * Get settings
-     *
-     * @return array
-     */
-    public function getSettings(): array {
-        $cache_key = 'wp_app_core_security_policy';
-        $cache_group = 'wp_app_core';
-
-        $settings = wp_cache_get($cache_key, $cache_group);
-
-        if (false === $settings) {
-            $settings = get_option($this->option_name, []);
-            $settings = wp_parse_args($settings, $this->default_settings);
-            wp_cache_set($cache_key, $settings, $cache_group);
-        }
-
-        return $settings;
+        ];
     }
 
-    /**
-     * Save settings
-     *
-     * @param array $input
-     * @return bool
-     */
-    public function saveSettings(array $input): bool {
-        if (empty($input)) {
-            return false;
-        }
-
-        wp_cache_delete('wp_app_core_security_policy', 'wp_app_core');
-
-        $sanitized = $this->sanitizeSettings($input);
-
-        if (!empty($sanitized)) {
-            $result = update_option($this->option_name, $sanitized);
-
-            if ($result) {
-                wp_cache_set(
-                    'wp_app_core_security_policy',
-                    $sanitized,
-                    'wp_app_core'
-                );
-            }
-
-            return $result;
-        }
-
-        return false;
-    }
+    // ✅ getSettings() - inherited from AbstractSettingsModel
+    // ✅ getSetting($key) - inherited from AbstractSettingsModel
+    // ✅ saveSettings($settings) - inherited from AbstractSettingsModel
+    // ✅ updateSetting($key, $value) - inherited from AbstractSettingsModel
+    // ✅ clearCache() - inherited from AbstractSettingsModel
 
     /**
      * Sanitize settings
@@ -131,9 +104,6 @@ class SecurityPolicyModel {
         if ($settings === null) {
             $settings = [];
         }
-
-        // Clear cache when settings are being saved
-        wp_cache_delete('wp_app_core_security_policy', 'wp_app_core');
 
         $sanitized = [];
 
@@ -228,25 +198,6 @@ class SecurityPolicyModel {
         $sanitized['database_backup_enabled'] = isset($settings['database_backup_enabled']) ? (bool) $settings['database_backup_enabled'] : false;
         $sanitized['auto_security_updates'] = isset($settings['auto_security_updates']) ? (bool) $settings['auto_security_updates'] : false;
 
-        return wp_parse_args($sanitized, $this->default_settings);
-    }
-
-    /**
-     * Get default settings
-     *
-     * @return array
-     */
-    public function getDefaultSettings(): array {
-        return $this->default_settings;
-    }
-
-    /**
-     * Delete settings
-     *
-     * @return bool
-     */
-    public function deleteSettings(): bool {
-        wp_cache_delete('wp_app_core_security_policy', 'wp_app_core');
-        return delete_option($this->option_name);
+        return wp_parse_args($sanitized, $this->getDefaultSettings());
     }
 }

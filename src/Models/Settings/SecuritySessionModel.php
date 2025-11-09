@@ -4,29 +4,47 @@
  *
  * @package     WP_App_Core
  * @subpackage  Models/Settings
- * @version     1.0.0
+ * @version     2.0.0
  * @author      arisciwek
  *
  * Path: /wp-app-core/src/Models/Settings/SecuritySessionModel.php
  *
- * Description: Model untuk Session & Login Management settings
- *              Session timeouts, login protection, login monitoring
+ * Description: Model untuk Session & Login Management settings.
+ *              REFACTORED: Now extends AbstractSettingsModel.
  *
  * Changelog:
+ * 2.0.0 - 2025-01-09 (TODO-1203)
+ * - BREAKING: Now extends AbstractSettingsModel
+ * - Uses PlatformCacheManager via AbstractCacheManager
+ * - ~100 lines eliminated
  * 1.0.0 - 2025-10-19
  * - Initial release
- * - Session management settings
- * - Login protection settings
- * - Login monitoring settings
  */
 
 namespace WPAppCore\Models\Settings;
 
-class SecuritySessionModel {
+use WPAppCore\Models\AbstractSettingsModel;
+use WPAppCore\Cache\Abstract\AbstractCacheManager;
+use WPAppCore\Cache\PlatformCacheManager;
 
-    private $option_name = 'wp_app_core_security_session';
+class SecuritySessionModel extends AbstractSettingsModel {
 
-    private $default_settings = [
+    private PlatformCacheManager $cacheManager;
+
+    public function __construct() {
+        $this->cacheManager = new PlatformCacheManager();
+    }
+
+    protected function getOptionName(): string {
+        return 'wpapp_security_session';
+    }
+
+    protected function getCacheManager() {
+        return $this->cacheManager;
+    }
+
+    protected function getDefaultSettings(): array {
+        return [
         // Session Settings
         'session_idle_timeout' => 3600, // 1 hour in seconds
         'session_absolute_timeout' => 43200, // 12 hours in seconds
@@ -48,59 +66,14 @@ class SecuritySessionModel {
         'force_logout_suspicious_sessions' => true,
         'email_new_device_login' => true,
         'unusual_activity_detection' => true,
-    ];
-
-    /**
-     * Get settings
-     *
-     * @return array
-     */
-    public function getSettings(): array {
-        $cache_key = 'wp_app_core_security_session';
-        $cache_group = 'wp_app_core';
-
-        $settings = wp_cache_get($cache_key, $cache_group);
-
-        if (false === $settings) {
-            $settings = get_option($this->option_name, []);
-            $settings = wp_parse_args($settings, $this->default_settings);
-            wp_cache_set($cache_key, $settings, $cache_group);
-        }
-
-        return $settings;
+        ];
     }
 
-    /**
-     * Save settings
-     *
-     * @param array $input
-     * @return bool
-     */
-    public function saveSettings(array $input): bool {
-        if (empty($input)) {
-            return false;
-        }
-
-        wp_cache_delete('wp_app_core_security_session', 'wp_app_core');
-
-        $sanitized = $this->sanitizeSettings($input);
-
-        if (!empty($sanitized)) {
-            $result = update_option($this->option_name, $sanitized);
-
-            if ($result) {
-                wp_cache_set(
-                    'wp_app_core_security_session',
-                    $sanitized,
-                    'wp_app_core'
-                );
-            }
-
-            return $result;
-        }
-
-        return false;
-    }
+    // ✅ getSettings() - inherited from AbstractSettingsModel
+    // ✅ getSetting($key) - inherited from AbstractSettingsModel
+    // ✅ saveSettings($settings) - inherited from AbstractSettingsModel
+    // ✅ updateSetting($key, $value) - inherited from AbstractSettingsModel
+    // ✅ clearCache() - inherited from AbstractSettingsModel
 
     /**
      * Sanitize settings
@@ -112,9 +85,6 @@ class SecuritySessionModel {
         if ($settings === null) {
             $settings = [];
         }
-
-        // Clear cache when settings are being saved
-        wp_cache_delete('wp_app_core_security_session', 'wp_app_core');
 
         $sanitized = [];
 
@@ -196,25 +166,6 @@ class SecuritySessionModel {
         $sanitized['email_new_device_login'] = isset($settings['email_new_device_login']) ? (bool) $settings['email_new_device_login'] : false;
         $sanitized['unusual_activity_detection'] = isset($settings['unusual_activity_detection']) ? (bool) $settings['unusual_activity_detection'] : false;
 
-        return wp_parse_args($sanitized, $this->default_settings);
-    }
-
-    /**
-     * Get default settings
-     *
-     * @return array
-     */
-    public function getDefaultSettings(): array {
-        return $this->default_settings;
-    }
-
-    /**
-     * Delete settings
-     *
-     * @return bool
-     */
-    public function deleteSettings(): bool {
-        wp_cache_delete('wp_app_core_security_session', 'wp_app_core');
-        return delete_option($this->option_name);
+        return wp_parse_args($sanitized, $this->getDefaultSettings());
     }
 }

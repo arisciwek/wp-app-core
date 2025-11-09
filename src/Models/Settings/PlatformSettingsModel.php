@@ -4,15 +4,22 @@
  *
  * @package     WP_App_Core
  * @subpackage  Models/Settings
- * @version     1.0.0
+ * @version     2.0.0
  * @author      arisciwek
  *
  * Path: /wp-app-core/src/Models/Settings/PlatformSettingsModel.php
  *
- * Description: Model untuk mengelola pengaturan platform/company
- *              Menyimpan informasi dasar perusahaan/kantor platform
+ * Description: Model untuk mengelola pengaturan platform/company.
+ *              Menyimpan informasi dasar perusahaan/kantor platform.
+ *              REFACTORED: Now extends AbstractSettingsModel with AbstractCacheManager.
  *
  * Changelog:
+ * 2.0.0 - 2025-01-09 (TODO-1203)
+ * - BREAKING: Now extends AbstractSettingsModel
+ * - CHANGED: Uses AbstractCacheManager via PlatformCacheManager
+ * - REMOVED: Duplicate methods (getSettings, saveSettings now inherited)
+ * - REDUCED: ~150 lines of code eliminated
+ * - KEPT: Custom sanitizeSettings logic (platform-specific)
  * 1.0.0 - 2025-10-19
  * - Initial release
  * - Company information settings
@@ -22,11 +29,28 @@
 
 namespace WPAppCore\Models\Settings;
 
-class PlatformSettingsModel {
+use WPAppCore\Models\AbstractSettingsModel;
+use WPAppCore\Cache\Abstract\AbstractCacheManager;
+use WPAppCore\Cache\PlatformCacheManager;
 
-    private $option_name = 'wp_app_core_platform_settings';
+class PlatformSettingsModel extends AbstractSettingsModel {
 
-    private $default_settings = [
+    private PlatformCacheManager $cacheManager;
+
+    public function __construct() {
+        $this->cacheManager = new PlatformCacheManager();
+    }
+
+    protected function getOptionName(): string {
+        return 'wpapp_platform_settings';
+    }
+
+    protected function getCacheManager() {
+        return $this->cacheManager;
+    }
+
+    protected function getDefaultSettings(): array {
+        return [
         // Company Information
         'company_name' => '',
         'company_tagline' => '',
@@ -63,77 +87,14 @@ class PlatformSettingsModel {
         'platform_version' => '1.0.0',
         'maintenance_mode' => false,
         'maintenance_message' => 'We are currently performing scheduled maintenance.',
-    ];
-
-    /**
-     * Get platform settings with defaults
-     *
-     * @return array
-     */
-    public function getSettings(): array {
-        $cache_key = 'wp_app_core_platform_settings';
-        $cache_group = 'wp_app_core';
-
-        // Try to get from cache
-        $settings = wp_cache_get($cache_key, $cache_group);
-
-        if (false === $settings) {
-            // Get from database
-            $settings = get_option($this->option_name, []);
-
-            // Parse with defaults
-            $settings = wp_parse_args($settings, $this->default_settings);
-
-            // Store in cache
-            wp_cache_set($cache_key, $settings, $cache_group);
-        }
-
-        // If admin email is not set, use WordPress admin email
-        if (empty($settings['company_email'])) {
-            $settings['company_email'] = get_option('admin_email');
-        }
-
-        if (empty($settings['support_email'])) {
-            $settings['support_email'] = get_option('admin_email');
-        }
-
-        return $settings;
+        ];
     }
 
-    /**
-     * Save platform settings
-     *
-     * @param array $input
-     * @return bool
-     */
-    public function saveSettings(array $input): bool {
-        if (empty($input)) {
-            return false;
-        }
-
-        // Clear cache
-        wp_cache_delete('wp_app_core_platform_settings', 'wp_app_core');
-
-        // Sanitize input
-        $sanitized = $this->sanitizeSettings($input);
-
-        if (!empty($sanitized)) {
-            $result = update_option($this->option_name, $sanitized);
-
-            // Re-cache if successful
-            if ($result) {
-                wp_cache_set(
-                    'wp_app_core_platform_settings',
-                    $sanitized,
-                    'wp_app_core'
-                );
-            }
-
-            return $result;
-        }
-
-        return false;
-    }
+    // ✅ getSettings() - inherited from AbstractSettingsModel
+    // ✅ getSetting($key) - inherited from AbstractSettingsModel
+    // ✅ saveSettings($settings) - inherited from AbstractSettingsModel
+    // ✅ updateSetting($key, $value) - inherited from AbstractSettingsModel
+    // ✅ clearCache() - inherited from AbstractSettingsModel
 
     /**
      * Sanitize platform settings
@@ -265,25 +226,11 @@ class PlatformSettingsModel {
         }
 
         // Merge with defaults
-        return wp_parse_args($sanitized, $this->default_settings);
+        return wp_parse_args($sanitized, $this->getDefaultSettings());
     }
 
-    /**
-     * Get default settings
-     *
-     * @return array
-     */
-    public function getDefaultSettings(): array {
-        return $this->default_settings;
-    }
-
-    /**
-     * Delete settings
-     *
-     * @return bool
-     */
-    public function deleteSettings(): bool {
-        wp_cache_delete('wp_app_core_platform_settings', 'wp_app_core');
-        return delete_option($this->option_name);
-    }
+    // ✅ getDefaultSettings() - protected in parent, available internally
+    // ✅ resetToDefaults() - inherited from AbstractSettingsModel
+    // ✅ hasSetting($key) - inherited from AbstractSettingsModel
+    // ✅ deleteSetting($key) - inherited from AbstractSettingsModel
 }

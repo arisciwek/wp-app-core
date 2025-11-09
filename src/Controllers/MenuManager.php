@@ -4,7 +4,7 @@
  *
  * @package     WP_App_Core
  * @subpackage  Controllers
- * @version     2.1.0
+ * @version     2.2.0
  * @author      arisciwek
  *
  * Path: /wp-app-core/src/Controllers/MenuManager.php
@@ -13,6 +13,10 @@
  *              Manages all admin menus and submenus
  *
  * Changelog:
+ * 2.2.0 - 2025-01-09 (TODO-1203)
+ * - Changed: Use PlatformSettingsPageController instead of PlatformSettingsController
+ * - Integration with refactored settings architecture
+ *
  * 2.1.0 - 2025-11-01 (TODO-1191: Separation of Concerns)
  * - Added: Platform Staff menu registration
  * - Added: staff_controller property
@@ -29,7 +33,7 @@
 
 namespace WPAppCore\Controllers;
 
-use WPAppCore\Controllers\PlatformSettingsController;
+use WPAppCore\Controllers\PlatformSettingsPageController;
 use WPAppCore\Controllers\Platform\PlatformStaffDashboardController;
 
 class MenuManager {
@@ -41,7 +45,7 @@ class MenuManager {
     public function __construct($plugin_name, $version) {
         $this->plugin_name = $plugin_name;
         $this->version = $version;
-        $this->settings_controller = new PlatformSettingsController();
+        $this->settings_controller = new PlatformSettingsPageController();
         $this->staff_dashboard_controller = new PlatformStaffDashboardController();
     }
 

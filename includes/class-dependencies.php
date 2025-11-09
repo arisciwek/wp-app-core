@@ -122,17 +122,10 @@ class WP_App_Core_Dependencies {
             true
         );
 
-        // DataTable Auto-Refresh System
-        // Load on admin pages where DataTables might be used
-        if (is_admin()) {
-            wp_enqueue_script(
-                'wpapp-datatable-auto-refresh',
-                WP_APP_CORE_PLUGIN_URL . 'assets/js/datatable/wpapp-datatable-auto-refresh.js',
-                ['jquery'],
-                $this->version,
-                true
-            );
+        // TODO-2192: Removed wpapp-datatable-auto-refresh.js
+        // This is now handled by wp-datatable framework directly
 
+        if (is_admin()) {
             // Leaflet.js for Map Picker (Global)
             wp_enqueue_style('leaflet', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', [], '1.9.4');
             wp_enqueue_script('leaflet', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', [], '1.9.4', true);

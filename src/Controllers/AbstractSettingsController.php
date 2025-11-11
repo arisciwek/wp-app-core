@@ -139,14 +139,30 @@ abstract class AbstractSettingsController {
      * Register settings with WordPress
      */
     public function registerSettings(): void {
+        // Get option name from model to ensure consistency
+        $optionName = $this->getOptionName();
+
         register_setting(
-            $this->getPluginPrefix() . '_settings',
-            $this->getPluginPrefix() . '_settings',
+            $optionName,
+            $optionName,
             [
                 'sanitize_callback' => [$this->model, 'sanitizeSettings'],
                 'default' => $this->model->getDefaults()
             ]
         );
+    }
+
+    /**
+     * Get option name from model
+     *
+     * @return string Option name
+     */
+    protected function getOptionName(): string {
+        // Use reflection to call protected method
+        $reflection = new \ReflectionClass($this->model);
+        $method = $reflection->getMethod('getOptionName');
+        $method->setAccessible(true);
+        return $method->invoke($this->model);
     }
 
     /**

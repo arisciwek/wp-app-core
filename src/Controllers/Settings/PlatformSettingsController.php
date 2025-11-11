@@ -65,56 +65,56 @@ class PlatformSettingsController {
         add_filter('wp_redirect', [$this, 'addSettingsSavedMessage'], 10, 2);
 
         // Clear cache after settings updated
-        add_action('update_option_wp_app_core_platform_settings', [$this, 'clearPlatformSettingsCache']);
-        add_action('update_option_wp_app_core_email_settings', [$this, 'clearEmailSettingsCache']);
+        add_action('update_option_platform_settings', [$this, 'clearPlatformSettingsCache']);
+        add_action('update_option_platform_email_settings', [$this, 'clearEmailSettingsCache']);
 
         // Platform Settings
         register_setting(
-            'wp_app_core_platform_settings',
-            'wp_app_core_platform_settings',
+            'platform_settings',  // Option group - must match settings_fields()
+            'platform_settings',  // Option name in database
             [
                 'sanitize_callback' => [$this->platform_model, 'sanitizeSettings'],
-                'default' => $this->platform_model->getDefaultSettings()
+                'default' => $this->platform_model->getDefaults()
             ]
         );
 
         // Email Settings
         register_setting(
-            'wp_app_core_email_settings',
-            'wp_app_core_email_settings',
+            'platform_email_settings',  // Option group - must match settings_fields()
+            'platform_email_settings',  // Option name in database
             [
                 'sanitize_callback' => [$this->email_model, 'sanitizeSettings'],
-                'default' => $this->email_model->getDefaultSettings()
+                'default' => $this->email_model->getDefaults()
             ]
         );
 
         // Security Authentication Settings
         register_setting(
-            'wp_app_core_security_authentication',
-            'wp_app_core_security_authentication',
+            'platform_security_authentication',  // Option group - must match settings_fields()
+            'platform_security_authentication',  // Option name in database
             [
                 'sanitize_callback' => [$this->auth_model, 'sanitizeSettings'],
-                'default' => $this->auth_model->getDefaultSettings()
+                'default' => $this->auth_model->getDefaults()
             ]
         );
 
         // Security Session Settings
         register_setting(
-            'wp_app_core_security_session',
-            'wp_app_core_security_session',
+            'platform_security_session',  // Option group - must match settings_fields()
+            'platform_security_session',  // Option name in database
             [
                 'sanitize_callback' => [$this->session_model, 'sanitizeSettings'],
-                'default' => $this->session_model->getDefaultSettings()
+                'default' => $this->session_model->getDefaults()
             ]
         );
 
         // Security Policy Settings
         register_setting(
-            'wp_app_core_security_policy',
-            'wp_app_core_security_policy',
+            'platform_security_policy',  // Option group - must match settings_fields()
+            'platform_security_policy',  // Option name in database
             [
                 'sanitize_callback' => [$this->policy_model, 'sanitizeSettings'],
-                'default' => $this->policy_model->getDefaultSettings()
+                'default' => $this->policy_model->getDefaults()
             ]
         );
 
@@ -676,17 +676,20 @@ class PlatformSettingsController {
         }
 
         try {
-            // Delete the option - this will force getSettings() to return defaults
-            delete_option('wp_app_core_security_authentication');
-            wp_cache_delete('wp_app_core_security_authentication', 'wp_app_core');
+            // Use the model's resetToDefaults method which saves defaults to DB
+            if ($this->auth_model->resetToDefaults()) {
+                // Get the saved defaults to return to client
+                $defaults = $this->auth_model->getSettings();
 
-            // Get default settings to return to client
-            $defaults = $this->auth_model->getDefaultSettings();
-
-            wp_send_json_success([
-                'message' => __('Security authentication settings reset to default successfully.', 'wp-app-core'),
-                'settings' => $defaults
-            ]);
+                wp_send_json_success([
+                    'message' => __('Security authentication settings reset to default successfully.', 'wp-app-core'),
+                    'settings' => $defaults
+                ]);
+            } else {
+                wp_send_json_error([
+                    'message' => __('Failed to reset settings', 'wp-app-core')
+                ]);
+            }
         } catch (\Exception $e) {
             wp_send_json_error([
                 'message' => sprintf(__('Error resetting settings: %s', 'wp-app-core'), $e->getMessage())
@@ -705,17 +708,20 @@ class PlatformSettingsController {
         }
 
         try {
-            // Delete the option - this will force getSettings() to return defaults
-            delete_option('wp_app_core_security_session');
-            wp_cache_delete('wp_app_core_security_session', 'wp_app_core');
+            // Use the model's resetToDefaults method which saves defaults to DB
+            if ($this->session_model->resetToDefaults()) {
+                // Get the saved defaults to return to client
+                $defaults = $this->session_model->getSettings();
 
-            // Get default settings to return to client
-            $defaults = $this->session_model->getDefaultSettings();
-
-            wp_send_json_success([
-                'message' => __('Security session settings reset to default successfully.', 'wp-app-core'),
-                'settings' => $defaults
-            ]);
+                wp_send_json_success([
+                    'message' => __('Security session settings reset to default successfully.', 'wp-app-core'),
+                    'settings' => $defaults
+                ]);
+            } else {
+                wp_send_json_error([
+                    'message' => __('Failed to reset settings', 'wp-app-core')
+                ]);
+            }
         } catch (\Exception $e) {
             wp_send_json_error([
                 'message' => sprintf(__('Error resetting settings: %s', 'wp-app-core'), $e->getMessage())
@@ -734,17 +740,20 @@ class PlatformSettingsController {
         }
 
         try {
-            // Delete the option - this will force getSettings() to return defaults
-            delete_option('wp_app_core_security_policy');
-            wp_cache_delete('wp_app_core_security_policy', 'wp_app_core');
+            // Use the model's resetToDefaults method which saves defaults to DB
+            if ($this->policy_model->resetToDefaults()) {
+                // Get the saved defaults to return to client
+                $defaults = $this->policy_model->getSettings();
 
-            // Get default settings to return to client
-            $defaults = $this->policy_model->getDefaultSettings();
-
-            wp_send_json_success([
-                'message' => __('Security policy settings reset to default successfully.', 'wp-app-core'),
-                'settings' => $defaults
-            ]);
+                wp_send_json_success([
+                    'message' => __('Security policy settings reset to default successfully.', 'wp-app-core'),
+                    'settings' => $defaults
+                ]);
+            } else {
+                wp_send_json_error([
+                    'message' => __('Failed to reset settings', 'wp-app-core')
+                ]);
+            }
         } catch (\Exception $e) {
             wp_send_json_error([
                 'message' => sprintf(__('Error resetting settings: %s', 'wp-app-core'), $e->getMessage())
@@ -770,11 +779,13 @@ class PlatformSettingsController {
         if (isset($_POST['option_page'])) {
             $option_page = $_POST['option_page'];
 
-            // Only for our settings pages
+            // Only for our settings pages (local scope: platform_*)
             $our_settings = [
-                'wp_app_core_platform_settings',
-                'wp_app_core_email_settings',
-                'wp_app_core_development_settings'
+                'platform_settings',
+                'platform_email_settings',
+                'platform_security_authentication',
+                'platform_security_session',
+                'platform_security_policy'
             ];
 
             if (in_array($option_page, $our_settings)) {
@@ -799,17 +810,20 @@ class PlatformSettingsController {
         }
 
         try {
-            // Delete the option - this will force getSettings() to return defaults
-            delete_option('wp_app_core_platform_settings');
-            wp_cache_delete('wp_app_core_platform_settings', 'wp_app_core');
+            // Use the model's resetToDefaults method which saves defaults to DB
+            if ($this->platform_model->resetToDefaults()) {
+                // Get the saved defaults to return to client
+                $defaults = $this->platform_model->getSettings();
 
-            // Get default settings to return to client
-            $defaults = $this->platform_model->getDefaultSettings();
-
-            wp_send_json_success([
-                'message' => __('General settings reset to default successfully.', 'wp-app-core'),
-                'settings' => $defaults
-            ]);
+                wp_send_json_success([
+                    'message' => __('General settings reset to default successfully.', 'wp-app-core'),
+                    'settings' => $defaults
+                ]);
+            } else {
+                wp_send_json_error([
+                    'message' => __('Failed to reset settings', 'wp-app-core')
+                ]);
+            }
         } catch (\Exception $e) {
             wp_send_json_error([
                 'message' => sprintf(__('Error resetting settings: %s', 'wp-app-core'), $e->getMessage())
@@ -828,17 +842,20 @@ class PlatformSettingsController {
         }
 
         try {
-            // Delete the option - this will force getSettings() to return defaults
-            delete_option('wp_app_core_email_settings');
-            wp_cache_delete('wp_app_core_email_settings', 'wp_app_core');
+            // Use the model's resetToDefaults method which saves defaults to DB
+            if ($this->email_model->resetToDefaults()) {
+                // Get the saved defaults to return to client
+                $defaults = $this->email_model->getSettings();
 
-            // Get default settings to return to client
-            $defaults = $this->email_model->getDefaultSettings();
-
-            wp_send_json_success([
-                'message' => __('Email settings reset to default successfully.', 'wp-app-core'),
-                'settings' => $defaults
-            ]);
+                wp_send_json_success([
+                    'message' => __('Email settings reset to default successfully.', 'wp-app-core'),
+                    'settings' => $defaults
+                ]);
+            } else {
+                wp_send_json_error([
+                    'message' => __('Failed to reset settings', 'wp-app-core')
+                ]);
+            }
         } catch (\Exception $e) {
             wp_send_json_error([
                 'message' => sprintf(__('Error resetting settings: %s', 'wp-app-core'), $e->getMessage())
@@ -850,7 +867,7 @@ class PlatformSettingsController {
      * Clear platform settings cache after update
      */
     public function clearPlatformSettingsCache() {
-        wp_cache_delete('wp_app_core_platform_settings', 'wp_app_core');
+        wp_cache_delete('platform_settings_data', 'wp_app_core');
         // Also clear any object cache
         if (function_exists('wp_cache_flush')) {
             wp_cache_flush();
@@ -861,7 +878,7 @@ class PlatformSettingsController {
      * Clear email settings cache after update
      */
     public function clearEmailSettingsCache() {
-        wp_cache_delete('wp_app_core_email_settings', 'wp_app_core');
+        wp_cache_delete('platform_email_settings_data', 'wp_app_core');
         // Also clear any object cache
         if (function_exists('wp_cache_flush')) {
             wp_cache_flush();

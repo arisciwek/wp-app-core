@@ -624,13 +624,13 @@ if (!defined('ABSPATH')) {
         </div>
     </form>
 
-    <!-- Sticky Footer with Action Buttons -->
+    <!-- DEPRECATED: Per-tab buttons moved to page level (settings-page.php) -->
+    <!-- Global scope pattern: All wp-app-* plugins use page-level buttons -->
+    <!--
     <div class="settings-footer">
         <p class="submit">
-            <?php submit_button(__('Save Policy Settings', 'wp-app-core'), 'primary', 'submit', false, ['form' => 'wp-app-core-security-policy-form']); ?>
-            <button type="button" id="reset-security-policy" class="button button-secondary">
-                <?php _e('Reset to Default', 'wp-app-core'); ?>
-            </button>
+            <?php // submit_button(__('Save Policy Settings', 'wp-app-core'), 'primary', 'submit', false, ['form' => 'wp-app-core-security-policy-form']); ?>
         </p>
     </div>
+    -->
 </div>

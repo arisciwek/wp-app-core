@@ -313,7 +313,18 @@ abstract class AbstractSettingsModel {
      * @return bool True on success, false on failure
      */
     public function resetToDefaults(): bool {
-        return $this->saveSettings($this->getDefaultSettings());
+        $defaults = $this->getDefaultSettings();
+        $current = $this->getSettings();
+
+        // If already at defaults, consider it success
+        if ($defaults === $current) {
+            // Clear cache to ensure fresh data
+            $this->clearCache();
+            return true;
+        }
+
+        // Save defaults
+        return $this->saveSettings($defaults);
     }
 
     /**

@@ -91,11 +91,20 @@ class SettingsPageAssets implements AssetStrategyInterface {
             true
         );
 
+        // TEMP: Error logger for debugging fast-disappearing errors
+        wp_enqueue_script(
+            'wpapp-error-logger',
+            WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/error-logger.js',
+            [],
+            filemtime(WP_APP_CORE_PLUGIN_DIR . 'assets/js/settings/error-logger.js'),
+            false // Load in head to catch early errors
+        );
+
         // Localize script with wpAppCoreSettings
         // This is what JavaScript expects!
         wp_localize_script('wpapp-settings-base', 'wpAppCoreSettings', [
             'ajaxUrl' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('wpapp_nonce'),
+            'nonce' => wp_create_nonce('wp_app_core_settings_nonce'),
             'currentTab' => $current_tab,
             'i18n' => [
                 'saving' => __('Saving...', 'wp-app-core'),
@@ -104,6 +113,15 @@ class SettingsPageAssets implements AssetStrategyInterface {
                 'confirmReset' => __('Are you sure you want to reset settings to defaults?', 'wp-app-core'),
             ]
         ]);
+
+        // Settings Reset Helper (WPModal integration)
+        wp_enqueue_script(
+            'wpapp-settings-reset-helper',
+            WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/settings-reset-helper.js',
+            ['jquery', 'wp-modal'], // Depend on WPModal
+            filemtime(WP_APP_CORE_PLUGIN_DIR . 'assets/js/settings/settings-reset-helper.js'),
+            true
+        );
 
         // Tab-specific scripts
         $this->enqueue_tab_script($current_tab);
@@ -188,8 +206,8 @@ class SettingsPageAssets implements AssetStrategyInterface {
                 wp_enqueue_script(
                     'wpapp-settings-' . $tab,
                     WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/' . $tab_scripts[$tab],
-                    ['jquery', 'wpapp-settings-base'],
-                    WP_APP_CORE_VERSION,
+                    ['jquery', 'wpapp-settings-base', 'wpapp-settings-reset-helper'],
+                    filemtime($file_path), // Use filemtime for cache busting
                     true
                 );
 

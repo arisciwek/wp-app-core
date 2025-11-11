@@ -365,13 +365,13 @@ if (!defined('ABSPATH')) {
         </div>
     </form>
 
-    <!-- Sticky Footer with Action Buttons -->
+    <!-- DEPRECATED: Per-tab buttons moved to page level (settings-page.php) -->
+    <!-- Global scope pattern: All wp-app-* plugins use page-level buttons -->
+    <!--
     <div class="settings-footer">
         <p class="submit">
-            <?php submit_button(__('Save Email Settings', 'wp-app-core'), 'primary', 'submit', false, ['form' => 'platform-email-settings-form']); ?>
-            <button type="button" id="reset-email-settings" class="button button-secondary">
-                <?php _e('Reset to Default', 'wp-app-core'); ?>
-            </button>
+            <?php // submit_button(__('Save Email Settings', 'wp-app-core'), 'primary', 'submit', false, ['form' => 'platform-email-settings-form']); ?>
         </p>
     </div>
+    -->
 </div>

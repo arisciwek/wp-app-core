@@ -111,13 +111,7 @@ class DataTableAssetsController {
             $this->version
         );
 
-        // Modal CSS (TODO-1194)
-        wp_enqueue_style(
-            'wpapp-modal-css',
-            WP_APP_CORE_PLUGIN_URL . 'assets/css/modal/wpapp-modal.css',
-            [],
-            $this->version
-        );
+        // Note: Modal CSS now provided by wp-modal plugin
 
         /**
          * Action: After DataTable CSS enqueued
@@ -160,15 +154,7 @@ class DataTableAssetsController {
         );
         error_log('✅ Tab Manager enqueued');
 
-        // Modal Manager (TODO-1194)
-        wp_enqueue_script(
-            'wpapp-modal-manager',
-            WP_APP_CORE_PLUGIN_URL . 'assets/js/modal/wpapp-modal-manager.js',
-            ['jquery'],
-            $this->version,
-            true
-        );
-        error_log('✅ Modal Manager enqueued');
+        // Note: Modal Manager now provided by wp-modal plugin
 
         /**
          * Action: After DataTable JS enqueued
@@ -261,8 +247,7 @@ class DataTableAssetsController {
     public static function is_enqueued() {
         return wp_script_is('wpapp-panel-manager', 'enqueued') &&
                wp_script_is('wpapp-tab-manager', 'enqueued') &&
-               wp_script_is('wpapp-modal-manager', 'enqueued') &&
-               wp_style_is('wpapp-datatable-css', 'enqueued') &&
-               wp_style_is('wpapp-modal-css', 'enqueued');
+               wp_style_is('wpapp-datatable-css', 'enqueued');
+               // Note: Old wpapp-modal checks removed - now using wp-modal plugin
     }
 }

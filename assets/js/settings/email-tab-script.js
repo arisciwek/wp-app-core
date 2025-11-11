@@ -1,92 +1,38 @@
 /**
- * Email Settings Tab Script
+ * Email Settings Tab Script - DEPRECATED
  *
  * @package     WP_App_Core
  * @subpackage  Assets/JS/Settings
- * @version     1.0.0
+ * @version     2.0.0
  * @author      arisciwek
  *
  * Path: /wp-app-core/assets/js/settings/email-tab-script.js
  *
- * Description: Handles email settings tab functionality
- *              - Reset to default functionality
+ * Description: DEPRECATED - Tab-specific logic no longer needed.
+ *              Save & Reset functionality moved to page-level (settings-page.php).
+ *              This file kept for backward compatibility but does nothing.
  *
- * Dependencies:
- * - jQuery
- * - WordPress Settings API
+ * Dependencies: None (no longer needed)
  *
  * Changelog:
+ * 2.0.0 - 2025-11-12
+ * - DEPRECATED: Moved to page-level global scope
+ * - Reset handler now in settings-reset-helper.js (auto-initialize)
+ * - Save handler now in settings-script.js
+ * - File kept empty for backward compatibility
+ *
+ * 1.1.0 - 2025-11-11
+ * - Migrated to WPModal confirmation
+ *
  * 1.0.0 - 2025-10-19
  * - Initial implementation
- * - Reset to default functionality
  */
 
 jQuery(document).ready(function($) {
+    // DEPRECATED: No tab-specific logic needed
+    // All functionality handled by global scripts:
+    // - settings-script.js (save button)
+    // - settings-reset-helper.js (reset button)
 
-    /**
-     * Handle Reset to Default
-     */
-    $('#reset-email-settings').on('click', function(e) {
-        e.preventDefault();
-
-        if (!confirm('Are you sure you want to reset all email settings to their default values?\n\nThis action cannot be undone.')) {
-            return;
-        }
-
-        const $resetBtn = $(this);
-        const $submitBtn = $('#submit');
-        const form = $('#platform-email-settings-form');
-
-        // Disable buttons during reset
-        $resetBtn.prop('disabled', true).text('Resetting...');
-        $submitBtn.prop('disabled', true);
-
-        $.ajax({
-            url: wpAppCoreSettings.ajaxUrl,
-            type: 'POST',
-            data: {
-                action: 'reset_email',
-                nonce: wpAppCoreSettings.nonce
-            },
-            success: function(response) {
-                if (response.success) {
-                    // Show success message
-                    showMessage('Settings reset to default successfully.', 'success');
-
-                    // Reload page after short delay to show updated values
-                    setTimeout(function() {
-                        window.location.reload();
-                    }, 1000);
-                } else {
-                    showMessage(response.data.message || 'Failed to reset settings.', 'error');
-                    $resetBtn.prop('disabled', false).text('Reset to Default');
-                    $submitBtn.prop('disabled', false);
-                }
-            },
-            error: function() {
-                showMessage('An error occurred while resetting settings.', 'error');
-                $resetBtn.prop('disabled', false).text('Reset to Default');
-                $submitBtn.prop('disabled', false);
-            }
-        });
-    });
-
-    /**
-     * Show message
-     */
-    function showMessage(message, type) {
-        const $messageDiv = $('<div>')
-            .addClass('notice notice-' + type + ' is-dismissible')
-            .html('<p>' + message + '</p>');
-
-        $('.wrap h1').after($messageDiv);
-
-        // Auto dismiss after 3 seconds
-        setTimeout(function() {
-            $messageDiv.fadeOut(function() {
-                $(this).remove();
-            });
-        }, 3000);
-    }
-
+    console.log('[Email Tab] Using global handlers (no tab-specific code needed)');
 });

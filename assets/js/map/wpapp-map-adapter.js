@@ -21,7 +21,7 @@
  *
  * Usage:
  * Automatically integrates map picker when:
- * - wpAppModal opens with map container (.branch-coordinates-map)
+ * - WPModal opens with map container (.branch-coordinates-map)
  * - Custom trigger: $(document).trigger('wpapp:init-map')
  * - Custom cleanup: $(document).trigger('wpapp:cleanup-map')
  *
@@ -31,9 +31,14 @@
  * - Coordinate fields: [name="latitude"], [name="longitude"]
  *
  * Changelog:
+ * 1.0.1 - 2025-11-11
+ * - Migrated to WPModal events (wpmodal:modal-opened, wpmodal:modal-closed)
+ * - Replaced wpAppModal with WPModal
+ * - Added timeout-based map refresh (replaces modal-fully-open event)
+ *
  * 1.0.0 - 2025-11-02 (TODO-2190 Global Adapter)
  * - Initial release as global adapter
- * - Supports wpAppModal integration
+ * - Supports WPModal integration
  * - Supports custom trigger events
  * - Generic implementation for all plugins
  * - Eliminates need for plugin-specific adapters
@@ -93,26 +98,26 @@
         },
 
         /**
-         * Bind wpAppModal lifecycle events
+         * Bind WPModal lifecycle events
          */
         bindModalEvents() {
-            this.debugLog('Binding wpAppModal events');
+            this.debugLog('Binding WPModal events');
 
             // When modal opens
-            $(document).on('wpapp:modal-opened', (event, config) => {
-                this.debugLog('wpapp:modal-opened event received', config);
+            $(document).on('wpmodal:modal-opened', (event, config) => {
+                this.debugLog('wpmodal:modal-opened event received', config);
                 this.initMapInContext('modal');
-            });
 
-            // When modal fully opened (after animation)
-            $(document).on('wpapp:modal-fully-open', () => {
-                this.debugLog('wpapp:modal-fully-open event received');
-                this.refreshMap();
+                // Trigger refresh after a short delay (replace modal-fully-open event)
+                setTimeout(() => {
+                    this.debugLog('Modal fully opened, refreshing map');
+                    this.refreshMap();
+                }, 300);
             });
 
             // When modal closes
-            $(document).on('wpapp:modal-closed', () => {
-                this.debugLog('wpapp:modal-closed event received');
+            $(document).on('wpmodal:modal-closed', () => {
+                this.debugLog('wpmodal:modal-closed event received');
                 this.cleanupMap();
             });
         },

@@ -61,6 +61,55 @@ define('WP_APP_CORE_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WP_APP_CORE_PLUGIN_FILE', __FILE__);
 
 /**
+ * Check for required plugin dependencies
+ *
+ * WP App Core requires WP Modal plugin to be active.
+ * If wp-modal is not active, show admin notice and deactivate this plugin.
+ */
+function wpappcore_check_dependencies() {
+    // Check if wp-modal is active
+    if (!is_plugin_active('wp-modal/wp-modal.php')) {
+        // Deactivate this plugin
+        deactivate_plugins(plugin_basename(__FILE__));
+
+        // Show admin notice
+        add_action('admin_notices', 'wpappcore_dependency_notice');
+
+        // Prevent plugin from loading
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * Show admin notice when dependency is missing
+ */
+function wpappcore_dependency_notice() {
+    ?>
+    <div class="notice notice-error">
+        <p>
+            <strong><?php _e('WP App Core', 'wp-app-core'); ?></strong>:
+            <?php _e('This plugin requires <strong>WP Modal</strong> plugin to be installed and activated.', 'wp-app-core'); ?>
+        </p>
+        <p>
+            <?php _e('WP App Core has been deactivated. Please install and activate WP Modal first.', 'wp-app-core'); ?>
+        </p>
+    </div>
+    <?php
+}
+
+// Check dependencies before loading
+if (!function_exists('is_plugin_active')) {
+    require_once ABSPATH . 'wp-admin/includes/plugin.php';
+}
+
+// Only load plugin if dependencies are met
+if (!wpappcore_check_dependencies()) {
+    return;
+}
+
+/**
  * Main plugin class
  */
 class WP_App_Core {
@@ -265,6 +314,7 @@ class WP_App_Core {
 
             // Initialize Platform Settings Controller
             $platform_settings = new \WPAppCore\Controllers\Settings\PlatformSettingsController();
+            $platform_settings->init();
 
             // Initialize Platform Staff Controller
             $platform_staff = new \WPAppCore\Controllers\Platform\PlatformStaffController();

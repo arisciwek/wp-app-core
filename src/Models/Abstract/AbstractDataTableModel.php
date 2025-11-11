@@ -11,7 +11,7 @@
  * @version     1.0.0
  * @author      arisciwek
  *
- * Path: /wp-app-core/src/Models/DataTable/AbstractDataTableModel.php
+ * Path: /wp-app-core/src/Models/Abstract/AbstractDataTableModel.php
  *
  * Description: Abstract base class for all entity DataTable models.
  *              Extends existing DataTableModel and provides concrete
@@ -58,7 +58,9 @@
  * - Comprehensive PHPDoc documentation
  */
 
-namespace WPAppCore\Models\DataTable;
+namespace WPAppCore\Models\Abstract;
+
+use WPAppCore\Models\DataTable\DataTableModel;
 
 defined('ABSPATH') || exit;
 

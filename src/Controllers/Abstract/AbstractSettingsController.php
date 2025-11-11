@@ -37,7 +37,7 @@
 namespace WPAppCore\Controllers\Abstract;
 
 use WPAppCore\Models\Abstract\AbstractSettingsModel;
-use WPAppCore\Validators\AbstractSettingsValidator;
+use WPAppCore\Validators\Abstract\AbstractSettingsValidator;
 
 defined('ABSPATH') || exit;
 

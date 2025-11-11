@@ -27,8 +27,8 @@ namespace WPAppCore\Controllers\Settings;
 use WPAppCore\Controllers\Abstract\AbstractSettingsController;
 use WPAppCore\Models\Abstract\AbstractSettingsModel;
 use WPAppCore\Models\Settings\SecurityPolicyModel;
-use WPAppCore\Validators\AbstractSettingsValidator;
-use WPAppCore\Validators\SecurityPolicyValidator;
+use WPAppCore\Validators\Abstract\AbstractSettingsValidator;
+use WPAppCore\Validators\Settings\SecurityPolicyValidator;
 
 class SecurityPolicyController extends AbstractSettingsController {
 

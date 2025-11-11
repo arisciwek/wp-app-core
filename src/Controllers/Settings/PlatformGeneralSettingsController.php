@@ -27,8 +27,8 @@ namespace WPAppCore\Controllers\Settings;
 use WPAppCore\Controllers\Abstract\AbstractSettingsController;
 use WPAppCore\Models\Abstract\AbstractSettingsModel;
 use WPAppCore\Models\Settings\PlatformSettingsModel;
-use WPAppCore\Validators\AbstractSettingsValidator;
-use WPAppCore\Validators\PlatformSettingsValidator;
+use WPAppCore\Validators\Abstract\AbstractSettingsValidator;
+use WPAppCore\Validators\Settings\PlatformSettingsValidator;
 
 class PlatformGeneralSettingsController extends AbstractSettingsController {
 

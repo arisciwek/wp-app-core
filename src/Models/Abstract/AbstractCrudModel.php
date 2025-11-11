@@ -11,7 +11,7 @@
  * @version     1.0.0
  * @author      arisciwek
  *
- * Path: /wp-app-core/src/Models/Crud/AbstractCrudModel.php
+ * Path: /wp-app-core/src/Models/Abstract/AbstractCrudModel.php
  *
  * Description: Abstract base class for all entity CRUD models.
  *              Provides concrete implementations of commonly duplicated
@@ -74,7 +74,7 @@
  * - Comprehensive PHPDoc documentation
  */
 
-namespace WPAppCore\Models\Crud;
+namespace WPAppCore\Models\Abstract;
 
 defined('ABSPATH') || exit;
 

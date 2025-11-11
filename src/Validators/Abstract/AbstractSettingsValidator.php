@@ -10,7 +10,7 @@
  * @version     1.0.0
  * @author      arisciwek
  *
- * Path: /wp-app-core/src/Validators/AbstractSettingsValidator.php
+ * Path: /wp-app-core/src/Validators/Abstract/AbstractSettingsValidator.php
  *
  * Description: Abstract base class for settings validators.
  *              Provides standardized validation rules and error handling.
@@ -30,7 +30,7 @@
  * - Multiple error handlers per field
  */
 
-namespace WPAppCore\Validators;
+namespace WPAppCore\Validators\Abstract;
 
 defined('ABSPATH') || exit;
 

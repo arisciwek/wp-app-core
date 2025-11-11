@@ -105,8 +105,12 @@ class WP_App_Core {
         // Load upgrade handler
         require_once WP_APP_CORE_PLUGIN_DIR . 'includes/class-upgrade.php';
 
-        // Load dependencies handler
-        require_once WP_APP_CORE_PLUGIN_DIR . 'includes/class-dependencies.php';
+        // Load Asset Controller (NEW - replaces class-dependencies.php)
+        require_once WP_APP_CORE_PLUGIN_DIR . 'src/Controllers/Assets/AssetStrategyInterface.php';
+        require_once WP_APP_CORE_PLUGIN_DIR . 'src/Controllers/Assets/AssetController.php';
+        require_once WP_APP_CORE_PLUGIN_DIR . 'src/Controllers/Assets/Strategies/SettingsPageAssets.php';
+        require_once WP_APP_CORE_PLUGIN_DIR . 'src/Controllers/Assets/Strategies/AdminBarAssets.php';
+        require_once WP_APP_CORE_PLUGIN_DIR . 'src/Controllers/Assets/Strategies/PlatformStaffAssets.php';
 
         // Load WP Customer integration (TODO-1210)
         // DISABLED: Not needed anymore - using direct capability checks in wp-customer
@@ -133,8 +137,9 @@ class WP_App_Core {
         add_action('plugins_loaded', [$this, 'init']);
         add_action('init', [$this, 'load_textdomain']);
 
-        // Initialize dependencies handler
-        new WP_App_Core_Dependencies('wp-app-core', WP_APP_CORE_VERSION);
+        // Initialize Asset Controller (NEW - replaces Dependencies)
+        $asset_controller = \WPAppCore\Controllers\Assets\AssetController::get_instance();
+        $asset_controller->init();
 
         // Initialize WP Customer integration (TODO-1210)
         // Hook into wp_customer_access_type filter to set platform user access type

@@ -7,10 +7,10 @@
  *
  * @package     WPAppCore
  * @subpackage  Controllers
- * @version     1.0.0
+ * @version     1.1.0
  * @author      arisciwek
  *
- * Path: /wp-app-core/src/Controllers/AbstractSettingsController.php
+ * Path: /wp-app-core/src/Controllers/Abstract/AbstractSettingsController.php
  *
  * Description: Abstract base class for all plugin settings controllers.
  *              Provides standardized settings page rendering, tab system,
@@ -23,6 +23,9 @@
  * - WordPress Settings API
  *
  * Changelog:
+ * 1.1.0 - 2025-01-09
+ * - Added prepareViewData() method to pass settings data to templates
+ * - Fixed: Settings data now properly available in tab templates via $settings variable
  * 1.0.0 - 2025-01-09
  * - Initial implementation
  * - Tab system with hooks
@@ -31,9 +34,9 @@
  * - Plugin-specific hook integration
  */
 
-namespace WPAppCore\Controllers;
+namespace WPAppCore\Controllers\Abstract;
 
-use WPAppCore\Models\AbstractSettingsModel;
+use WPAppCore\Models\Abstract\AbstractSettingsModel;
 use WPAppCore\Validators\AbstractSettingsValidator;
 
 defined('ABSPATH') || exit;
@@ -103,6 +106,14 @@ abstract class AbstractSettingsController {
      */
     abstract protected function getValidator(): AbstractSettingsValidator;
 
+    /**
+     * Get controller/tab slug for this controller
+     * Used for unique AJAX action registration
+     *
+     * @return string Controller slug, e.g., 'general', 'security-policy'
+     */
+    abstract protected function getControllerSlug(): string;
+
     // ========================================
     // CONCRETE METHODS (Shared implementation)
     // ========================================
@@ -167,9 +178,24 @@ abstract class AbstractSettingsController {
 
     /**
      * Register AJAX handlers
+     *
+     * Registers controller-specific AJAX actions:
+     * - {prefix}_save_{controller_slug}
+     * - {prefix}_reset_{controller_slug}
+     *
+     * Example for SecurityPolicyController:
+     * - wp_ajax_wpapp_save_security_policy
+     * - wp_ajax_wpapp_reset_security_policy
      */
     protected function registerAjaxHandlers(): void {
         $prefix = $this->getPluginPrefix();
+        $controller = $this->getControllerSlug();
+
+        // Register controller-specific reset handler
+        // Example: wp_ajax_wpapp_reset_security_policy
+        add_action('wp_ajax_reset_' . str_replace('-', '_', $controller), [$this, 'handleResetSettings']);
+
+        // Also register generic handler for backward compatibility
         add_action('wp_ajax_' . $prefix . '_save_settings', [$this, 'handleSaveSettings']);
         add_action('wp_ajax_' . $prefix . '_reset_settings', [$this, 'handleResetSettings']);
     }
@@ -199,6 +225,9 @@ abstract class AbstractSettingsController {
     public function loadTabView(string $tab): void {
         $prefix = $this->getPluginPrefix();
 
+        // Prepare view data
+        $view_data = $this->prepareViewData($tab);
+
         // Hook: Allow plugins to provide custom tab template path
         $custom_tab_path = apply_filters(
             $prefix . '_settings_tab_path',
@@ -207,6 +236,9 @@ abstract class AbstractSettingsController {
         );
 
         if ($custom_tab_path && file_exists($custom_tab_path)) {
+            if (!empty($view_data)) {
+                extract($view_data);
+            }
             include $custom_tab_path;
             return;
         }
@@ -214,12 +246,30 @@ abstract class AbstractSettingsController {
         // Try core tab template
         $core_tab = WPAPP_CORE_PATH . "src/Templates/Settings/tab-{$tab}.php";
         if (file_exists($core_tab)) {
+            if (!empty($view_data)) {
+                extract($view_data);
+            }
             include $core_tab;
             return;
         }
 
         // Hook: Custom tab content via action
         do_action($prefix . '_settings_tab_content_' . $tab);
+    }
+
+    /**
+     * Prepare view data for tabs
+     *
+     * Default implementation provides settings data.
+     * Child classes can override for custom data.
+     *
+     * @param string $tab Tab slug
+     * @return array View data
+     */
+    protected function prepareViewData(string $tab): array {
+        return [
+            'settings' => $this->model->getSettings()
+        ];
     }
 
     /**

@@ -8,10 +8,10 @@
  *
  * @package     WPAppCore
  * @subpackage  Models
- * @version     1.2.0
+ * @version     1.3.0
  * @author      arisciwek
  *
- * Path: /wp-app-core/src/Models/AbstractSettingsModel.php
+ * Path: /wp-app-core/src/Models/Abstract/AbstractSettingsModel.php
  *
  * Description: Abstract base class for all settings models.
  *              Provides concrete implementations of commonly duplicated
@@ -70,6 +70,16 @@
  *   Example: do_action('wpc_settings_updated', $settings)
  *
  * Changelog:
+ * 1.3.0 - 2025-01-09
+ * - FIXED: Cache not invalidated when option updated via WordPress Settings API
+ * - Added constructor with update_option_{option_name} hook
+ * - Added onOptionUpdated() callback for automatic cache clearing
+ * - Cache now auto-clears on both manual save and WordPress Settings API
+ * 1.2.0 - 2025-01-09
+ * - FIXED: Cache key collision between plugins
+ * - Added getCacheKey() method to generate unique cache key per plugin
+ * - Cache key now uses option name: {option_name}_data
+ * - Example: 'wpapp_platform_settings_data', 'wpc_settings_data', etc.
  * 1.1.0 - 2025-01-09 (TODO-1203)
  * - BREAKING: Changed from wp_cache_* to AbstractCacheManager
  * - Removed getCacheKey() and getCacheGroup() abstract methods
@@ -83,13 +93,61 @@
  * - Default sanitization: sanitizeSettings()
  */
 
-namespace WPAppCore\Models;
+namespace WPAppCore\Models\Abstract;
 
 use WPAppCore\Cache\Abstract\AbstractCacheManager;
 
 defined('ABSPATH') || exit;
 
 abstract class AbstractSettingsModel {
+
+    /**
+     * Constructor
+     * Registers hooks for cache invalidation
+     */
+    public function __construct() {
+        // Register hooks to clear cache when option is updated/added via WordPress Settings API
+        $optionName = $this->getOptionName();
+
+        // Hook for update_option (when option already exists)
+        add_action('update_option_' . $optionName, [$this, 'onOptionUpdated'], 10, 3);
+
+        // Hook for add_option (when option doesn't exist yet)
+        // Note: add_option only passes 2 params ($option, $value), not ($old, $new, $option)
+        add_action('add_option_' . $optionName, [$this, 'onOptionAdded'], 10, 2);
+    }
+
+    /**
+     * Hook callback when option is updated
+     * Clears cache automatically when WordPress updates the option
+     *
+     * @param mixed $old_value Old option value
+     * @param mixed $new_value New option value
+     * @param string $option Option name
+     */
+    public function onOptionUpdated($old_value, $new_value, $option): void {
+        error_log('[AbstractSettingsModel] onOptionUpdated() called for option: ' . $option);
+        error_log('[AbstractSettingsModel] Old company_name: ' . (is_array($old_value) ? ($old_value['company_name'] ?? 'NOT SET') : 'NOT ARRAY'));
+        error_log('[AbstractSettingsModel] New company_name: ' . (is_array($new_value) ? ($new_value['company_name'] ?? 'NOT SET') : 'NOT ARRAY'));
+        error_log('[AbstractSettingsModel] Backtrace: ' . wp_debug_backtrace_summary());
+        $this->clearCache();
+        error_log('[AbstractSettingsModel] Cache cleared for option: ' . $option);
+    }
+
+    /**
+     * Hook callback when option is added (first time)
+     * Clears cache automatically when WordPress adds the option
+     *
+     * @param string $option Option name
+     * @param mixed $value Option value
+     */
+    public function onOptionAdded($option, $value): void {
+        error_log('[AbstractSettingsModel] onOptionAdded() called for option: ' . $option);
+        error_log('[AbstractSettingsModel] New company_name: ' . (is_array($value) ? ($value['company_name'] ?? 'NOT SET') : 'NOT ARRAY'));
+        error_log('[AbstractSettingsModel] Backtrace: ' . wp_debug_backtrace_summary());
+        $this->clearCache();
+        error_log('[AbstractSettingsModel] Cache cleared for option: ' . $option);
+    }
 
     /**
      * Get option name for WordPress options table
@@ -126,6 +184,16 @@ abstract class AbstractSettingsModel {
     }
 
     /**
+     * Get cache key for settings
+     * Uses option name to create unique cache key per plugin
+     *
+     * @return string Unique cache key
+     */
+    protected function getCacheKey(): string {
+        return $this->getOptionName() . '_data';
+    }
+
+    /**
      * Get all settings with defaults merged
      *
      * Uses AbstractCacheManager for caching.
@@ -135,17 +203,26 @@ abstract class AbstractSettingsModel {
      */
     public function getSettings(): array {
         $cacheManager = $this->getCacheManager();
+        $cacheKey = $this->getCacheKey();
+
+        error_log('[AbstractSettingsModel] getSettings() called');
+        error_log('[AbstractSettingsModel] Cache key: ' . $cacheKey);
 
         // Try cache first (using cache manager)
-        $settings = $cacheManager->get('settings');
+        $settings = $cacheManager->get($cacheKey);
 
         // Check if cache returned valid data (not null and not false)
         if ($settings === null || $settings === false) {
+            error_log('[AbstractSettingsModel] Cache miss - loading from DB');
+            $optionName = $this->getOptionName();
+
             // Get from database
             $settings = get_option(
-                $this->getOptionName(),
+                $optionName,
                 $this->getDefaultSettings()
             );
+
+            error_log('[AbstractSettingsModel] Raw DB company_name: ' . (is_array($settings) ? ($settings['company_name'] ?? 'NOT SET') : 'NOT ARRAY'));
 
             // Ensure we have an array
             if (!is_array($settings)) {
@@ -156,8 +233,13 @@ abstract class AbstractSettingsModel {
             // This handles new settings added in updates
             $settings = wp_parse_args($settings, $this->getDefaultSettings());
 
+            error_log('[AbstractSettingsModel] After merge company_name: ' . ($settings['company_name'] ?? 'NOT SET'));
+
             // Cache it (using cache manager)
-            $cacheManager->set('settings', $settings);
+            $cacheManager->set($cacheKey, $settings);
+        } else {
+            error_log('[AbstractSettingsModel] Cache hit - using cached data');
+            error_log('[AbstractSettingsModel] Cached company_name: ' . (is_array($settings) ? ($settings['company_name'] ?? 'NOT SET') : 'NOT ARRAY'));
         }
 
         return $settings;
@@ -184,11 +266,12 @@ abstract class AbstractSettingsModel {
      * @return bool True on success, false on failure
      */
     public function saveSettings(array $settings): bool {
+        $cacheKey = $this->getCacheKey();
         $result = update_option($this->getOptionName(), $settings);
 
         if ($result) {
-            // Clear cache using AbstractCacheManager
-            $this->getCacheManager()->delete('settings');
+            // Clear cache using AbstractCacheManager with specific key
+            $this->getCacheManager()->delete($cacheKey);
 
             // Fire hook for plugins to react to settings changes
             // Example: 'wpc_settings_updated'
@@ -220,7 +303,8 @@ abstract class AbstractSettingsModel {
      * @return void
      */
     public function clearCache(): void {
-        $this->getCacheManager()->delete('settings');
+        $cacheKey = $this->getCacheKey();
+        $this->getCacheManager()->delete($cacheKey);
     }
 
     /**

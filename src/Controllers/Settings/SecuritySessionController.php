@@ -24,8 +24,8 @@
 
 namespace WPAppCore\Controllers\Settings;
 
-use WPAppCore\Controllers\AbstractSettingsController;
-use WPAppCore\Models\AbstractSettingsModel;
+use WPAppCore\Controllers\Abstract\AbstractSettingsController;
+use WPAppCore\Models\Abstract\AbstractSettingsModel;
 use WPAppCore\Models\Settings\SecuritySessionModel;
 use WPAppCore\Validators\AbstractSettingsValidator;
 use WPAppCore\Validators\SecuritySessionValidator;
@@ -59,5 +59,9 @@ class SecuritySessionController extends AbstractSettingsController {
 
     protected function getValidator(): AbstractSettingsValidator {
         return new SecuritySessionValidator();
+    }
+
+    protected function getControllerSlug(): string {
+        return 'security-session';
     }
 }

@@ -45,7 +45,7 @@ jQuery(document).ready(function($) {
             url: wpAppCoreSettings.ajaxUrl,
             type: 'POST',
             data: {
-                action: 'reset_general_settings',
+                action: 'reset_general',
                 nonce: wpAppCoreSettings.nonce
             },
             success: function(response) {

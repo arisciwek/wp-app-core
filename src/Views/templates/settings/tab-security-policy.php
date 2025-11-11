@@ -43,7 +43,7 @@ if (!defined('ABSPATH')) {
 
     <form method="post" action="options.php" id="wp-app-core-security-policy-form" class="wp-app-core-security-policy-form">
         <?php
-        settings_fields('wp_app_core_security_policy');
+        settings_fields('platform_security_policy');
         ?>
 
         <!-- Section 1: Data Security -->
@@ -64,7 +64,7 @@ if (!defined('ABSPATH')) {
                             <label>
                                 <input
                                     type="checkbox"
-                                    name="wp_app_core_security_policy[data_encryption_enabled]"
+                                    name="platform_security_policy[data_encryption_enabled]"
                                     value="1"
                                     <?php checked(!empty($settings['data_encryption_enabled'])); ?>
                                 />
@@ -85,7 +85,7 @@ if (!defined('ABSPATH')) {
                             <label>
                                 <input
                                     type="checkbox"
-                                    name="wp_app_core_security_policy[force_ssl_admin]"
+                                    name="platform_security_policy[force_ssl_admin]"
                                     value="1"
                                     <?php checked(!empty($settings['force_ssl_admin'])); ?>
                                 />
@@ -107,7 +107,7 @@ if (!defined('ABSPATH')) {
                                 <label>
                                     <input
                                         type="checkbox"
-                                        name="wp_app_core_security_policy[secure_cookies]"
+                                        name="platform_security_policy[secure_cookies]"
                                         value="1"
                                         <?php checked(!empty($settings['secure_cookies'])); ?>
                                     />
@@ -117,7 +117,7 @@ if (!defined('ABSPATH')) {
                                 <label>
                                     <input
                                         type="checkbox"
-                                        name="wp_app_core_security_policy[cookie_httponly]"
+                                        name="platform_security_policy[cookie_httponly]"
                                         value="1"
                                         <?php checked(!empty($settings['cookie_httponly'])); ?>
                                     />
@@ -138,7 +138,7 @@ if (!defined('ABSPATH')) {
                         <td>
                             <select
                                 id="cookie_samesite"
-                                name="wp_app_core_security_policy[cookie_samesite]"
+                                name="platform_security_policy[cookie_samesite]"
                                 class="regular-text"
                             >
                                 <option value="Strict" <?php selected($settings['cookie_samesite'] ?? 'Strict', 'Strict'); ?>>
@@ -166,7 +166,7 @@ if (!defined('ABSPATH')) {
                             <input
                                 type="number"
                                 id="max_upload_size"
-                                name="wp_app_core_security_policy[max_upload_size]"
+                                name="platform_security_policy[max_upload_size]"
                                 value="<?php echo esc_attr($settings['max_upload_size'] ?? 5242880); ?>"
                                 class="regular-text"
                                 min="1024"
@@ -187,7 +187,7 @@ if (!defined('ABSPATH')) {
                             <label>
                                 <input
                                     type="checkbox"
-                                    name="wp_app_core_security_policy[disable_file_editing]"
+                                    name="platform_security_policy[disable_file_editing]"
                                     value="1"
                                     <?php checked(!empty($settings['disable_file_editing'])); ?>
                                 />
@@ -220,7 +220,7 @@ if (!defined('ABSPATH')) {
                             <label>
                                 <input
                                     type="checkbox"
-                                    name="wp_app_core_security_policy[activity_logs_enabled]"
+                                    name="platform_security_policy[activity_logs_enabled]"
                                     value="1"
                                     class="activity-logs-toggle"
                                     <?php checked(!empty($settings['activity_logs_enabled'])); ?>
@@ -242,7 +242,7 @@ if (!defined('ABSPATH')) {
                             <input
                                 type="number"
                                 id="log_retention_days"
-                                name="wp_app_core_security_policy[log_retention_days]"
+                                name="platform_security_policy[log_retention_days]"
                                 value="<?php echo esc_attr($settings['log_retention_days'] ?? 90); ?>"
                                 class="small-text"
                                 min="7"
@@ -265,7 +265,7 @@ if (!defined('ABSPATH')) {
                                 <label>
                                     <input
                                         type="checkbox"
-                                        name="wp_app_core_security_policy[log_user_login_logout]"
+                                        name="platform_security_policy[log_user_login_logout]"
                                         value="1"
                                         <?php checked(!empty($settings['log_user_login_logout'])); ?>
                                     />
@@ -275,7 +275,7 @@ if (!defined('ABSPATH')) {
                                 <label>
                                     <input
                                         type="checkbox"
-                                        name="wp_app_core_security_policy[log_settings_changes]"
+                                        name="platform_security_policy[log_settings_changes]"
                                         value="1"
                                         <?php checked(!empty($settings['log_settings_changes'])); ?>
                                     />
@@ -285,7 +285,7 @@ if (!defined('ABSPATH')) {
                                 <label>
                                     <input
                                         type="checkbox"
-                                        name="wp_app_core_security_policy[log_role_permission_changes]"
+                                        name="platform_security_policy[log_role_permission_changes]"
                                         value="1"
                                         <?php checked(!empty($settings['log_role_permission_changes'])); ?>
                                     />
@@ -295,7 +295,7 @@ if (!defined('ABSPATH')) {
                                 <label>
                                     <input
                                         type="checkbox"
-                                        name="wp_app_core_security_policy[log_data_exports]"
+                                        name="platform_security_policy[log_data_exports]"
                                         value="1"
                                         <?php checked(!empty($settings['log_data_exports'])); ?>
                                     />
@@ -305,7 +305,7 @@ if (!defined('ABSPATH')) {
                                 <label>
                                     <input
                                         type="checkbox"
-                                        name="wp_app_core_security_policy[log_failed_logins]"
+                                        name="platform_security_policy[log_failed_logins]"
                                         value="1"
                                         <?php checked(!empty($settings['log_failed_logins'])); ?>
                                     />
@@ -315,7 +315,7 @@ if (!defined('ABSPATH')) {
                                 <label>
                                     <input
                                         type="checkbox"
-                                        name="wp_app_core_security_policy[log_critical_actions]"
+                                        name="platform_security_policy[log_critical_actions]"
                                         value="1"
                                         <?php checked(!empty($settings['log_critical_actions'])); ?>
                                     />
@@ -346,7 +346,7 @@ if (!defined('ABSPATH')) {
                             <label>
                                 <input
                                     type="checkbox"
-                                    name="wp_app_core_security_policy[export_logs_enabled]"
+                                    name="platform_security_policy[export_logs_enabled]"
                                     value="1"
                                     <?php checked(!empty($settings['export_logs_enabled'])); ?>
                                 />
@@ -367,7 +367,7 @@ if (!defined('ABSPATH')) {
                             <label>
                                 <input
                                     type="checkbox"
-                                    name="wp_app_core_security_policy[user_access_reports_enabled]"
+                                    name="platform_security_policy[user_access_reports_enabled]"
                                     value="1"
                                     <?php checked(!empty($settings['user_access_reports_enabled'])); ?>
                                 />
@@ -388,7 +388,7 @@ if (!defined('ABSPATH')) {
                             <label>
                                 <input
                                     type="checkbox"
-                                    name="wp_app_core_security_policy[security_event_notifications]"
+                                    name="platform_security_policy[security_event_notifications]"
                                     value="1"
                                     class="security-notifications-toggle"
                                     <?php checked(!empty($settings['security_event_notifications'])); ?>
@@ -411,7 +411,7 @@ if (!defined('ABSPATH')) {
                                 <label>
                                     <input
                                         type="checkbox"
-                                        name="wp_app_core_security_policy[notify_new_admin_user]"
+                                        name="platform_security_policy[notify_new_admin_user]"
                                         value="1"
                                         <?php checked(!empty($settings['notify_new_admin_user'])); ?>
                                     />
@@ -421,7 +421,7 @@ if (!defined('ABSPATH')) {
                                 <label>
                                     <input
                                         type="checkbox"
-                                        name="wp_app_core_security_policy[notify_role_changes]"
+                                        name="platform_security_policy[notify_role_changes]"
                                         value="1"
                                         <?php checked(!empty($settings['notify_role_changes'])); ?>
                                     />
@@ -431,7 +431,7 @@ if (!defined('ABSPATH')) {
                                 <label>
                                     <input
                                         type="checkbox"
-                                        name="wp_app_core_security_policy[notify_settings_modified]"
+                                        name="platform_security_policy[notify_settings_modified]"
                                         value="1"
                                         <?php checked(!empty($settings['notify_settings_modified'])); ?>
                                     />
@@ -441,7 +441,7 @@ if (!defined('ABSPATH')) {
                                 <label>
                                     <input
                                         type="checkbox"
-                                        name="wp_app_core_security_policy[notify_multiple_failed_logins]"
+                                        name="platform_security_policy[notify_multiple_failed_logins]"
                                         value="1"
                                         <?php checked(!empty($settings['notify_multiple_failed_logins'])); ?>
                                     />
@@ -459,7 +459,7 @@ if (!defined('ABSPATH')) {
                         <td>
                             <select
                                 id="compliance_mode"
-                                name="wp_app_core_security_policy[compliance_mode]"
+                                name="platform_security_policy[compliance_mode]"
                                 class="regular-text"
                             >
                                 <option value="none" <?php selected($settings['compliance_mode'] ?? 'none', 'none'); ?>>
@@ -499,7 +499,7 @@ if (!defined('ABSPATH')) {
                             <label>
                                 <input
                                     type="checkbox"
-                                    name="wp_app_core_security_policy[disable_xmlrpc]"
+                                    name="platform_security_policy[disable_xmlrpc]"
                                     value="1"
                                     <?php checked(!empty($settings['disable_xmlrpc'])); ?>
                                 />
@@ -520,7 +520,7 @@ if (!defined('ABSPATH')) {
                             <label>
                                 <input
                                     type="checkbox"
-                                    name="wp_app_core_security_policy[disable_rest_api_anonymous]"
+                                    name="platform_security_policy[disable_rest_api_anonymous]"
                                     value="1"
                                     <?php checked(!empty($settings['disable_rest_api_anonymous'])); ?>
                                 />
@@ -541,7 +541,7 @@ if (!defined('ABSPATH')) {
                             <label>
                                 <input
                                     type="checkbox"
-                                    name="wp_app_core_security_policy[security_headers_enabled]"
+                                    name="platform_security_policy[security_headers_enabled]"
                                     value="1"
                                     class="security-headers-toggle"
                                     <?php checked(!empty($settings['security_headers_enabled'])); ?>
@@ -562,7 +562,7 @@ if (!defined('ABSPATH')) {
                         <td>
                             <select
                                 id="x_frame_options"
-                                name="wp_app_core_security_policy[x_frame_options]"
+                                name="platform_security_policy[x_frame_options]"
                                 class="regular-text"
                             >
                                 <option value="DENY" <?php selected($settings['x_frame_options'] ?? 'SAMEORIGIN', 'DENY'); ?>>
@@ -587,7 +587,7 @@ if (!defined('ABSPATH')) {
                             <label>
                                 <input
                                     type="checkbox"
-                                    name="wp_app_core_security_policy[database_backup_enabled]"
+                                    name="platform_security_policy[database_backup_enabled]"
                                     value="1"
                                     <?php checked(!empty($settings['database_backup_enabled'])); ?>
                                 />
@@ -608,7 +608,7 @@ if (!defined('ABSPATH')) {
                             <label>
                                 <input
                                     type="checkbox"
-                                    name="wp_app_core_security_policy[auto_security_updates]"
+                                    name="platform_security_policy[auto_security_updates]"
                                     value="1"
                                     <?php checked(!empty($settings['auto_security_updates'])); ?>
                                 />

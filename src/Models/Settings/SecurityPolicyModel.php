@@ -23,7 +23,7 @@
 
 namespace WPAppCore\Models\Settings;
 
-use WPAppCore\Models\AbstractSettingsModel;
+use WPAppCore\Models\Abstract\AbstractSettingsModel;
 use WPAppCore\Cache\Abstract\AbstractCacheManager;
 use WPAppCore\Cache\PlatformCacheManager;
 
@@ -33,10 +33,11 @@ class SecurityPolicyModel extends AbstractSettingsModel {
 
     public function __construct() {
         $this->cacheManager = new PlatformCacheManager();
+        parent::__construct(); // Register cache invalidation hooks
     }
 
     protected function getOptionName(): string {
-        return 'wpapp_security_policy';
+        return 'platform_security_policy';
     }
 
     protected function getCacheManager() {

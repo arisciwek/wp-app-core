@@ -146,7 +146,7 @@ jQuery(document).ready(function($) {
         }
 
         // Warning for disabling XML-RPC
-        if ($('input[name="wp_app_core_security_policy[disable_xmlrpc]"]').is(':checked')) {
+        if ($('input[name="platform_security_policy[disable_xmlrpc]"]').is(':checked')) {
             const xmlrpcWarningShown = sessionStorage.getItem('xmlrpc_warning_shown');
             if (!xmlrpcWarningShown) {
                 if (!confirm('WARNING: Disabling XML-RPC will prevent remote publishing and some mobile apps from working.\n\nAre you sure you want to disable XML-RPC?')) {
@@ -158,7 +158,7 @@ jQuery(document).ready(function($) {
         }
 
         // Warning for disabling REST API for anonymous users
-        if ($('input[name="wp_app_core_security_policy[disable_rest_api_anonymous]"]').is(':checked')) {
+        if ($('input[name="platform_security_policy[disable_rest_api_anonymous]"]').is(':checked')) {
             const restApiWarningShown = sessionStorage.getItem('rest_api_warning_shown');
             if (!restApiWarningShown) {
                 if (!confirm('WARNING: Disabling REST API for anonymous users may break some plugins and themes that rely on the API.\n\nContinue?')) {
@@ -271,7 +271,7 @@ jQuery(document).ready(function($) {
     /**
      * Disable File Editing Warning
      */
-    $('input[name="wp_app_core_security_policy[disable_file_editing]"]').on('change', function() {
+    $('input[name="platform_security_policy[disable_file_editing]"]').on('change', function() {
         if ($(this).is(':checked')) {
             showMessage('File editing will be disabled. You will need to edit theme and plugin files via FTP or file manager.', 'info');
         }
@@ -280,7 +280,7 @@ jQuery(document).ready(function($) {
     /**
      * Force SSL Admin Info
      */
-    $('input[name="wp_app_core_security_policy[force_ssl_admin]"]').on('change', function() {
+    $('input[name="platform_security_policy[force_ssl_admin]"]').on('change', function() {
         if ($(this).is(':checked')) {
             // Check if HTTPS is enabled
             if (window.location.protocol !== 'https:') {
@@ -292,7 +292,7 @@ jQuery(document).ready(function($) {
     /**
      * Data Encryption Warning
      */
-    $('input[name="wp_app_core_security_policy[data_encryption_enabled]"]').on('change', function() {
+    $('input[name="platform_security_policy[data_encryption_enabled]"]').on('change', function() {
         if ($(this).is(':checked')) {
             if (!confirm('Enabling data encryption will encrypt sensitive data in the database.\n\nThis is a one-way operation. Once enabled, disabling it later may cause data issues.\n\nContinue?')) {
                 $(this).prop('checked', false);

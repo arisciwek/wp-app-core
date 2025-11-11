@@ -114,8 +114,8 @@ jQuery(document).ready(function($) {
     /**
      * Validate 2FA Methods - At least one must be selected
      */
-    $('input[name="wp_app_core_security_authentication[twofa_methods][]"]').on('change', function() {
-        const checked = $('input[name="wp_app_core_security_authentication[twofa_methods][]"]:checked').length;
+    $('input[name="platform_security_authentication[twofa_methods][]"]').on('change', function() {
+        const checked = $('input[name="platform_security_authentication[twofa_methods][]"]:checked').length;
         if (checked === 0) {
             // Prevent unchecking the last one
             $(this).prop('checked', true);
@@ -166,7 +166,7 @@ jQuery(document).ready(function($) {
 
         // Validate 2FA
         if ($('.twofa-toggle').is(':checked')) {
-            const methodsChecked = $('input[name="wp_app_core_security_authentication[twofa_methods][]"]:checked').length;
+            const methodsChecked = $('input[name="platform_security_authentication[twofa_methods][]"]:checked').length;
             if (methodsChecked === 0) {
                 e.preventDefault();
                 showMessage('Please select at least one 2FA authentication method.', 'error');
@@ -176,7 +176,7 @@ jQuery(document).ready(function($) {
 
         // Validate IP Whitelist
         if ($('.ip-whitelist-toggle').is(':checked')) {
-            const whitelist = $('textarea[name="wp_app_core_security_authentication[ip_whitelist]"]').val().trim();
+            const whitelist = $('textarea[name="platform_security_authentication[ip_whitelist]"]').val().trim();
             if (whitelist === '') {
                 if (!confirm('IP Whitelist is enabled but empty. This will block ALL access including yours!\n\nAre you sure you want to continue?')) {
                     e.preventDefault();
@@ -187,8 +187,8 @@ jQuery(document).ready(function($) {
 
         // Validate Access Hours
         if ($('.access-hours-toggle').is(':checked')) {
-            const start = $('input[name="wp_app_core_security_authentication[admin_access_hours_start]"]').val();
-            const end = $('input[name="wp_app_core_security_authentication[admin_access_hours_end]"]').val();
+            const start = $('input[name="platform_security_authentication[admin_access_hours_start]"]').val();
+            const end = $('input[name="platform_security_authentication[admin_access_hours_end]"]').val();
 
             if (!start || !end) {
                 e.preventDefault();
@@ -236,7 +236,7 @@ jQuery(document).ready(function($) {
     /**
      * Validate IP lists on blur
      */
-    $('textarea[name="wp_app_core_security_authentication[ip_whitelist]"], textarea[name="wp_app_core_security_authentication[ip_blacklist]"]').on('blur', function() {
+    $('textarea[name="platform_security_authentication[ip_whitelist]"], textarea[name="platform_security_authentication[ip_blacklist]"]').on('blur', function() {
         const ips = parseIPList(this);
         const invalid = [];
 

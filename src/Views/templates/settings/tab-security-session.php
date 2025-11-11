@@ -41,7 +41,7 @@ if (!defined('ABSPATH')) {
 
     <form method="post" action="options.php" id="wp-app-core-security-session-form" class="wp-app-core-security-session-form">
         <?php
-        settings_fields('wp_app_core_security_session');
+        settings_fields('platform_security_session');
         ?>
 
         <!-- Section 1: Session Settings -->
@@ -62,7 +62,7 @@ if (!defined('ABSPATH')) {
                             <input
                                 type="number"
                                 id="session_idle_timeout"
-                                name="wp_app_core_security_session[session_idle_timeout]"
+                                name="platform_security_session[session_idle_timeout]"
                                 value="<?php echo esc_attr($settings['session_idle_timeout'] ?? 3600); ?>"
                                 class="regular-text"
                                 min="300"
@@ -83,7 +83,7 @@ if (!defined('ABSPATH')) {
                             <input
                                 type="number"
                                 id="session_absolute_timeout"
-                                name="wp_app_core_security_session[session_absolute_timeout]"
+                                name="platform_security_session[session_absolute_timeout]"
                                 value="<?php echo esc_attr($settings['session_absolute_timeout'] ?? 43200); ?>"
                                 class="regular-text"
                                 min="600"
@@ -104,7 +104,7 @@ if (!defined('ABSPATH')) {
                             <input
                                 type="number"
                                 id="concurrent_sessions_limit"
-                                name="wp_app_core_security_session[concurrent_sessions_limit]"
+                                name="platform_security_session[concurrent_sessions_limit]"
                                 value="<?php echo esc_attr($settings['concurrent_sessions_limit'] ?? 3); ?>"
                                 class="small-text"
                                 min="1"
@@ -125,7 +125,7 @@ if (!defined('ABSPATH')) {
                             <label>
                                 <input
                                     type="checkbox"
-                                    name="wp_app_core_security_session[force_logout_enabled]"
+                                    name="platform_security_session[force_logout_enabled]"
                                     value="1"
                                     class="force-logout-toggle"
                                     <?php checked(!empty($settings['force_logout_enabled'])); ?>
@@ -147,7 +147,7 @@ if (!defined('ABSPATH')) {
                             <input
                                 type="number"
                                 id="remember_me_duration"
-                                name="wp_app_core_security_session[remember_me_duration]"
+                                name="platform_security_session[remember_me_duration]"
                                 value="<?php echo esc_attr($settings['remember_me_duration'] ?? 1209600); ?>"
                                 class="regular-text"
                                 min="86400"
@@ -180,7 +180,7 @@ if (!defined('ABSPATH')) {
                             <input
                                 type="number"
                                 id="max_login_attempts"
-                                name="wp_app_core_security_session[max_login_attempts]"
+                                name="platform_security_session[max_login_attempts]"
                                 value="<?php echo esc_attr($settings['max_login_attempts'] ?? 5); ?>"
                                 class="small-text"
                                 min="3"
@@ -201,7 +201,7 @@ if (!defined('ABSPATH')) {
                             <input
                                 type="number"
                                 id="lockout_duration"
-                                name="wp_app_core_security_session[lockout_duration]"
+                                name="platform_security_session[lockout_duration]"
                                 value="<?php echo esc_attr($settings['lockout_duration'] ?? 1800); ?>"
                                 class="regular-text"
                                 min="300"
@@ -222,7 +222,7 @@ if (!defined('ABSPATH')) {
                             <label>
                                 <input
                                     type="checkbox"
-                                    name="wp_app_core_security_session[progressive_delays_enabled]"
+                                    name="platform_security_session[progressive_delays_enabled]"
                                     value="1"
                                     <?php checked(!empty($settings['progressive_delays_enabled'])); ?>
                                 />
@@ -243,7 +243,7 @@ if (!defined('ABSPATH')) {
                             <input
                                 type="number"
                                 id="captcha_after_failed_attempts"
-                                name="wp_app_core_security_session[captcha_after_failed_attempts]"
+                                name="platform_security_session[captcha_after_failed_attempts]"
                                 value="<?php echo esc_attr($settings['captcha_after_failed_attempts'] ?? 3); ?>"
                                 class="small-text"
                                 min="1"
@@ -263,7 +263,7 @@ if (!defined('ABSPATH')) {
                             <label>
                                 <input
                                     type="checkbox"
-                                    name="wp_app_core_security_session[email_failed_login_notification]"
+                                    name="platform_security_session[email_failed_login_notification]"
                                     value="1"
                                     <?php checked(!empty($settings['email_failed_login_notification'])); ?>
                                 />
@@ -296,7 +296,7 @@ if (!defined('ABSPATH')) {
                             <label>
                                 <input
                                     type="checkbox"
-                                    name="wp_app_core_security_session[login_history_enabled]"
+                                    name="platform_security_session[login_history_enabled]"
                                     value="1"
                                     class="login-history-toggle"
                                     <?php checked(!empty($settings['login_history_enabled'])); ?>
@@ -318,7 +318,7 @@ if (!defined('ABSPATH')) {
                             <input
                                 type="number"
                                 id="login_history_limit"
-                                name="wp_app_core_security_session[login_history_limit]"
+                                name="platform_security_session[login_history_limit]"
                                 value="<?php echo esc_attr($settings['login_history_limit'] ?? 100); ?>"
                                 class="small-text"
                                 min="10"
@@ -339,7 +339,7 @@ if (!defined('ABSPATH')) {
                             <label>
                                 <input
                                     type="checkbox"
-                                    name="wp_app_core_security_session[show_active_sessions]"
+                                    name="platform_security_session[show_active_sessions]"
                                     value="1"
                                     <?php checked(!empty($settings['show_active_sessions'])); ?>
                                 />
@@ -360,7 +360,7 @@ if (!defined('ABSPATH')) {
                             <label>
                                 <input
                                     type="checkbox"
-                                    name="wp_app_core_security_session[force_logout_suspicious_sessions]"
+                                    name="platform_security_session[force_logout_suspicious_sessions]"
                                     value="1"
                                     <?php checked(!empty($settings['force_logout_suspicious_sessions'])); ?>
                                 />
@@ -381,7 +381,7 @@ if (!defined('ABSPATH')) {
                             <label>
                                 <input
                                     type="checkbox"
-                                    name="wp_app_core_security_session[email_new_device_login]"
+                                    name="platform_security_session[email_new_device_login]"
                                     value="1"
                                     <?php checked(!empty($settings['email_new_device_login'])); ?>
                                 />
@@ -402,7 +402,7 @@ if (!defined('ABSPATH')) {
                             <label>
                                 <input
                                     type="checkbox"
-                                    name="wp_app_core_security_session[unusual_activity_detection]"
+                                    name="platform_security_session[unusual_activity_detection]"
                                     value="1"
                                     <?php checked(!empty($settings['unusual_activity_detection'])); ?>
                                 />

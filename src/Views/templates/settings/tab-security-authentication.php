@@ -39,7 +39,7 @@ if (!current_user_can('manage_options')) {
     <div id="security-auth-messages"></div>
 
     <form method="post" action="options.php" id="wp-app-core-security-authentication-form" class="wp-app-core-security-auth-form">
-        <?php settings_fields('wp_app_core_security_authentication'); ?>
+        <?php settings_fields('platform_security_authentication'); ?>
 
         <!-- Password Policy Settings Section -->
         <div class="settings-section">
@@ -57,7 +57,7 @@ if (!current_user_can('manage_options')) {
                     <td>
                         <label>
                             <input type="checkbox"
-                                   name="wp_app_core_security_authentication[force_strong_password]"
+                                   name="platform_security_authentication[force_strong_password]"
                                    value="1"
                                    <?php checked($settings['force_strong_password'], true); ?>>
                             <?php _e('Require strong passwords for all users', 'wp-app-core'); ?>
@@ -76,7 +76,7 @@ if (!current_user_can('manage_options')) {
                     <td>
                         <input type="number"
                                id="password_min_length"
-                               name="wp_app_core_security_authentication[password_min_length]"
+                               name="platform_security_authentication[password_min_length]"
                                value="<?php echo esc_attr($settings['password_min_length']); ?>"
                                min="8"
                                max="128"
@@ -101,7 +101,7 @@ if (!current_user_can('manage_options')) {
 
                             <label>
                                 <input type="checkbox"
-                                       name="wp_app_core_security_authentication[password_require_uppercase]"
+                                       name="platform_security_authentication[password_require_uppercase]"
                                        value="1"
                                        <?php checked($settings['password_require_uppercase'], true); ?>>
                                 <?php _e('At least one uppercase letter (A-Z)', 'wp-app-core'); ?>
@@ -109,7 +109,7 @@ if (!current_user_can('manage_options')) {
 
                             <label>
                                 <input type="checkbox"
-                                       name="wp_app_core_security_authentication[password_require_lowercase]"
+                                       name="platform_security_authentication[password_require_lowercase]"
                                        value="1"
                                        <?php checked($settings['password_require_lowercase'], true); ?>>
                                 <?php _e('At least one lowercase letter (a-z)', 'wp-app-core'); ?>
@@ -117,7 +117,7 @@ if (!current_user_can('manage_options')) {
 
                             <label>
                                 <input type="checkbox"
-                                       name="wp_app_core_security_authentication[password_require_numbers]"
+                                       name="platform_security_authentication[password_require_numbers]"
                                        value="1"
                                        <?php checked($settings['password_require_numbers'], true); ?>>
                                 <?php _e('At least one number (0-9)', 'wp-app-core'); ?>
@@ -125,7 +125,7 @@ if (!current_user_can('manage_options')) {
 
                             <label>
                                 <input type="checkbox"
-                                       name="wp_app_core_security_authentication[password_require_special_chars]"
+                                       name="platform_security_authentication[password_require_special_chars]"
                                        value="1"
                                        <?php checked($settings['password_require_special_chars'], true); ?>>
                                 <?php _e('At least one special character (!@#$%^&*)', 'wp-app-core'); ?>
@@ -142,7 +142,7 @@ if (!current_user_can('manage_options')) {
                     <td>
                         <input type="number"
                                id="password_expiration_days"
-                               name="wp_app_core_security_authentication[password_expiration_days]"
+                               name="platform_security_authentication[password_expiration_days]"
                                value="<?php echo esc_attr($settings['password_expiration_days']); ?>"
                                min="0"
                                max="365"
@@ -162,7 +162,7 @@ if (!current_user_can('manage_options')) {
                     <td>
                         <input type="number"
                                id="password_history_count"
-                               name="wp_app_core_security_authentication[password_history_count]"
+                               name="platform_security_authentication[password_history_count]"
                                value="<?php echo esc_attr($settings['password_history_count']); ?>"
                                min="0"
                                max="24"
@@ -192,7 +192,7 @@ if (!current_user_can('manage_options')) {
                     <td>
                         <label>
                             <input type="checkbox"
-                                   name="wp_app_core_security_authentication[twofa_enabled]"
+                                   name="platform_security_authentication[twofa_enabled]"
                                    value="1"
                                    class="twofa-toggle"
                                    <?php checked($settings['twofa_enabled'], true); ?>>
@@ -217,7 +217,7 @@ if (!current_user_can('manage_options')) {
 
                             <label>
                                 <input type="checkbox"
-                                       name="wp_app_core_security_authentication[twofa_methods][]"
+                                       name="platform_security_authentication[twofa_methods][]"
                                        value="authenticator"
                                        <?php checked(in_array('authenticator', $settings['twofa_methods'])); ?>>
                                 <?php _e('Authenticator App (Google Authenticator, Authy)', 'wp-app-core'); ?>
@@ -225,7 +225,7 @@ if (!current_user_can('manage_options')) {
 
                             <label>
                                 <input type="checkbox"
-                                       name="wp_app_core_security_authentication[twofa_methods][]"
+                                       name="platform_security_authentication[twofa_methods][]"
                                        value="email"
                                        <?php checked(in_array('email', $settings['twofa_methods'])); ?>>
                                 <?php _e('Email Code', 'wp-app-core'); ?>
@@ -233,7 +233,7 @@ if (!current_user_can('manage_options')) {
 
                             <label>
                                 <input type="checkbox"
-                                       name="wp_app_core_security_authentication[twofa_methods][]"
+                                       name="platform_security_authentication[twofa_methods][]"
                                        value="sms"
                                        <?php checked(in_array('sms', $settings['twofa_methods'])); ?>>
                                 <?php _e('SMS Code (requires SMS gateway)', 'wp-app-core'); ?>
@@ -251,7 +251,7 @@ if (!current_user_can('manage_options')) {
                         <?php _e('Enforce 2FA for Roles', 'wp-app-core'); ?>
                     </th>
                     <td>
-                        <select name="wp_app_core_security_authentication[twofa_force_for_roles][]"
+                        <select name="platform_security_authentication[twofa_force_for_roles][]"
                                 multiple
                                 class="regular-text"
                                 style="height: 150px;">
@@ -278,7 +278,7 @@ if (!current_user_can('manage_options')) {
                     <td>
                         <label>
                             <input type="checkbox"
-                                   name="wp_app_core_security_authentication[twofa_backup_codes]"
+                                   name="platform_security_authentication[twofa_backup_codes]"
                                    value="1"
                                    <?php checked($settings['twofa_backup_codes'], true); ?>>
                             <?php _e('Allow users to generate backup codes', 'wp-app-core'); ?>
@@ -297,7 +297,7 @@ if (!current_user_can('manage_options')) {
                     <td>
                         <input type="number"
                                id="twofa_grace_period_days"
-                               name="wp_app_core_security_authentication[twofa_grace_period_days]"
+                               name="platform_security_authentication[twofa_grace_period_days]"
                                value="<?php echo esc_attr($settings['twofa_grace_period_days']); ?>"
                                min="0"
                                max="30"
@@ -327,7 +327,7 @@ if (!current_user_can('manage_options')) {
                     <td>
                         <label>
                             <input type="checkbox"
-                                   name="wp_app_core_security_authentication[ip_whitelist_enabled]"
+                                   name="platform_security_authentication[ip_whitelist_enabled]"
                                    value="1"
                                    class="ip-whitelist-toggle"
                                    <?php checked($settings['ip_whitelist_enabled'], true); ?>>
@@ -337,7 +337,7 @@ if (!current_user_can('manage_options')) {
                             <?php _e('Warning: This may lock you out if configured incorrectly!', 'wp-app-core'); ?>
                         </p>
                         <div class="ip-whitelist-options" style="margin-top: 10px;">
-                            <textarea name="wp_app_core_security_authentication[ip_whitelist]"
+                            <textarea name="platform_security_authentication[ip_whitelist]"
                                       rows="5"
                                       class="large-text code"
                                       placeholder="192.168.1.1&#10;10.0.0.0/8&#10;203.0.113.0/24"><?php
@@ -359,14 +359,14 @@ if (!current_user_can('manage_options')) {
                     <td>
                         <label>
                             <input type="checkbox"
-                                   name="wp_app_core_security_authentication[ip_blacklist_enabled]"
+                                   name="platform_security_authentication[ip_blacklist_enabled]"
                                    value="1"
                                    class="ip-blacklist-toggle"
                                    <?php checked($settings['ip_blacklist_enabled'], true); ?>>
                             <?php _e('Enable IP blacklist (block specific IPs)', 'wp-app-core'); ?>
                         </label>
                         <div class="ip-blacklist-options" style="margin-top: 10px;">
-                            <textarea name="wp_app_core_security_authentication[ip_blacklist]"
+                            <textarea name="platform_security_authentication[ip_blacklist]"
                                       rows="5"
                                       class="large-text code"
                                       placeholder="192.168.1.100&#10;10.0.0.50"><?php
@@ -387,7 +387,7 @@ if (!current_user_can('manage_options')) {
                     <td>
                         <label>
                             <input type="checkbox"
-                                   name="wp_app_core_security_authentication[admin_access_hours_enabled]"
+                                   name="platform_security_authentication[admin_access_hours_enabled]"
                                    value="1"
                                    class="access-hours-toggle"
                                    <?php checked($settings['admin_access_hours_enabled'], true); ?>>
@@ -397,13 +397,13 @@ if (!current_user_can('manage_options')) {
                             <label>
                                 <?php _e('From:', 'wp-app-core'); ?>
                                 <input type="time"
-                                       name="wp_app_core_security_authentication[admin_access_hours_start]"
+                                       name="platform_security_authentication[admin_access_hours_start]"
                                        value="<?php echo esc_attr($settings['admin_access_hours_start']); ?>">
                             </label>
                             <label style="margin-left: 15px;">
                                 <?php _e('To:', 'wp-app-core'); ?>
                                 <input type="time"
-                                       name="wp_app_core_security_authentication[admin_access_hours_end]"
+                                       name="platform_security_authentication[admin_access_hours_end]"
                                        value="<?php echo esc_attr($settings['admin_access_hours_end']); ?>">
                             </label>
                             <p class="description">
@@ -421,7 +421,7 @@ if (!current_user_can('manage_options')) {
                     <td>
                         <label>
                             <input type="checkbox"
-                                   name="wp_app_core_security_authentication[maintenance_mode_enabled]"
+                                   name="platform_security_authentication[maintenance_mode_enabled]"
                                    value="1"
                                    <?php checked($settings['maintenance_mode_enabled'], true); ?>>
                             <?php _e('Enable maintenance mode', 'wp-app-core'); ?>

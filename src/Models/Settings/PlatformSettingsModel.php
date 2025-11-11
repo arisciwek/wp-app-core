@@ -4,7 +4,7 @@
  *
  * @package     WP_App_Core
  * @subpackage  Models/Settings
- * @version     2.0.0
+ * @version     2.1.0
  * @author      arisciwek
  *
  * Path: /wp-app-core/src/Models/Settings/PlatformSettingsModel.php
@@ -14,6 +14,9 @@
  *              REFACTORED: Now extends AbstractSettingsModel with AbstractCacheManager.
  *
  * Changelog:
+ * 2.1.0 - 2025-01-09
+ * - FIXED: Added parent::__construct() call to register cache invalidation hooks
+ * - Cache now auto-clears when option updated via WordPress Settings API
  * 2.0.0 - 2025-01-09 (TODO-1203)
  * - BREAKING: Now extends AbstractSettingsModel
  * - CHANGED: Uses AbstractCacheManager via PlatformCacheManager
@@ -29,7 +32,7 @@
 
 namespace WPAppCore\Models\Settings;
 
-use WPAppCore\Models\AbstractSettingsModel;
+use WPAppCore\Models\Abstract\AbstractSettingsModel;
 use WPAppCore\Cache\Abstract\AbstractCacheManager;
 use WPAppCore\Cache\PlatformCacheManager;
 
@@ -39,10 +42,11 @@ class PlatformSettingsModel extends AbstractSettingsModel {
 
     public function __construct() {
         $this->cacheManager = new PlatformCacheManager();
+        parent::__construct(); // Register cache invalidation hooks
     }
 
     protected function getOptionName(): string {
-        return 'wpapp_platform_settings';
+        return 'platform_settings';
     }
 
     protected function getCacheManager() {
@@ -52,20 +56,20 @@ class PlatformSettingsModel extends AbstractSettingsModel {
     protected function getDefaultSettings(): array {
         return [
         // Company Information
-        'company_name' => '',
-        'company_tagline' => '',
-        'company_address' => '',
-        'company_city' => '',
-        'company_state' => '',
-        'company_postal_code' => '',
+        'company_name' => 'PT Digital Marketplace Indonesia',
+        'company_tagline' => 'Connecting Businesses, Empowering Growth',
+        'company_address' => 'Jl. Jenderal Sudirman No. 123, Senayan',
+        'company_city' => 'Jakarta Selatan',
+        'company_state' => 'DKI Jakarta',
+        'company_postal_code' => '12190',
         'company_country' => 'Indonesia',
 
         // Contact Information
-        'company_phone' => '',
-        'company_email' => '',
-        'company_website' => '',
-        'support_email' => '',
-        'support_phone' => '',
+        'company_phone' => '+62 21 5550 1234',
+        'company_email' => 'info@marketplace.co.id',
+        'company_website' => 'https://marketplace.co.id',
+        'support_email' => 'support@marketplace.co.id',
+        'support_phone' => '+62 21 5550 5678',
 
         // Branding
         'company_logo_id' => 0,
@@ -107,11 +111,17 @@ class PlatformSettingsModel extends AbstractSettingsModel {
             $settings = [];
         }
 
+        // DEBUG: Log incoming settings
+        error_log('[PlatformSettingsModel] sanitizeSettings() called');
+        error_log('[PlatformSettingsModel] Incoming company_name: ' . ($settings['company_name'] ?? 'NOT SET'));
+        error_log('[PlatformSettingsModel] Incoming settings count: ' . count($settings));
+
         $sanitized = [];
 
         // Sanitize company information
         if (isset($settings['company_name'])) {
             $sanitized['company_name'] = sanitize_text_field($settings['company_name']);
+            error_log('[PlatformSettingsModel] Sanitized company_name: ' . $sanitized['company_name']);
         }
 
         if (isset($settings['company_tagline'])) {
@@ -225,8 +235,19 @@ class PlatformSettingsModel extends AbstractSettingsModel {
             $sanitized['maintenance_message'] = sanitize_textarea_field($settings['maintenance_message']);
         }
 
-        // Merge with defaults
-        return wp_parse_args($sanitized, $this->getDefaultSettings());
+        // Merge with CURRENT database values (not hardcoded defaults)
+        // This ensures fields not in the form retain their current values
+        $current = get_option($this->getOptionName(), []);
+        error_log('[PlatformSettingsModel] Current DB company_name: ' . ($current['company_name'] ?? 'NOT SET'));
+
+        $merged_with_current = wp_parse_args($sanitized, $current);
+        error_log('[PlatformSettingsModel] After merge with current: ' . ($merged_with_current['company_name'] ?? 'NOT SET'));
+
+        // Then merge with defaults for any missing fields
+        $final = wp_parse_args($merged_with_current, $this->getDefaultSettings());
+        error_log('[PlatformSettingsModel] Final company_name after merge: ' . ($final['company_name'] ?? 'NOT SET'));
+
+        return $final;
     }
 
     // ✅ getDefaultSettings() - protected in parent, available internally

@@ -25,8 +25,8 @@
 
 namespace WPAppCore\Controllers\Settings;
 
-use WPAppCore\Controllers\AbstractSettingsController;
-use WPAppCore\Models\AbstractSettingsModel;
+use WPAppCore\Controllers\Abstract\AbstractSettingsController;
+use WPAppCore\Models\Abstract\AbstractSettingsModel;
 use WPAppCore\Models\Settings\EmailSettingsModel;
 use WPAppCore\Validators\AbstractSettingsValidator;
 use WPAppCore\Validators\EmailSettingsValidator;
@@ -61,6 +61,10 @@ class EmailSettingsController extends AbstractSettingsController {
 
     protected function getValidator(): AbstractSettingsValidator {
         return new EmailSettingsValidator();
+    }
+
+    protected function getControllerSlug(): string {
+        return 'email';
     }
 
     /**

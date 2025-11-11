@@ -7,7 +7,7 @@
  * @version     2.0.0
  * @author      arisciwek
  *
- * Path: /wp-app-core/src/Controllers/Platform/PlatformSettingsPageController.php
+ * Path: /wp-app-core/src/Controllers/Settings/PlatformSettingsPageController.php
  *
  * Description: Main orchestrator untuk platform settings page.
  *              REFACTORED: Replaces monolithic PlatformSettingsController.
@@ -24,7 +24,7 @@
  * - Was monolithic PlatformSettingsController (871 lines)
  */
 
-namespace WPAppCore\Controllers\Platform;
+namespace WPAppCore\Controllers\Settings;
 
 use WPAppCore\Controllers\Settings\PlatformGeneralSettingsController;
 use WPAppCore\Controllers\Settings\EmailSettingsController;

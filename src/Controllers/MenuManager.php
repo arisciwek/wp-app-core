@@ -33,7 +33,7 @@
 
 namespace WPAppCore\Controllers;
 
-use WPAppCore\Controllers\Platform\PlatformSettingsPageController;
+use WPAppCore\Controllers\Settings\PlatformSettingsPageController;
 use WPAppCore\Controllers\Platform\PlatformStaffDashboardController;
 
 class MenuManager {

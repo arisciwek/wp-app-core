@@ -7,7 +7,7 @@
  * @version     1.0.0
  * @author      arisciwek
  *
- * Path: /wp-app-core/src/Controllers/Platform/PlatformSettingsController.php
+ * Path: /wp-app-core/src/Controllers/Settings/PlatformSettingsController.php
  *
  * Description: Controller untuk mengelola halaman settings platform
  *              Handles tab navigation, AJAX, dan form submission
@@ -20,7 +20,7 @@
  * - Permission checks
  */
 
-namespace WPAppCore\Controllers\Platform;
+namespace WPAppCore\Controllers\Settings;
 
 use WPAppCore\Models\Settings\PlatformSettingsModel;
 use WPAppCore\Models\Settings\PlatformPermissionModel;

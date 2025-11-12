@@ -185,29 +185,36 @@ abstract class AbstractSettingsController {
     public function handleResetViaPost(): void {
         // Check if reset was requested
         if (isset($_POST['reset_to_defaults']) && $_POST['reset_to_defaults'] === '1') {
-            // Verify nonce from settings_fields()
+            // Get option name for this controller
+            $option_name = $this->getOptionName();
             $option_page = $_POST['option_page'] ?? '';
+
+            // CRITICAL: Only handle if this is OUR form
+            // Each controller must only handle its own option_page
+            if ($option_page !== $option_name) {
+                return; // Not our form, skip
+            }
+
+            // Verify nonce from settings_fields()
             check_admin_referer($option_page . '-options');
 
-            // Get option name and reset to defaults
-            $option_name = $this->getOptionName();
+            // Reset to defaults
             $defaults = $this->model->getDefaults();
-            update_option($option_name, $defaults);
+            $updated = update_option($option_name, $defaults);
 
-            // Add reset success parameter to redirect with HIGH PRIORITY
-            // Priority 1 to run before WordPress default redirect
-            add_filter('wp_redirect', function($location) {
-                // Remove WordPress auto-added parameters
-                $location = remove_query_arg(['settings-updated', 'saved_tab', 'message'], $location);
+            // Build redirect URL
+            $current_tab = $_POST['current_tab'] ?? '';
+            $redirect_url = add_query_arg([
+                'page' => 'wp-app-core-settings',
+                'tab' => $current_tab,
+                'reset' => 'success',
+                'reset_tab' => $current_tab
+            ], admin_url('admin.php'));
 
-                // Add reset parameters
-                $location = add_query_arg([
-                    'reset' => 'success',
-                    'reset_tab' => $_POST['current_tab'] ?? ''
-                ], $location);
-
-                return $location;
-            }, 1); // Priority 1 - very early
+            // CRITICAL: Redirect and DIE to prevent WordPress from processing form POST
+            // This prevents form data from overwriting the defaults we just set
+            wp_redirect($redirect_url);
+            exit;
         }
     }
 

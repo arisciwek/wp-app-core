@@ -530,30 +530,92 @@ class CustomerDemoData extends AbstractDemoData {
 - No need to create duplicate AbstractDemoData or WPUserGenerator
 - Simply extend wp-app-core's AbstractDemoData
 
-### PlatformDemoData Note
+### Phase 1.5: wp-app-core Complete Implementation ✓
 
-**Current State:**
-- Uses static methods pattern (not extends AbstractDemoData)
-- Methods: `generate()`, `deleteAll()`, `generateSingleUser()`, `getStatistics()`
-- Manual transaction handling
+**PlatformDemoData Refactored** (COMPLETED)
+- **Before:** Static methods, manual transaction handling (324 lines)
+- **After:** Extends AbstractDemoData, instance methods (v2.0.1, 306 lines)
+- **Changes:**
+  - Now extends generic AbstractDemoData ✓
+  - Converted from static to instance methods ✓
+  - Implements `initModels()`, `validate()`, `generate()` ✓
+  - Uses parent's transaction wrapper (cleaner) ✓
+  - Added `getLastResults()` for detailed results ✓
+  - Fixed null userGenerator error with `did_action('plugins_loaded')` check ✓
+- **Controller Updated:** PlatformDemoDataController now uses instance methods
+- **Pattern:** Now consistent with CustomerDemoData, AgencyDemoData
 
-**Decision:** Leave as-is for now
-- Pattern already works correctly
-- No hardcoded dependencies on other plugins
-- Static methods API already used in AJAX handlers
-- Breaking change not necessary for TODO-1207 goals
+**Shared Assets Created** (NEW)
+- `/assets/css/demo-data/demo-data.css` (217 lines)
+  - Grid layout, cards, loading states
+  - Responsive design
+  - Generic, reusable across all 20 plugins
+- `/assets/js/demo-data/demo-data.js` (v2.0.1, 348 lines)
+  - Generic AJAX handlers using data attributes
+  - WPModal integration for confirmations
+  - Auto-update status features
+  - Legacy support for old class names
+  - Configuration via data-action, data-nonce, data-confirm
+- **Deleted:** Old duplicate assets from `/assets/css/settings/` and `/assets/js/settings/`
 
-**Future Consideration:**
-- Could refactor to extends AbstractDemoData for consistency
-- Would need to convert static methods to instance methods
-- Would need to update AJAX handlers and tab template
+**WPModal Integration** (NEW)
+- Replaced native `confirm()` with `WPModal.confirm()`
+- Beautiful modal dialogs instead of browser alerts
+- Double confirmation (red danger button) for destructive actions
+- Fallback to native confirm if WPModal not loaded
+- Added wp-modal dependency to SettingsPageAssets
+
+**Template Updates** (COMPLETED)
+- Updated `tab-demo-data.php` with data attributes:
+  - `data-action` for AJAX action names
+  - `data-confirm` for WPModal confirmations
+  - `data-double-confirm` for destructive actions
+  - `data-success-reload="true"` for role management buttons
+  - `data-stats-refresh` for staff management buttons
+  - `demo-data-button` class for generic handlers
+
+**Auto-Update Status** (NEW FEATURE)
+- Create/Delete Roles → Auto reload page → Status updates immediately
+- Generate/Delete Staff → Auto refresh stats → No page reload needed
+- Statistics auto-load on page load
+- Role count updates via page reload
+- Staff stats update via AJAX refresh
 
 ### Files Modified
 
 1. `/wp-app-core/src/Database/Demo/AbstractDemoData.php`
-   - Version: 1.0.0 → 2.0.0
-   - BREAKING: Removed hardcoded models
-   - Made truly plugin-agnostic
+   - Version: 1.0.0 → 2.0.0 → 2.0.1
+   - v2.0.0: BREAKING - Removed hardcoded models, made plugin-agnostic
+   - v2.0.1: Fixed null model error with `did_action('plugins_loaded')` check
+
+2. `/wp-app-core/src/Database/Demo/PlatformDemoData.php`
+   - Version: 1.0.8 → 2.0.0 → 2.0.1
+   - v2.0.0: BREAKING - Now extends AbstractDemoData, instance methods
+   - v2.0.1: Updated for AbstractDemoData v2.0.1 compatibility
+
+3. `/wp-app-core/src/Controllers/Settings/PlatformDemoDataController.php`
+   - Updated AJAX handlers to use instance methods
+   - Changed from static calls to instantiation pattern
+
+4. `/wp-app-core/src/Controllers/Assets/Strategies/SettingsPageAssets.php`
+   - Updated to load shared demo-data assets
+   - Added wp-modal dependency for demo-data tab
+
+5. `/wp-app-core/src/Views/templates/settings/tab-demo-data.php`
+   - Added data attributes for all buttons
+   - Added demo-data-button class
+   - Added WPModal confirmation messages
+   - Added auto-update features
+
+### Files Created (NEW)
+
+1. `/wp-app-core/assets/css/demo-data/demo-data.css` (217 lines)
+2. `/wp-app-core/assets/js/demo-data/demo-data.js` (v2.0.1, 348 lines)
+
+### Files Deleted
+
+1. `/wp-app-core/assets/css/settings/demo-data-tab-style.css` (duplicate)
+2. `/wp-app-core/assets/js/settings/platform-demo-data-tab-script.js` (duplicate)
 
 ### Files Verified (No Changes)
 
@@ -562,51 +624,86 @@ class CustomerDemoData extends AbstractDemoData {
 
 ### Status Update
 - [x] Questions answered by user
-- [x] Implementation plan approved  
+- [x] Implementation plan approved
 - [x] Phase 1 completed (Abstract foundation)
+- [x] Phase 1.5 completed (wp-app-core complete implementation)
+  - [x] PlatformDemoData refactored to extend AbstractDemoData
+  - [x] Shared CSS/JS assets created
+  - [x] WPModal integration
+  - [x] Auto-update status features
+  - [x] Template updates with data attributes
+  - [x] Old duplicate assets deleted
 - [ ] Phase 2 pending (wp-customer refactoring)
 - [ ] Phase 3 pending (wp-agency refactoring)
 - [ ] Phase 4 pending (Remaining plugins)
 
 ### Expected Code Reduction (After Full Implementation)
 
+**wp-app-core (Already Completed):**
+- Deleted demo-data-tab-style.css: -3.5KB
+- Deleted platform-demo-data-tab-script.js: -14KB
+- PlatformDemoData reduced: -18 lines (324 → 306)
+- Total: ~17.5KB + 18 lines
+
 **wp-customer:**
 - Delete AbstractDemoData.php: -120 lines
 - Delete WPUserGenerator.php: -435 lines
-- Total reduction: -555 lines
+- Delete demo-data CSS: ~217 lines
+- Delete demo-data JS: ~348 lines
+- Total reduction: -1,120 lines
 
 **wp-agency:**
 - Delete AbstractDemoData.php: -120 lines
 - Delete WPUserGenerator.php: -435 lines
-- Total reduction: -555 lines
+- Delete demo-data CSS: ~217 lines
+- Delete demo-data JS: ~348 lines
+- Total reduction: -1,120 lines
 
 **Per additional plugin (17 remaining):**
 - No need to create AbstractDemoData: -120 lines saved
 - No need to create WPUserGenerator: -435 lines saved
-- Total saved per plugin: -555 lines
+- No need to create demo-data CSS: -217 lines saved
+- No need to create demo-data JS: -348 lines saved
+- Total saved per plugin: -1,120 lines
 
 **Total Expected Savings:**
-- wp-customer + wp-agency: -1,110 lines
-- 17 remaining plugins: -9,435 lines (555 × 17)
-- **Grand total: -10,545 lines across 20 plugins**
+- wp-customer + wp-agency: -2,240 lines
+- 17 remaining plugins: -19,040 lines (1,120 × 17)
+- **Grand total: -21,280 lines across 20 plugins**
+- **Plus:** ~35KB of duplicate CSS/JS assets eliminated
 
 ### Testing Required
 
-1. **wp-app-core:**
-   - Test PlatformDemoData.generate() still works
-   - Test demo data tab UI
-   - Test AJAX handlers
+1. **wp-app-core (COMPLETED):**
+   - [x] Test PlatformDemoData extends AbstractDemoData
+   - [x] Test instance methods pattern (create/delete/stats)
+   - [x] Test demo data tab UI with shared assets
+   - [x] Test AJAX handlers with new generic pattern
+   - [x] Test WPModal confirmations
+   - [x] Test auto-update status features
+   - [x] Test role count updates (via page reload)
+   - [x] Test staff stats updates (via AJAX refresh)
+   - [x] Verify null userGenerator error fixed
+   - [x] Verify old duplicate assets deleted
 
 2. **After wp-customer refactor:**
-   - Test CustomerDemoData extends wp-app-core AbstractDemoData
-   - Test customer demo generation
-   - Verify no errors from deleted files
+   - [ ] Test CustomerDemoData extends wp-app-core AbstractDemoData
+   - [ ] Test customer demo generation
+   - [ ] Test shared assets load correctly
+   - [ ] Test WPModal confirmations work
+   - [ ] Verify no errors from deleted files
+   - [ ] Verify AbstractDemoData.php deleted
+   - [ ] Verify WPUserGenerator.php deleted
 
 3. **After wp-agency refactor:**
-   - Test AgencyDemoData extends wp-app-core AbstractDemoData
-   - Test agency demo generation
-   - Verify no errors from deleted files
+   - [ ] Test AgencyDemoData extends wp-app-core AbstractDemoData
+   - [ ] Test agency demo generation
+   - [ ] Test shared assets load correctly
+   - [ ] Test WPModal confirmations work
+   - [ ] Verify no errors from deleted files
+   - [ ] Verify AbstractDemoData.php deleted
+   - [ ] Verify WPUserGenerator.php deleted
 
 ---
 
-Last Updated: 2025-01-12 (Phase 1 Complete)
+Last Updated: 2025-01-12 (Phase 1.5 Complete - wp-app-core fully implemented)

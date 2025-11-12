@@ -27,10 +27,10 @@
 namespace WPAppCore\Controllers\Settings;
 
 use WPAppCore\Controllers\Settings\PlatformGeneralSettingsController;
-use WPAppCore\Controllers\Settings\EmailSettingsController;
-use WPAppCore\Controllers\Settings\SecurityAuthenticationController;
-use WPAppCore\Controllers\Settings\SecuritySessionController;
-use WPAppCore\Controllers\Settings\SecurityPolicyController;
+use WPAppCore\Controllers\Settings\PlatformEmailSettingsController;
+use WPAppCore\Controllers\Settings\PlatformSecurityAuthenticationController;
+use WPAppCore\Controllers\Settings\PlatformSecuritySessionController;
+use WPAppCore\Controllers\Settings\PlatformSecurityPolicyController;
 use WPAppCore\Controllers\Settings\PlatformPermissionsController;
 use WPAppCore\Controllers\Settings\PlatformDemoDataController;
 
@@ -42,10 +42,10 @@ class PlatformSettingsPageController {
         // Initialize specialized controllers
         $this->controllers = [
             'general' => new PlatformGeneralSettingsController(),
-            'email' => new EmailSettingsController(),
-            'security-authentication' => new SecurityAuthenticationController(),
-            'security-session' => new SecuritySessionController(),
-            'security-policy' => new SecurityPolicyController(),
+            'email' => new PlatformEmailSettingsController(),
+            'security-authentication' => new PlatformSecurityAuthenticationController(),
+            'security-session' => new PlatformSecuritySessionController(),
+            'security-policy' => new PlatformSecurityPolicyController(),
             'permissions' => new PlatformPermissionsController(),
             'demo-data' => new PlatformDemoDataController(),
         ];
@@ -55,13 +55,109 @@ class PlatformSettingsPageController {
      * Initialize controller
      */
     public function init(): void {
-        // Initialize all specialized controllers
+        // Initialize all specialized controllers FIRST
+        // This registers their hooks (wpapp_save_*, wpapp_reset_*)
         foreach ($this->controllers as $tab => $controller) {
             $controller->init();
         }
 
-        // Register admin_init hooks
+        // CRITICAL: Central dispatcher - handle save/reset BEFORE WordPress processes form
+        add_action('admin_init', [$this, 'handleFormSubmission'], 1); // Priority 1 - very early
+
+        // Register settings
         add_action('admin_init', [$this, 'registerSettings']);
+    }
+
+    /**
+     * Central dispatcher for save & reset
+     * Priority 1 - runs BEFORE WordPress Settings API processes form
+     */
+    public function handleFormSubmission(): void {
+        // Only handle POST requests with option_page
+        if (empty($_POST) || !isset($_POST['option_page'])) {
+            return;
+        }
+
+        $option_page = $_POST['option_page'] ?? '';
+
+        // Only handle our settings
+        $our_settings = [
+            'platform_settings',
+            'platform_email_settings',
+            'platform_security_authentication',
+            'platform_security_session',
+            'platform_security_policy'
+        ];
+
+        if (!in_array($option_page, $our_settings)) {
+            return;
+        }
+
+        // Verify nonce
+        check_admin_referer($option_page . '-options');
+
+        // DISPATCH: Reset request?
+        if (isset($_POST['reset_to_defaults']) && $_POST['reset_to_defaults'] === '1') {
+            $this->dispatchReset($option_page);
+            return; // exit handled in dispatchReset
+        }
+
+        // DISPATCH: Save request
+        $this->dispatchSave($option_page);
+        // Let WordPress continue to handle redirect
+    }
+
+    /**
+     * Dispatch reset request via hook
+     *
+     * @param string $option_page Option page being reset
+     */
+    private function dispatchReset(string $option_page): void {
+        // Trigger hook - controller yang match option_page akan respond
+        $defaults = apply_filters("wpapp_reset_{$option_page}", [], $option_page);
+
+        if (empty($defaults)) {
+            // No controller handled this
+            wp_die(__('Invalid reset request - no controller responded.', 'wp-app-core'));
+        }
+
+        // Update option with defaults
+        update_option($option_page, $defaults);
+
+        // Build redirect URL
+        $current_tab = $_POST['current_tab'] ?? '';
+        $redirect_url = add_query_arg([
+            'page' => 'wp-app-core-settings',
+            'tab' => $current_tab,
+            'reset' => 'success',
+            'reset_tab' => $current_tab
+        ], admin_url('admin.php'));
+
+        // CRITICAL: Redirect and exit to prevent WordPress from processing form
+        wp_redirect($redirect_url);
+        exit;
+    }
+
+    /**
+     * Dispatch save request via hook
+     *
+     * @param string $option_page Option page being saved
+     */
+    private function dispatchSave(string $option_page): void {
+        // Trigger hook - controller yang match option_page akan respond
+        $saved = apply_filters("wpapp_save_{$option_page}", false, $_POST);
+
+        if (!$saved) {
+            // Validation failed or no controller handled this
+            add_settings_error(
+                $option_page,
+                'save_failed',
+                __('Failed to save settings. Please check your input.', 'wp-app-core')
+            );
+        }
+
+        // Let WordPress continue to process form and redirect
+        // This allows WordPress Settings API to handle redirect with settings-updated parameter
     }
 
     /**
@@ -258,7 +354,7 @@ class PlatformSettingsPageController {
 
         // SKIP if this is a RESET request (not a save request)
         if (isset($_POST['reset_to_defaults']) && $_POST['reset_to_defaults'] === '1') {
-            // Reset is handled by AbstractSettingsController
+            // Reset is handled by dispatchReset() - already redirected with reset=success
             return $location;
         }
 

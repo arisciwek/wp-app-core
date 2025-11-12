@@ -114,6 +114,23 @@ abstract class AbstractSettingsController {
      */
     abstract protected function getControllerSlug(): string;
 
+    /**
+     * Save settings (called by central dispatcher via hook)
+     * MUST be implemented by child classes
+     *
+     * @param array $data POST data containing settings
+     * @return bool True if saved successfully, false otherwise
+     */
+    abstract protected function doSave(array $data): bool;
+
+    /**
+     * Reset settings to defaults (called by central dispatcher via hook)
+     * MUST be implemented by child classes
+     *
+     * @return array Default settings array
+     */
+    abstract protected function doReset(): array;
+
     // ========================================
     // CONCRETE METHODS (Shared implementation)
     // ========================================
@@ -129,11 +146,64 @@ abstract class AbstractSettingsController {
 
     /**
      * Initialize controller
+     * Auto-registers hooks for save & reset dispatch
      */
     public function init(): void {
-        add_action('admin_init', [$this, 'handleResetViaPost'], 5); // Priority 5 - before settings registration
+        // AUTO-REGISTER hooks based on option_name
+        // Central dispatcher will trigger these hooks
+        $option_name = $this->getOptionName();
+        add_filter("wpapp_save_{$option_name}", [$this, 'handleSaveHook'], 10, 2);
+        add_filter("wpapp_reset_{$option_name}", [$this, 'handleResetHook'], 10, 2);
+
+        // Register WordPress settings
         add_action('admin_init', [$this, 'registerSettings']);
+
+        // Enqueue assets
         add_action('admin_enqueue_scripts', [$this, 'enqueueAssets']);
+    }
+
+    /**
+     * Handle save via hook (wrapper for doSave)
+     * Called by central dispatcher via apply_filters
+     *
+     * @param mixed $result Previous filter result (ignored)
+     * @param array $post_data POST data
+     * @return bool True if saved successfully
+     */
+    public function handleSaveHook($result, $post_data): bool {
+        // Permission check
+        if (!current_user_can($this->getSettingsCapability())) {
+            return false;
+        }
+
+        // Validate data
+        $option_name = $this->getOptionName();
+        $settings_data = $post_data[$option_name] ?? [];
+
+        if (!$this->validator->validate($settings_data)) {
+            return false;
+        }
+
+        // Call child implementation
+        return $this->doSave($post_data);
+    }
+
+    /**
+     * Handle reset via hook (wrapper for doReset)
+     * Called by central dispatcher via apply_filters
+     *
+     * @param mixed $result Previous filter result (ignored)
+     * @param string $option_page Option page being reset
+     * @return array Default settings
+     */
+    public function handleResetHook($result, $option_page): array {
+        // Permission check
+        if (!current_user_can($this->getSettingsCapability())) {
+            return [];
+        }
+
+        // Call child implementation
+        return $this->doReset();
     }
 
     /**
@@ -174,48 +244,6 @@ abstract class AbstractSettingsController {
         $method = $reflection->getMethod('getOptionName');
         $method->setAccessible(true);
         return $method->invoke($this->model);
-    }
-
-    /**
-     * Register settings with reset detection
-     *
-     * Native WordPress Settings API handles both save and reset via POST.
-     * Reset is detected via hidden input 'reset_to_defaults' in form.
-     */
-    public function handleResetViaPost(): void {
-        // Check if reset was requested
-        if (isset($_POST['reset_to_defaults']) && $_POST['reset_to_defaults'] === '1') {
-            // Get option name for this controller
-            $option_name = $this->getOptionName();
-            $option_page = $_POST['option_page'] ?? '';
-
-            // CRITICAL: Only handle if this is OUR form
-            // Each controller must only handle its own option_page
-            if ($option_page !== $option_name) {
-                return; // Not our form, skip
-            }
-
-            // Verify nonce from settings_fields()
-            check_admin_referer($option_page . '-options');
-
-            // Reset to defaults
-            $defaults = $this->model->getDefaults();
-            $updated = update_option($option_name, $defaults);
-
-            // Build redirect URL
-            $current_tab = $_POST['current_tab'] ?? '';
-            $redirect_url = add_query_arg([
-                'page' => 'wp-app-core-settings',
-                'tab' => $current_tab,
-                'reset' => 'success',
-                'reset_tab' => $current_tab
-            ], admin_url('admin.php'));
-
-            // CRITICAL: Redirect and DIE to prevent WordPress from processing form POST
-            // This prevents form data from overwriting the defaults we just set
-            wp_redirect($redirect_url);
-            exit;
-        }
     }
 
     /**

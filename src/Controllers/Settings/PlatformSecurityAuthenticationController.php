@@ -1,23 +1,27 @@
 <?php
 /**
- * Platform General Settings Controller
+ * Platform Security Authentication Controller
  *
  * @package     WP_App_Core
  * @subpackage  Controllers/Settings
- * @version     2.0.0
+ * @version     3.0.0
  * @author      arisciwek
  *
- * Path: /wp-app-core/src/Controllers/Settings/PlatformGeneralSettingsController.php
+ * Path: /wp-app-core/src/Controllers/Settings/PlatformSecurityAuthenticationController.php
  *
- * Description: Controller untuk general platform settings.
+ * Description: Controller untuk authentication & access control settings.
  *              REFACTORED: Now extends AbstractSettingsController.
  *              Extracted from monolithic PlatformSettingsController.
  *
  * Changelog:
+ * 3.0.0 - 2025-11-12 (TODO-1205)
+ * - BREAKING: Renamed from SecurityAuthenticationController
+ * - Implemented doSave() and doReset() abstract methods
+ * - Part of standardized settings architecture for 20 plugins
  * 2.0.0 - 2025-01-09 (TODO-1203)
  * - BREAKING: Extracted from PlatformSettingsController
  * - Now extends AbstractSettingsController
- * - Single responsibility: General platform settings only
+ * - Single responsibility: Authentication settings only
  * 1.0.0 - 2025-10-19
  * - Was part of PlatformSettingsController
  */
@@ -26,11 +30,11 @@ namespace WPAppCore\Controllers\Settings;
 
 use WPAppCore\Controllers\Abstract\AbstractSettingsController;
 use WPAppCore\Models\Abstract\AbstractSettingsModel;
-use WPAppCore\Models\Settings\PlatformSettingsModel;
+use WPAppCore\Models\Settings\SecurityAuthenticationModel;
 use WPAppCore\Validators\Abstract\AbstractSettingsValidator;
-use WPAppCore\Validators\Settings\PlatformSettingsValidator;
+use WPAppCore\Validators\Settings\SecurityAuthenticationValidator;
 
-class PlatformGeneralSettingsController extends AbstractSettingsController {
+class PlatformSecurityAuthenticationController extends AbstractSettingsController {
 
     protected function getPluginSlug(): string {
         return 'wp-app-core';
@@ -54,42 +58,31 @@ class PlatformGeneralSettingsController extends AbstractSettingsController {
     }
 
     protected function getModel(): AbstractSettingsModel {
-        return new PlatformSettingsModel();
+        return new SecurityAuthenticationModel();
     }
 
     protected function getValidator(): AbstractSettingsValidator {
-        return new PlatformSettingsValidator();
+        return new SecurityAuthenticationValidator();
     }
 
     protected function getControllerSlug(): string {
-        return 'general';
+        return 'security-authentication';
     }
 
     /**
      * Register notification messages via hook
-     *
-     * ABSTRACT PATTERN: Each controller registers their own messages
      */
     public function init(): void {
         parent::init();
-
-        // Register notification messages
         add_filter('wpapp_settings_notification_messages', [$this, 'registerNotificationMessages']);
     }
 
     /**
      * Register notification messages for this controller
-     *
-     * @param array $messages Existing messages from other controllers
-     * @return array Modified messages with this controller's messages added
      */
     public function registerNotificationMessages(array $messages): array {
-        // Save message - SEPARATED from reset
-        $messages['save_messages']['general'] = __('General settings have been saved successfully.', 'wp-app-core');
-
-        // Reset message - SEPARATED from save
-        $messages['reset_messages']['general'] = __('General settings have been reset to default values successfully.', 'wp-app-core');
-
+        $messages['save_messages']['security-authentication'] = __('Security authentication settings have been saved successfully.', 'wp-app-core');
+        $messages['reset_messages']['security-authentication'] = __('Security authentication settings have been reset to default values successfully.', 'wp-app-core');
         return $messages;
     }
 
@@ -102,7 +95,7 @@ class PlatformGeneralSettingsController extends AbstractSettingsController {
      */
     protected function doSave(array $data): bool {
         // Extract settings from POST data
-        $settings = $data['platform_settings'] ?? [];
+        $settings = $data['platform_security_authentication'] ?? [];
 
         // Save via model
         return $this->model->saveSettings($settings);

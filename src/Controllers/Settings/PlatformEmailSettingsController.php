@@ -1,19 +1,24 @@
 <?php
 /**
- * Email Settings Controller
+ * Platform Email Settings Controller
  *
  * @package     WP_App_Core
  * @subpackage  Controllers/Settings
- * @version     2.0.0
+ * @version     3.0.0
  * @author      arisciwek
  *
- * Path: /wp-app-core/src/Controllers/Settings/EmailSettingsController.php
+ * Path: /wp-app-core/src/Controllers/Settings/PlatformEmailSettingsController.php
  *
  * Description: Controller untuk email dan notification settings.
  *              REFACTORED: Now extends AbstractSettingsController.
  *              Extracted from monolithic PlatformSettingsController.
  *
  * Changelog:
+ * 3.0.0 - 2025-11-12 (TODO-1205)
+ * - BREAKING: Renamed from EmailSettingsController
+ * - Implemented doSave() and doReset() abstract methods
+ * - Removed registerAjaxHandlers() - no longer in parent
+ * - Part of standardized settings architecture for 20 plugins
  * 2.0.0 - 2025-01-09 (TODO-1203)
  * - BREAKING: Extracted from PlatformSettingsController
  * - Now extends AbstractSettingsController
@@ -31,7 +36,7 @@ use WPAppCore\Models\Settings\EmailSettingsModel;
 use WPAppCore\Validators\Abstract\AbstractSettingsValidator;
 use WPAppCore\Validators\Settings\EmailSettingsValidator;
 
-class EmailSettingsController extends AbstractSettingsController {
+class PlatformEmailSettingsController extends AbstractSettingsController {
 
     protected function getPluginSlug(): string {
         return 'wp-app-core';
@@ -68,7 +73,7 @@ class EmailSettingsController extends AbstractSettingsController {
     }
 
     /**
-     * Register notification messages via hook
+     * Register notification messages and custom AJAX handlers
      *
      * ABSTRACT PATTERN: Each controller registers their own messages
      * This is called during init() to register with the page controller
@@ -78,6 +83,10 @@ class EmailSettingsController extends AbstractSettingsController {
 
         // Register notification messages
         add_filter('wpapp_settings_notification_messages', [$this, 'registerNotificationMessages']);
+
+        // Register custom AJAX handlers for email-specific features
+        add_action('wp_ajax_wpapp_test_smtp_connection', [$this, 'handleTestSMTPConnection']);
+        add_action('wp_ajax_wpapp_send_test_email', [$this, 'handleSendTestEmail']);
     }
 
     /**
@@ -97,14 +106,28 @@ class EmailSettingsController extends AbstractSettingsController {
     }
 
     /**
-     * Register custom AJAX handlers for email-specific features
+     * Save settings (implementation of abstract method)
+     * Called by central dispatcher via hook
+     *
+     * @param array $data POST data
+     * @return bool True if saved successfully
      */
-    protected function registerAjaxHandlers(): void {
-        parent::registerAjaxHandlers();
+    protected function doSave(array $data): bool {
+        // Extract settings from POST data
+        $settings = $data['platform_email_settings'] ?? [];
 
-        // Custom email AJAX handlers
-        add_action('wp_ajax_wpapp_test_smtp_connection', [$this, 'handleTestSMTPConnection']);
-        add_action('wp_ajax_wpapp_send_test_email', [$this, 'handleSendTestEmail']);
+        // Save via model
+        return $this->model->saveSettings($settings);
+    }
+
+    /**
+     * Reset settings to defaults (implementation of abstract method)
+     * Called by central dispatcher via hook
+     *
+     * @return array Default settings
+     */
+    protected function doReset(): array {
+        return $this->model->getDefaults();
     }
 
     /**

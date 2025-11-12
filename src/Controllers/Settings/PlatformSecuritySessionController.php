@@ -1,23 +1,27 @@
 <?php
 /**
- * Security Authentication Controller
+ * Platform Security Session Controller
  *
  * @package     WP_App_Core
  * @subpackage  Controllers/Settings
- * @version     2.0.0
+ * @version     3.0.0
  * @author      arisciwek
  *
- * Path: /wp-app-core/src/Controllers/Settings/SecurityAuthenticationController.php
+ * Path: /wp-app-core/src/Controllers/Settings/PlatformSecuritySessionController.php
  *
- * Description: Controller untuk authentication & access control settings.
+ * Description: Controller untuk session & login management settings.
  *              REFACTORED: Now extends AbstractSettingsController.
  *              Extracted from monolithic PlatformSettingsController.
  *
  * Changelog:
+ * 3.0.0 - 2025-11-12 (TODO-1205)
+ * - BREAKING: Renamed from SecuritySessionController
+ * - Implemented doSave() and doReset() abstract methods
+ * - Part of standardized settings architecture for 20 plugins
  * 2.0.0 - 2025-01-09 (TODO-1203)
  * - BREAKING: Extracted from PlatformSettingsController
  * - Now extends AbstractSettingsController
- * - Single responsibility: Authentication settings only
+ * - Single responsibility: Session settings only
  * 1.0.0 - 2025-10-19
  * - Was part of PlatformSettingsController
  */
@@ -26,11 +30,11 @@ namespace WPAppCore\Controllers\Settings;
 
 use WPAppCore\Controllers\Abstract\AbstractSettingsController;
 use WPAppCore\Models\Abstract\AbstractSettingsModel;
-use WPAppCore\Models\Settings\SecurityAuthenticationModel;
+use WPAppCore\Models\Settings\SecuritySessionModel;
 use WPAppCore\Validators\Abstract\AbstractSettingsValidator;
-use WPAppCore\Validators\Settings\SecurityAuthenticationValidator;
+use WPAppCore\Validators\Settings\SecuritySessionValidator;
 
-class SecurityAuthenticationController extends AbstractSettingsController {
+class PlatformSecuritySessionController extends AbstractSettingsController {
 
     protected function getPluginSlug(): string {
         return 'wp-app-core';
@@ -54,15 +58,15 @@ class SecurityAuthenticationController extends AbstractSettingsController {
     }
 
     protected function getModel(): AbstractSettingsModel {
-        return new SecurityAuthenticationModel();
+        return new SecuritySessionModel();
     }
 
     protected function getValidator(): AbstractSettingsValidator {
-        return new SecurityAuthenticationValidator();
+        return new SecuritySessionValidator();
     }
 
     protected function getControllerSlug(): string {
-        return 'security-authentication';
+        return 'security-session';
     }
 
     /**
@@ -77,8 +81,33 @@ class SecurityAuthenticationController extends AbstractSettingsController {
      * Register notification messages for this controller
      */
     public function registerNotificationMessages(array $messages): array {
-        $messages['save_messages']['security-authentication'] = __('Security authentication settings have been saved successfully.', 'wp-app-core');
-        $messages['reset_messages']['security-authentication'] = __('Security authentication settings have been reset to default values successfully.', 'wp-app-core');
+        $messages['save_messages']['security-session'] = __('Security session settings have been saved successfully.', 'wp-app-core');
+        $messages['reset_messages']['security-session'] = __('Security session settings have been reset to default values successfully.', 'wp-app-core');
         return $messages;
+    }
+
+    /**
+     * Save settings (implementation of abstract method)
+     * Called by central dispatcher via hook
+     *
+     * @param array $data POST data
+     * @return bool True if saved successfully
+     */
+    protected function doSave(array $data): bool {
+        // Extract settings from POST data
+        $settings = $data['platform_security_session'] ?? [];
+
+        // Save via model
+        return $this->model->saveSettings($settings);
+    }
+
+    /**
+     * Reset settings to defaults (implementation of abstract method)
+     * Called by central dispatcher via hook
+     *
+     * @return array Default settings
+     */
+    protected function doReset(): array {
+        return $this->model->getDefaults();
     }
 }

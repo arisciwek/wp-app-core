@@ -1,19 +1,23 @@
 <?php
 /**
- * Security Policy Controller
+ * Platform Security Policy Controller
  *
  * @package     WP_App_Core
  * @subpackage  Controllers/Settings
- * @version     2.0.0
+ * @version     3.0.0
  * @author      arisciwek
  *
- * Path: /wp-app-core/src/Controllers/Settings/SecurityPolicyController.php
+ * Path: /wp-app-core/src/Controllers/Settings/PlatformSecurityPolicyController.php
  *
  * Description: Controller untuk security policies & audit settings.
  *              REFACTORED: Now extends AbstractSettingsController.
  *              Extracted from monolithic PlatformSettingsController.
  *
  * Changelog:
+ * 3.0.0 - 2025-11-12 (TODO-1205)
+ * - BREAKING: Renamed from SecurityPolicyController
+ * - Implemented doSave() and doReset() abstract methods
+ * - Part of standardized settings architecture for 20 plugins
  * 2.0.0 - 2025-01-09 (TODO-1203)
  * - BREAKING: Extracted from PlatformSettingsController
  * - Now extends AbstractSettingsController
@@ -30,7 +34,7 @@ use WPAppCore\Models\Settings\SecurityPolicyModel;
 use WPAppCore\Validators\Abstract\AbstractSettingsValidator;
 use WPAppCore\Validators\Settings\SecurityPolicyValidator;
 
-class SecurityPolicyController extends AbstractSettingsController {
+class PlatformSecurityPolicyController extends AbstractSettingsController {
 
     protected function getPluginSlug(): string {
         return 'wp-app-core';
@@ -80,5 +84,30 @@ class SecurityPolicyController extends AbstractSettingsController {
         $messages['save_messages']['security-policy'] = __('Security policy settings have been saved successfully.', 'wp-app-core');
         $messages['reset_messages']['security-policy'] = __('Security policy settings have been reset to default values successfully.', 'wp-app-core');
         return $messages;
+    }
+
+    /**
+     * Save settings (implementation of abstract method)
+     * Called by central dispatcher via hook
+     *
+     * @param array $data POST data
+     * @return bool True if saved successfully
+     */
+    protected function doSave(array $data): bool {
+        // Extract settings from POST data
+        $settings = $data['platform_security_policy'] ?? [];
+
+        // Save via model
+        return $this->model->saveSettings($settings);
+    }
+
+    /**
+     * Reset settings to defaults (implementation of abstract method)
+     * Called by central dispatcher via hook
+     *
+     * @return array Default settings
+     */
+    protected function doReset(): array {
+        return $this->model->getDefaults();
     }
 }

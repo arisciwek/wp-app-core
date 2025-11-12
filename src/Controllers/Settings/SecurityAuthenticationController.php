@@ -64,4 +64,21 @@ class SecurityAuthenticationController extends AbstractSettingsController {
     protected function getControllerSlug(): string {
         return 'security-authentication';
     }
+
+    /**
+     * Register notification messages via hook
+     */
+    public function init(): void {
+        parent::init();
+        add_filter('wpapp_settings_notification_messages', [$this, 'registerNotificationMessages']);
+    }
+
+    /**
+     * Register notification messages for this controller
+     */
+    public function registerNotificationMessages(array $messages): array {
+        $messages['save_messages']['security-authentication'] = __('Security authentication settings have been saved successfully.', 'wp-app-core');
+        $messages['reset_messages']['security-authentication'] = __('Security authentication settings have been reset to default values successfully.', 'wp-app-core');
+        return $messages;
+    }
 }

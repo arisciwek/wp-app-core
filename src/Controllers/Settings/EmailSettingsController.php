@@ -68,6 +68,35 @@ class EmailSettingsController extends AbstractSettingsController {
     }
 
     /**
+     * Register notification messages via hook
+     *
+     * ABSTRACT PATTERN: Each controller registers their own messages
+     * This is called during init() to register with the page controller
+     */
+    public function init(): void {
+        parent::init();
+
+        // Register notification messages
+        add_filter('wpapp_settings_notification_messages', [$this, 'registerNotificationMessages']);
+    }
+
+    /**
+     * Register notification messages for this controller
+     *
+     * @param array $messages Existing messages from other controllers
+     * @return array Modified messages with this controller's messages added
+     */
+    public function registerNotificationMessages(array $messages): array {
+        // Save message
+        $messages['save_messages']['email'] = __('Email settings have been saved successfully.', 'wp-app-core');
+
+        // Reset message
+        $messages['reset_messages']['email'] = __('Email settings have been reset to default values successfully.', 'wp-app-core');
+
+        return $messages;
+    }
+
+    /**
      * Register custom AJAX handlers for email-specific features
      */
     protected function registerAjaxHandlers(): void {

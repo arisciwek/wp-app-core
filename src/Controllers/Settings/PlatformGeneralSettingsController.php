@@ -64,4 +64,32 @@ class PlatformGeneralSettingsController extends AbstractSettingsController {
     protected function getControllerSlug(): string {
         return 'general';
     }
+
+    /**
+     * Register notification messages via hook
+     *
+     * ABSTRACT PATTERN: Each controller registers their own messages
+     */
+    public function init(): void {
+        parent::init();
+
+        // Register notification messages
+        add_filter('wpapp_settings_notification_messages', [$this, 'registerNotificationMessages']);
+    }
+
+    /**
+     * Register notification messages for this controller
+     *
+     * @param array $messages Existing messages from other controllers
+     * @return array Modified messages with this controller's messages added
+     */
+    public function registerNotificationMessages(array $messages): array {
+        // Save message - SEPARATED from reset
+        $messages['save_messages']['general'] = __('General settings have been saved successfully.', 'wp-app-core');
+
+        // Reset message - SEPARATED from save
+        $messages['reset_messages']['general'] = __('General settings have been reset to default values successfully.', 'wp-app-core');
+
+        return $messages;
+    }
 }

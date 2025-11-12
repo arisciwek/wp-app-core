@@ -89,6 +89,40 @@ class PlatformSettingsPageController {
     }
 
     /**
+     * Get notification messages from all controllers via hook
+     *
+     * Hook pattern: Each controller registers their messages
+     * This creates an abstraction layer for tab notifications
+     *
+     * @return array ['save_messages' => [...], 'reset_messages' => [...]]
+     */
+    public function getNotificationMessages(): array {
+        $messages = [
+            'save_messages' => [],
+            'reset_messages' => []
+        ];
+
+        /**
+         * Hook: wpapp_settings_notification_messages
+         *
+         * Allows each controller to register their notification messages
+         *
+         * @param array $messages Array with 'save_messages' and 'reset_messages'
+         * @return array Modified messages array
+         *
+         * @example
+         * add_filter('wpapp_settings_notification_messages', function($messages) {
+         *     $messages['save_messages']['email'] = __('Email settings saved', 'wp-app-core');
+         *     $messages['reset_messages']['email'] = __('Email settings reset', 'wp-app-core');
+         *     return $messages;
+         * });
+         */
+        $messages = apply_filters('wpapp_settings_notification_messages', $messages);
+
+        return $messages;
+    }
+
+    /**
      * Render settings page
      */
     public function renderPage(): void {
@@ -237,9 +271,18 @@ class PlatformSettingsPageController {
             ];
 
             if (in_array($option_page, $our_settings)) {
+                // IMPORTANT: Remove reset parameters first (prevent duplicate notifications)
+                $location = remove_query_arg(['reset', 'reset_tab', 'message'], $location);
+
                 // Add settings-updated parameter if not already present
                 if (strpos($location, 'settings-updated=true') === false) {
                     $location = add_query_arg('settings-updated', 'true', $location);
+                }
+
+                // Add saved_tab parameter to show tab-specific success message
+                if (isset($_POST['saved_tab'])) {
+                    $saved_tab = sanitize_key($_POST['saved_tab']);
+                    $location = add_query_arg('saved_tab', $saved_tab, $location);
                 }
             }
         }

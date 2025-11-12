@@ -100,9 +100,40 @@ $current_config = $tab_config[$current_tab] ?? $tab_config['general'];
 <div class="wrap wp-app-settings-page">
     <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
 
-    <?php settings_errors(); ?>
+    <?php
+    // GLOBAL SCOPE: Page-level notification handling
+    // Suppress WordPress default notices when we have custom tab-specific notices
+    $show_custom_notice = false;
+
+    // Check if we have custom save notice
+    if (isset($_GET['settings-updated']) && $_GET['settings-updated'] === 'true' && isset($_GET['saved_tab'])) {
+        $saved_tab = sanitize_key($_GET['saved_tab']);
+        if ($saved_tab === $current_tab) {
+            $show_custom_notice = true;
+        }
+    }
+
+    // Check if we have custom reset notice
+    if (isset($_GET['reset']) && isset($_GET['reset_tab'])) {
+        $reset_tab = sanitize_key($_GET['reset_tab']);
+        if ($reset_tab === $current_tab) {
+            $show_custom_notice = true;
+        }
+    }
+
+    // Only show WordPress default notices if we don't have custom notices
+    if (!$show_custom_notice) {
+        settings_errors();
+    }
+    ?>
 
     <?php
+    // ABSTRACT PATTERN: Get notification messages from controller via hook
+    // Each tab controller registers their messages via wpapp_settings_notification_messages hook
+    $notification_messages = $controller->getNotificationMessages();
+    $save_messages = $notification_messages['save_messages'];
+    $reset_messages = $notification_messages['reset_messages'];
+
     // Show save success notices
     // Only show if saved_tab matches current_tab (prevent showing on tab switch)
     if (isset($_GET['settings-updated']) && $_GET['settings-updated'] === 'true' && isset($_GET['saved_tab'])) {
@@ -110,17 +141,7 @@ $current_config = $tab_config[$current_tab] ?? $tab_config['general'];
 
         // Only show notice if we're on the same tab that was saved
         if ($saved_tab === $current_tab) {
-            // Generate specific success message based on tab
-            $save_messages = [
-                'general' => __('General settings have been saved successfully.', 'wp-app-core'),
-                'email' => __('Email settings have been saved successfully.', 'wp-app-core'),
-                'security-authentication' => __('Security authentication settings have been saved successfully.', 'wp-app-core'),
-                'security-session' => __('Security session settings have been saved successfully.', 'wp-app-core'),
-                'security-policy' => __('Security policy settings have been saved successfully.', 'wp-app-core'),
-                'permissions' => __('Platform permissions have been saved successfully.', 'wp-app-core'),
-                'demo-data' => __('Development settings have been saved successfully.', 'wp-app-core'),
-            ];
-
+            // Get message from controller-registered messages
             $success_message = $save_messages[$current_tab] ?? __('Settings have been saved successfully.', 'wp-app-core');
             ?>
             <div class="notice notice-success is-dismissible">
@@ -139,17 +160,8 @@ $current_config = $tab_config[$current_tab] ?? $tab_config['general'];
         // Only show notice if we're on the same tab that was reset
         if ($reset_tab === $current_tab) {
             if ($reset_status === 'success') {
-                // Generate specific success message based on tab
-                $tab_messages = [
-                    'general' => __('General settings have been reset to default values successfully.', 'wp-app-core'),
-                    'email' => __('Email settings have been reset to default values successfully.', 'wp-app-core'),
-                    'security-authentication' => __('Security authentication settings have been reset to default values successfully.', 'wp-app-core'),
-                    'security-session' => __('Security session settings have been reset to default values successfully.', 'wp-app-core'),
-                    'security-policy' => __('Security policy settings have been reset to default values successfully.', 'wp-app-core'),
-                    'permissions' => __('Platform permissions have been reset to default values successfully.', 'wp-app-core'),
-                ];
-
-                $success_message = $tab_messages[$current_tab] ?? __('Settings have been reset to default values successfully.', 'wp-app-core');
+                // Get message from controller-registered messages
+                $success_message = $reset_messages[$current_tab] ?? __('Settings have been reset to default values successfully.', 'wp-app-core');
                 ?>
                 <div class="notice notice-success is-dismissible">
                     <p><strong><?php echo esc_html($success_message); ?></strong></p>

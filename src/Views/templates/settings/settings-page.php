@@ -103,6 +103,33 @@ $current_config = $tab_config[$current_tab] ?? $tab_config['general'];
     <?php settings_errors(); ?>
 
     <?php
+    // Show save success notices
+    // Only show if saved_tab matches current_tab (prevent showing on tab switch)
+    if (isset($_GET['settings-updated']) && $_GET['settings-updated'] === 'true' && isset($_GET['saved_tab'])) {
+        $saved_tab = sanitize_key($_GET['saved_tab']);
+
+        // Only show notice if we're on the same tab that was saved
+        if ($saved_tab === $current_tab) {
+            // Generate specific success message based on tab
+            $save_messages = [
+                'general' => __('General settings have been saved successfully.', 'wp-app-core'),
+                'email' => __('Email settings have been saved successfully.', 'wp-app-core'),
+                'security-authentication' => __('Security authentication settings have been saved successfully.', 'wp-app-core'),
+                'security-session' => __('Security session settings have been saved successfully.', 'wp-app-core'),
+                'security-policy' => __('Security policy settings have been saved successfully.', 'wp-app-core'),
+                'permissions' => __('Platform permissions have been saved successfully.', 'wp-app-core'),
+                'demo-data' => __('Development settings have been saved successfully.', 'wp-app-core'),
+            ];
+
+            $success_message = $save_messages[$current_tab] ?? __('Settings have been saved successfully.', 'wp-app-core');
+            ?>
+            <div class="notice notice-success is-dismissible">
+                <p><strong><?php echo esc_html($success_message); ?></strong></p>
+            </div>
+            <?php
+        }
+    }
+
     // Show reset success/error notices
     // Only show if reset_tab matches current_tab (prevent showing on tab switch)
     if (isset($_GET['reset']) && isset($_GET['reset_tab'])) {

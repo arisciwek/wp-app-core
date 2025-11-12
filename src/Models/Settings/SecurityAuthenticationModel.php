@@ -104,7 +104,8 @@ class SecurityAuthenticationModel extends AbstractSettingsModel {
         $sanitized = [];
 
         // Login Settings
-        $sanitized['force_strong_password'] = isset($settings['force_strong_password']) ? (bool) $settings['force_strong_password'] : false;
+        // Boolean: Always set (checkbox unchecked = false, checked = true)
+        $sanitized['force_strong_password'] = !empty($settings['force_strong_password']);
 
         if (isset($settings['password_min_length'])) {
             $sanitized['password_min_length'] = absint($settings['password_min_length']);
@@ -116,10 +117,11 @@ class SecurityAuthenticationModel extends AbstractSettingsModel {
             }
         }
 
-        $sanitized['password_require_uppercase'] = isset($settings['password_require_uppercase']) ? (bool) $settings['password_require_uppercase'] : false;
-        $sanitized['password_require_lowercase'] = isset($settings['password_require_lowercase']) ? (bool) $settings['password_require_lowercase'] : false;
-        $sanitized['password_require_numbers'] = isset($settings['password_require_numbers']) ? (bool) $settings['password_require_numbers'] : false;
-        $sanitized['password_require_special_chars'] = isset($settings['password_require_special_chars']) ? (bool) $settings['password_require_special_chars'] : false;
+        // Boolean: Always set (checkbox unchecked = false, checked = true)
+        $sanitized['password_require_uppercase'] = !empty($settings['password_require_uppercase']);
+        $sanitized['password_require_lowercase'] = !empty($settings['password_require_lowercase']);
+        $sanitized['password_require_numbers'] = !empty($settings['password_require_numbers']);
+        $sanitized['password_require_special_chars'] = !empty($settings['password_require_special_chars']);
 
         if (isset($settings['password_expiration_days'])) {
             $sanitized['password_expiration_days'] = absint($settings['password_expiration_days']);
@@ -133,7 +135,8 @@ class SecurityAuthenticationModel extends AbstractSettingsModel {
         }
 
         // Two-Factor Authentication
-        $sanitized['twofa_enabled'] = isset($settings['twofa_enabled']) ? (bool) $settings['twofa_enabled'] : false;
+        // Boolean: Always set (checkbox unchecked = false, checked = true)
+        $sanitized['twofa_enabled'] = !empty($settings['twofa_enabled']);
 
         if (isset($settings['twofa_force_for_roles'])) {
             if (is_array($settings['twofa_force_for_roles'])) {
@@ -153,14 +156,16 @@ class SecurityAuthenticationModel extends AbstractSettingsModel {
             }
         }
 
-        $sanitized['twofa_backup_codes'] = isset($settings['twofa_backup_codes']) ? (bool) $settings['twofa_backup_codes'] : false;
+        // Boolean: Always set (checkbox unchecked = false, checked = true)
+        $sanitized['twofa_backup_codes'] = !empty($settings['twofa_backup_codes']);
 
         if (isset($settings['twofa_grace_period_days'])) {
             $sanitized['twofa_grace_period_days'] = absint($settings['twofa_grace_period_days']);
         }
 
         // Access Control
-        $sanitized['ip_whitelist_enabled'] = isset($settings['ip_whitelist_enabled']) ? (bool) $settings['ip_whitelist_enabled'] : false;
+        // Boolean: Always set (checkbox unchecked = false, checked = true)
+        $sanitized['ip_whitelist_enabled'] = !empty($settings['ip_whitelist_enabled']);
 
         if (isset($settings['ip_whitelist'])) {
             if (is_array($settings['ip_whitelist'])) {
@@ -168,7 +173,8 @@ class SecurityAuthenticationModel extends AbstractSettingsModel {
             }
         }
 
-        $sanitized['ip_blacklist_enabled'] = isset($settings['ip_blacklist_enabled']) ? (bool) $settings['ip_blacklist_enabled'] : false;
+        // Boolean: Always set (checkbox unchecked = false, checked = true)
+        $sanitized['ip_blacklist_enabled'] = !empty($settings['ip_blacklist_enabled']);
 
         if (isset($settings['ip_blacklist'])) {
             if (is_array($settings['ip_blacklist'])) {
@@ -176,7 +182,8 @@ class SecurityAuthenticationModel extends AbstractSettingsModel {
             }
         }
 
-        $sanitized['country_blocking_enabled'] = isset($settings['country_blocking_enabled']) ? (bool) $settings['country_blocking_enabled'] : false;
+        // Boolean: Always set (checkbox unchecked = false, checked = true)
+        $sanitized['country_blocking_enabled'] = !empty($settings['country_blocking_enabled']);
 
         if (isset($settings['allowed_countries'])) {
             if (is_array($settings['allowed_countries'])) {
@@ -190,8 +197,9 @@ class SecurityAuthenticationModel extends AbstractSettingsModel {
             }
         }
 
-        $sanitized['device_management_enabled'] = isset($settings['device_management_enabled']) ? (bool) $settings['device_management_enabled'] : false;
-        $sanitized['admin_access_hours_enabled'] = isset($settings['admin_access_hours_enabled']) ? (bool) $settings['admin_access_hours_enabled'] : false;
+        // Boolean: Always set (checkbox unchecked = false, checked = true)
+        $sanitized['device_management_enabled'] = !empty($settings['device_management_enabled']);
+        $sanitized['admin_access_hours_enabled'] = !empty($settings['admin_access_hours_enabled']);
 
         if (isset($settings['admin_access_hours_start'])) {
             $sanitized['admin_access_hours_start'] = sanitize_text_field($settings['admin_access_hours_start']);
@@ -201,7 +209,8 @@ class SecurityAuthenticationModel extends AbstractSettingsModel {
             $sanitized['admin_access_hours_end'] = sanitize_text_field($settings['admin_access_hours_end']);
         }
 
-        $sanitized['maintenance_mode_enabled'] = isset($settings['maintenance_mode_enabled']) ? (bool) $settings['maintenance_mode_enabled'] : false;
+        // Boolean: Always set (checkbox unchecked = false, checked = true)
+        $sanitized['maintenance_mode_enabled'] = !empty($settings['maintenance_mode_enabled']);
 
         return wp_parse_args($sanitized, $this->getDefaultSettings());
     }

@@ -124,15 +124,24 @@
                                     console.log('[Settings Helper] ✅ SUCCESS - Settings reset data:', response.data);
                                     console.log('[Settings Helper] 🔄 Reloading page with success notice...');
 
+                                    // Build redirect URL parameters
+                                    const currentTab = $resetBtn.data('current-tab');
+                                    const redirectParams = {
+                                        page: new URLSearchParams(window.location.search).get('page'),
+                                        tab: currentTab,
+                                        'settings-updated': 'true',
+                                        reset: 'success',
+                                        reset_tab: currentTab
+                                    };
+
+                                    console.log('[Settings Helper] 📋 Redirect parameters:', redirectParams);
+                                    console.log('[Settings Helper] 📍 Current tab value:', currentTab);
+
                                     // NORMAL MODE: Reload page with success parameter
-                                    window.location.href = window.location.href.split('?')[0] + '?' +
-                                        $.param({
-                                            page: new URLSearchParams(window.location.search).get('page'),
-                                            tab: $resetBtn.data('current-tab'),
-                                            'settings-updated': 'true',
-                                            reset: 'success',
-                                            reset_tab: $resetBtn.data('current-tab')
-                                        });
+                                    const redirectUrl = window.location.href.split('?')[0] + '?' + $.param(redirectParams);
+                                    console.log('[Settings Helper] 🔗 Redirect URL:', redirectUrl);
+
+                                    window.location.href = redirectUrl;
                                 } else {
                                     console.log('[Settings Helper] Reset failed:', response.data.message);
                                     console.error('[Settings Helper] ❌ ERROR - Full response:', response);

@@ -16,7 +16,12 @@ defined('ABSPATH') || exit;
 class PlatformStaffAssets implements AssetStrategyInterface {
 
     public function should_load(): bool {
-        $screen = get_current_screen();
+        // get_current_screen() only exists in admin
+        if (!\is_admin()) {
+            return false;
+        }
+
+        $screen = \get_current_screen();
         if (!$screen) {
             return false;
         }

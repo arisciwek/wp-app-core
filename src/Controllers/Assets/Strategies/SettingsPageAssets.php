@@ -45,7 +45,12 @@ class SettingsPageAssets implements AssetStrategyInterface {
      * @return bool
      */
     public function should_load(): bool {
-        $screen = get_current_screen();
+        // get_current_screen() only exists in admin
+        if (!\is_admin()) {
+            return false;
+        }
+
+        $screen = \get_current_screen();
         if (!$screen) {
             return false;
         }
@@ -63,7 +68,7 @@ class SettingsPageAssets implements AssetStrategyInterface {
         $current_tab = $this->get_current_tab();
 
         // Base settings styles
-        wp_enqueue_style(
+        \wp_enqueue_style(
             'wpapp-settings-base',
             WP_APP_CORE_PLUGIN_URL . 'assets/css/settings/settings-style.css',
             [],
@@ -83,7 +88,7 @@ class SettingsPageAssets implements AssetStrategyInterface {
         $current_tab = $this->get_current_tab();
 
         // Base settings script
-        wp_enqueue_script(
+        \wp_enqueue_script(
             'wpapp-settings-base',
             WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/settings-script.js',
             ['jquery'],
@@ -92,34 +97,34 @@ class SettingsPageAssets implements AssetStrategyInterface {
         );
 
         // TEMP: Error logger for debugging fast-disappearing errors
-        wp_enqueue_script(
+        \wp_enqueue_script(
             'wpapp-error-logger',
             WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/error-logger.js',
             [],
-            filemtime(WP_APP_CORE_PLUGIN_DIR . 'assets/js/settings/error-logger.js'),
+            \filemtime(WP_APP_CORE_PLUGIN_DIR . 'assets/js/settings/error-logger.js'),
             false // Load in head to catch early errors
         );
 
         // Localize script with wpAppCoreSettings
         // This is what JavaScript expects!
-        wp_localize_script('wpapp-settings-base', 'wpAppCoreSettings', [
-            'ajaxUrl' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('wp_app_core_settings_nonce'),
+        \wp_localize_script('wpapp-settings-base', 'wpAppCoreSettings', [
+            'ajaxUrl' => \admin_url('admin-ajax.php'),
+            'nonce' => \wp_create_nonce('wp_app_core_settings_nonce'),
             'currentTab' => $current_tab,
             'i18n' => [
-                'saving' => __('Saving...', 'wp-app-core'),
-                'saved' => __('Settings saved successfully.', 'wp-app-core'),
-                'error' => __('Error saving settings.', 'wp-app-core'),
-                'confirmReset' => __('Are you sure you want to reset settings to defaults?', 'wp-app-core'),
+                'saving' => \__('Saving...', 'wp-app-core'),
+                'saved' => \__('Settings saved successfully.', 'wp-app-core'),
+                'error' => \__('Error saving settings.', 'wp-app-core'),
+                'confirmReset' => \__('Are you sure you want to reset settings to defaults?', 'wp-app-core'),
             ]
         ]);
 
         // Settings Reset Helper (WPModal integration)
-        wp_enqueue_script(
+        \wp_enqueue_script(
             'wpapp-settings-reset-helper',
             WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/settings-reset-helper.js',
             ['jquery', 'wp-modal'], // Depend on WPModal
-            filemtime(WP_APP_CORE_PLUGIN_DIR . 'assets/js/settings/settings-reset-helper.js'),
+            \filemtime(WP_APP_CORE_PLUGIN_DIR . 'assets/js/settings/settings-reset-helper.js'),
             true
         );
 
@@ -133,7 +138,7 @@ class SettingsPageAssets implements AssetStrategyInterface {
      * @return string
      */
     private function get_current_tab(): string {
-        return isset($_GET['tab']) ? sanitize_key($_GET['tab']) : 'general';
+        return isset($_GET['tab']) ? \sanitize_key($_GET['tab']) : 'general';
     }
 
     /**
@@ -159,8 +164,8 @@ class SettingsPageAssets implements AssetStrategyInterface {
         if (isset($tab_styles[$tab])) {
             $file_path = WP_APP_CORE_PLUGIN_DIR . 'assets/css/settings/' . $tab_styles[$tab];
 
-            if (file_exists($file_path)) {
-                wp_enqueue_style(
+            if (\file_exists($file_path)) {
+                \wp_enqueue_style(
                     'wpapp-settings-' . $tab,
                     WP_APP_CORE_PLUGIN_URL . 'assets/css/settings/' . $tab_styles[$tab],
                     ['wpapp-settings-base'],
@@ -174,7 +179,7 @@ class SettingsPageAssets implements AssetStrategyInterface {
                  * @param string $tab Current tab slug
                  * @param string $handle CSS handle that was enqueued
                  */
-                do_action('wpapp_after_shared_tab_style', $tab, 'wpapp-settings-' . $tab);
+                \do_action('wpapp_after_shared_tab_style', $tab, 'wpapp-settings-' . $tab);
             }
         }
     }
@@ -202,12 +207,12 @@ class SettingsPageAssets implements AssetStrategyInterface {
         if (isset($tab_scripts[$tab])) {
             $file_path = WP_APP_CORE_PLUGIN_DIR . 'assets/js/settings/' . $tab_scripts[$tab];
 
-            if (file_exists($file_path)) {
-                wp_enqueue_script(
+            if (\file_exists($file_path)) {
+                \wp_enqueue_script(
                     'wpapp-settings-' . $tab,
                     WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/' . $tab_scripts[$tab],
                     ['jquery', 'wpapp-settings-base', 'wpapp-settings-reset-helper'],
-                    filemtime($file_path), // Use filemtime for cache busting
+                    \filemtime($file_path), // Use filemtime for cache busting
                     true
                 );
 
@@ -218,7 +223,7 @@ class SettingsPageAssets implements AssetStrategyInterface {
                  * @param string $tab Current tab slug
                  * @param string $handle JS handle that was enqueued
                  */
-                do_action('wpapp_after_shared_tab_script', $tab, 'wpapp-settings-' . $tab);
+                \do_action('wpapp_after_shared_tab_script', $tab, 'wpapp-settings-' . $tab);
             }
         }
     }

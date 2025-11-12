@@ -101,6 +101,19 @@
             // Disable button to prevent double-submit
             $btn.prop('disabled', true).text('Saving...');
 
+            // Add saved_tab as hidden input field (safer than modifying action URL)
+            // Remove existing saved_tab input if any
+            $form.find('input[name="saved_tab"]').remove();
+
+            // Add new hidden input
+            $('<input>')
+                .attr('type', 'hidden')
+                .attr('name', 'saved_tab')
+                .attr('value', currentTab)
+                .appendTo($form);
+
+            console.log('[WPApp Settings] 📍 Added saved_tab hidden input:', currentTab);
+
             // Submit the form (WordPress will handle it)
             $form.submit();
 

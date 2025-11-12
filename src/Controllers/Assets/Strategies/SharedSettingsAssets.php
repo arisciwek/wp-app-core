@@ -144,11 +144,11 @@ class SharedSettingsAssets implements AssetStrategyInterface {
 
         $file_path = WP_APP_CORE_PLUGIN_DIR . 'assets/css/settings/' . $styles[$tab];
 
-        if (!file_exists($file_path)) {
+        if (!\file_exists($file_path)) {
             return false;
         }
 
-        wp_enqueue_style(
+        \wp_enqueue_style(
             $handle,
             WP_APP_CORE_PLUGIN_URL . 'assets/css/settings/' . $styles[$tab],
             $deps,
@@ -183,11 +183,11 @@ class SharedSettingsAssets implements AssetStrategyInterface {
 
         $file_path = WP_APP_CORE_PLUGIN_DIR . 'assets/js/settings/' . $scripts[$tab];
 
-        if (!file_exists($file_path)) {
+        if (!\file_exists($file_path)) {
             return false;
         }
 
-        wp_enqueue_script(
+        \wp_enqueue_script(
             $handle,
             WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/' . $scripts[$tab],
             $deps,
@@ -197,7 +197,7 @@ class SharedSettingsAssets implements AssetStrategyInterface {
 
         // Optional localization
         if (!empty($localize_data)) {
-            wp_localize_script($handle, $localize_data['object_name'], $localize_data['data']);
+            \wp_localize_script($handle, $localize_data['object_name'], $localize_data['data']);
         }
 
         return true;

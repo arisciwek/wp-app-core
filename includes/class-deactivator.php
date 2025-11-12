@@ -100,16 +100,79 @@ class WP_App_Core_Deactivator {
 
     private static function cleanupOptions() {
         try {
+            // Global scope options (wp_app_core_*)
             delete_option('wp_app_core_version');
-            delete_option('wp_app_core_platform_settings');
-            delete_option('wp_app_core_email_settings');
-            delete_option('wp_app_core_security_authentication');
-            delete_option('wp_app_core_security_session');
-            delete_option('wp_app_core_security_policy');
             delete_option('wp_app_core_development_settings');
-            self::debug("Platform settings cleared");
+
+            // Local scope options (platform_*)
+            delete_option('platform_settings');
+            delete_option('platform_email_settings');
+            delete_option('platform_security_authentication');
+            delete_option('platform_security_session');
+            delete_option('platform_security_policy');
+
+            self::debug("Platform settings deleted from database");
+
+            // Clear all caches
+            self::clearAllCaches();
+
+            self::debug("Platform settings and caches cleared");
         } catch (\Exception $e) {
             self::debug("Error cleaning up options: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Clear all caches (WordPress Object Cache, W3 Total Cache, etc.)
+     *
+     * @return void
+     */
+    private static function clearAllCaches() {
+        try {
+            // 1. Clear specific platform cache keys from PlatformCacheManager
+            // Cache keys follow pattern: {option_name}_data
+            $cache_keys = [
+                'platform_settings_data',
+                'platform_email_settings_data',
+                'platform_security_authentication_data',
+                'platform_security_session_data',
+                'platform_security_policy_data',
+            ];
+
+            foreach ($cache_keys as $key) {
+                wp_cache_delete($key, 'wp_app_core');
+            }
+            self::debug("Platform cache keys deleted: " . count($cache_keys) . " keys");
+
+            // 2. Flush WordPress Object Cache (Memcached/Redis)
+            wp_cache_flush();
+            self::debug("WordPress Object Cache flushed");
+
+            // 3. Clear W3 Total Cache if active
+            if (function_exists('w3tc_flush_all')) {
+                w3tc_flush_all();
+                self::debug("W3 Total Cache flushed");
+            }
+
+            // 4. Clear WP Super Cache if active
+            if (function_exists('wp_cache_clear_cache')) {
+                wp_cache_clear_cache();
+                self::debug("WP Super Cache flushed");
+            }
+
+            // 5. Clear transients related to platform
+            global $wpdb;
+            $wpdb->query(
+                "DELETE FROM {$wpdb->options}
+                WHERE option_name LIKE '_transient_platform_%'
+                OR option_name LIKE '_transient_timeout_platform_%'
+                OR option_name LIKE '_transient_wp_app_core_%'
+                OR option_name LIKE '_transient_timeout_wp_app_core_%'"
+            );
+            self::debug("Platform transients deleted");
+
+        } catch (\Exception $e) {
+            self::debug("Error clearing caches: " . $e->getMessage());
         }
     }
 }

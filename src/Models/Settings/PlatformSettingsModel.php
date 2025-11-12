@@ -227,9 +227,8 @@ class PlatformSettingsModel extends AbstractSettingsModel {
             $sanitized['platform_version'] = sanitize_text_field($settings['platform_version']);
         }
 
-        if (isset($settings['maintenance_mode'])) {
-            $sanitized['maintenance_mode'] = (bool) $settings['maintenance_mode'];
-        }
+        // Boolean: Always set (checkbox unchecked = false, checked = true)
+        $sanitized['maintenance_mode'] = !empty($settings['maintenance_mode']);
 
         if (isset($settings['maintenance_message'])) {
             $sanitized['maintenance_message'] = sanitize_textarea_field($settings['maintenance_message']);

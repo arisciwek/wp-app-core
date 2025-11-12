@@ -116,9 +116,8 @@ class EmailSettingsModel extends AbstractSettingsModel {
         $sanitized = [];
 
         // SMTP Configuration
-        if (isset($settings['smtp_enabled'])) {
-            $sanitized['smtp_enabled'] = (bool) $settings['smtp_enabled'];
-        }
+        // Boolean: Always set (checkbox unchecked = false, checked = true)
+        $sanitized['smtp_enabled'] = !empty($settings['smtp_enabled']);
 
         if (isset($settings['smtp_host'])) {
             $sanitized['smtp_host'] = sanitize_text_field($settings['smtp_host']);
@@ -138,9 +137,8 @@ class EmailSettingsModel extends AbstractSettingsModel {
                 : 'tls';
         }
 
-        if (isset($settings['smtp_auth'])) {
-            $sanitized['smtp_auth'] = (bool) $settings['smtp_auth'];
-        }
+        // Boolean: Always set (checkbox unchecked = false, checked = true)
+        $sanitized['smtp_auth'] = !empty($settings['smtp_auth']);
 
         if (isset($settings['smtp_username'])) {
             $sanitized['smtp_username'] = sanitize_text_field($settings['smtp_username']);
@@ -160,9 +158,8 @@ class EmailSettingsModel extends AbstractSettingsModel {
         }
 
         // Email Templates
-        if (isset($settings['welcome_email_enabled'])) {
-            $sanitized['welcome_email_enabled'] = (bool) $settings['welcome_email_enabled'];
-        }
+        // Boolean: Always set (checkbox unchecked = false, checked = true)
+        $sanitized['welcome_email_enabled'] = !empty($settings['welcome_email_enabled']);
 
         if (isset($settings['welcome_email_subject'])) {
             $sanitized['welcome_email_subject'] = sanitize_text_field($settings['welcome_email_subject']);
@@ -172,9 +169,8 @@ class EmailSettingsModel extends AbstractSettingsModel {
             $sanitized['welcome_email_content'] = wp_kses_post($settings['welcome_email_content']);
         }
 
-        if (isset($settings['notification_email_enabled'])) {
-            $sanitized['notification_email_enabled'] = (bool) $settings['notification_email_enabled'];
-        }
+        // Boolean: Always set (checkbox unchecked = false, checked = true)
+        $sanitized['notification_email_enabled'] = !empty($settings['notification_email_enabled']);
 
         if (isset($settings['notification_from_email'])) {
             $sanitized['notification_from_email'] = sanitize_email($settings['notification_from_email']);
@@ -185,17 +181,10 @@ class EmailSettingsModel extends AbstractSettingsModel {
         }
 
         // Admin Notifications
-        if (isset($settings['admin_new_tenant_notification'])) {
-            $sanitized['admin_new_tenant_notification'] = (bool) $settings['admin_new_tenant_notification'];
-        }
-
-        if (isset($settings['admin_new_payment_notification'])) {
-            $sanitized['admin_new_payment_notification'] = (bool) $settings['admin_new_payment_notification'];
-        }
-
-        if (isset($settings['admin_support_ticket_notification'])) {
-            $sanitized['admin_support_ticket_notification'] = (bool) $settings['admin_support_ticket_notification'];
-        }
+        // Boolean: Always set (checkbox unchecked = false, checked = true)
+        $sanitized['admin_new_tenant_notification'] = !empty($settings['admin_new_tenant_notification']);
+        $sanitized['admin_new_payment_notification'] = !empty($settings['admin_new_payment_notification']);
+        $sanitized['admin_support_ticket_notification'] = !empty($settings['admin_support_ticket_notification']);
 
         if (isset($settings['admin_notification_recipients'])) {
             if (is_array($settings['admin_notification_recipients'])) {
@@ -205,21 +194,11 @@ class EmailSettingsModel extends AbstractSettingsModel {
         }
 
         // Tenant Notifications
-        if (isset($settings['tenant_registration_approved'])) {
-            $sanitized['tenant_registration_approved'] = (bool) $settings['tenant_registration_approved'];
-        }
-
-        if (isset($settings['tenant_invoice_created'])) {
-            $sanitized['tenant_invoice_created'] = (bool) $settings['tenant_invoice_created'];
-        }
-
-        if (isset($settings['tenant_payment_received'])) {
-            $sanitized['tenant_payment_received'] = (bool) $settings['tenant_payment_received'];
-        }
-
-        if (isset($settings['tenant_subscription_expiring'])) {
-            $sanitized['tenant_subscription_expiring'] = (bool) $settings['tenant_subscription_expiring'];
-        }
+        // Boolean: Always set (checkbox unchecked = false, checked = true)
+        $sanitized['tenant_registration_approved'] = !empty($settings['tenant_registration_approved']);
+        $sanitized['tenant_invoice_created'] = !empty($settings['tenant_invoice_created']);
+        $sanitized['tenant_payment_received'] = !empty($settings['tenant_payment_received']);
+        $sanitized['tenant_subscription_expiring'] = !empty($settings['tenant_subscription_expiring']);
 
         // Notification Preferences
         if (isset($settings['notification_method'])) {
@@ -234,9 +213,8 @@ class EmailSettingsModel extends AbstractSettingsModel {
             }
         }
 
-        if (isset($settings['digest_enabled'])) {
-            $sanitized['digest_enabled'] = (bool) $settings['digest_enabled'];
-        }
+        // Boolean: Always set (checkbox unchecked = false, checked = true)
+        $sanitized['digest_enabled'] = !empty($settings['digest_enabled']);
 
         if (isset($settings['digest_frequency'])) {
             $allowed = ['daily', 'weekly'];
@@ -254,9 +232,8 @@ class EmailSettingsModel extends AbstractSettingsModel {
             $sanitized['email_footer_text'] = sanitize_textarea_field($settings['email_footer_text']);
         }
 
-        if (isset($settings['unsubscribe_enabled'])) {
-            $sanitized['unsubscribe_enabled'] = (bool) $settings['unsubscribe_enabled'];
-        }
+        // Boolean: Always set (checkbox unchecked = false, checked = true)
+        $sanitized['unsubscribe_enabled'] = !empty($settings['unsubscribe_enabled']);
 
         return wp_parse_args($sanitized, $this->getDefaultSettings());
     }

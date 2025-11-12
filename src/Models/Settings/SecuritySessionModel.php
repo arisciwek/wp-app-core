@@ -114,7 +114,8 @@ class SecuritySessionModel extends AbstractSettingsModel {
             }
         }
 
-        $sanitized['force_logout_enabled'] = isset($settings['force_logout_enabled']) ? (bool) $settings['force_logout_enabled'] : false;
+        // Boolean: Always set (checkbox unchecked = false, checked = true)
+        $sanitized['force_logout_enabled'] = !empty($settings['force_logout_enabled']);
 
         if (isset($settings['remember_me_duration'])) {
             $sanitized['remember_me_duration'] = absint($settings['remember_me_duration']);
@@ -138,7 +139,8 @@ class SecuritySessionModel extends AbstractSettingsModel {
             }
         }
 
-        $sanitized['progressive_delays_enabled'] = isset($settings['progressive_delays_enabled']) ? (bool) $settings['progressive_delays_enabled'] : false;
+        // Boolean: Always set (checkbox unchecked = false, checked = true)
+        $sanitized['progressive_delays_enabled'] = !empty($settings['progressive_delays_enabled']);
 
         if (isset($settings['captcha_after_failed_attempts'])) {
             $sanitized['captcha_after_failed_attempts'] = absint($settings['captcha_after_failed_attempts']);
@@ -147,10 +149,12 @@ class SecuritySessionModel extends AbstractSettingsModel {
             }
         }
 
-        $sanitized['email_failed_login_notification'] = isset($settings['email_failed_login_notification']) ? (bool) $settings['email_failed_login_notification'] : false;
+        // Boolean: Always set (checkbox unchecked = false, checked = true)
+        $sanitized['email_failed_login_notification'] = !empty($settings['email_failed_login_notification']);
 
         // Login Monitoring
-        $sanitized['login_history_enabled'] = isset($settings['login_history_enabled']) ? (bool) $settings['login_history_enabled'] : false;
+        // Boolean: Always set (checkbox unchecked = false, checked = true)
+        $sanitized['login_history_enabled'] = !empty($settings['login_history_enabled']);
 
         if (isset($settings['login_history_limit'])) {
             $sanitized['login_history_limit'] = absint($settings['login_history_limit']);
@@ -162,10 +166,11 @@ class SecuritySessionModel extends AbstractSettingsModel {
             }
         }
 
-        $sanitized['show_active_sessions'] = isset($settings['show_active_sessions']) ? (bool) $settings['show_active_sessions'] : false;
-        $sanitized['force_logout_suspicious_sessions'] = isset($settings['force_logout_suspicious_sessions']) ? (bool) $settings['force_logout_suspicious_sessions'] : false;
-        $sanitized['email_new_device_login'] = isset($settings['email_new_device_login']) ? (bool) $settings['email_new_device_login'] : false;
-        $sanitized['unusual_activity_detection'] = isset($settings['unusual_activity_detection']) ? (bool) $settings['unusual_activity_detection'] : false;
+        // Boolean: Always set (checkbox unchecked = false, checked = true)
+        $sanitized['show_active_sessions'] = !empty($settings['show_active_sessions']);
+        $sanitized['force_logout_suspicious_sessions'] = !empty($settings['force_logout_suspicious_sessions']);
+        $sanitized['email_new_device_login'] = !empty($settings['email_new_device_login']);
+        $sanitized['unusual_activity_detection'] = !empty($settings['unusual_activity_detection']);
 
         return wp_parse_args($sanitized, $this->getDefaultSettings());
     }

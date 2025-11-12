@@ -109,10 +109,10 @@ class SecurityPolicyModel extends AbstractSettingsModel {
         $sanitized = [];
 
         // Data Security
-        $sanitized['data_encryption_enabled'] = isset($settings['data_encryption_enabled']) ? (bool) $settings['data_encryption_enabled'] : false;
-        $sanitized['force_ssl_admin'] = isset($settings['force_ssl_admin']) ? (bool) $settings['force_ssl_admin'] : false;
-        $sanitized['secure_cookies'] = isset($settings['secure_cookies']) ? (bool) $settings['secure_cookies'] : false;
-        $sanitized['cookie_httponly'] = isset($settings['cookie_httponly']) ? (bool) $settings['cookie_httponly'] : false;
+        $sanitized['data_encryption_enabled'] = !empty($settings['data_encryption_enabled']);
+        $sanitized['force_ssl_admin'] = !empty($settings['force_ssl_admin']);
+        $sanitized['secure_cookies'] = !empty($settings['secure_cookies']);
+        $sanitized['cookie_httponly'] = !empty($settings['cookie_httponly']);
 
         if (isset($settings['cookie_samesite'])) {
             $allowed = ['Strict', 'Lax', 'None'];
@@ -134,10 +134,10 @@ class SecurityPolicyModel extends AbstractSettingsModel {
             }
         }
 
-        $sanitized['disable_file_editing'] = isset($settings['disable_file_editing']) ? (bool) $settings['disable_file_editing'] : false;
+        $sanitized['disable_file_editing'] = !empty($settings['disable_file_editing']);
 
         // Activity Logging
-        $sanitized['activity_logs_enabled'] = isset($settings['activity_logs_enabled']) ? (bool) $settings['activity_logs_enabled'] : false;
+        $sanitized['activity_logs_enabled'] = !empty($settings['activity_logs_enabled']);
 
         if (isset($settings['log_retention_days'])) {
             $sanitized['log_retention_days'] = absint($settings['log_retention_days']);
@@ -149,21 +149,21 @@ class SecurityPolicyModel extends AbstractSettingsModel {
             }
         }
 
-        $sanitized['log_user_login_logout'] = isset($settings['log_user_login_logout']) ? (bool) $settings['log_user_login_logout'] : false;
-        $sanitized['log_settings_changes'] = isset($settings['log_settings_changes']) ? (bool) $settings['log_settings_changes'] : false;
-        $sanitized['log_role_permission_changes'] = isset($settings['log_role_permission_changes']) ? (bool) $settings['log_role_permission_changes'] : false;
-        $sanitized['log_data_exports'] = isset($settings['log_data_exports']) ? (bool) $settings['log_data_exports'] : false;
-        $sanitized['log_failed_logins'] = isset($settings['log_failed_logins']) ? (bool) $settings['log_failed_logins'] : false;
-        $sanitized['log_critical_actions'] = isset($settings['log_critical_actions']) ? (bool) $settings['log_critical_actions'] : false;
+        $sanitized['log_user_login_logout'] = !empty($settings['log_user_login_logout']);
+        $sanitized['log_settings_changes'] = !empty($settings['log_settings_changes']);
+        $sanitized['log_role_permission_changes'] = !empty($settings['log_role_permission_changes']);
+        $sanitized['log_data_exports'] = !empty($settings['log_data_exports']);
+        $sanitized['log_failed_logins'] = !empty($settings['log_failed_logins']);
+        $sanitized['log_critical_actions'] = !empty($settings['log_critical_actions']);
 
         // Audit & Compliance
-        $sanitized['export_logs_enabled'] = isset($settings['export_logs_enabled']) ? (bool) $settings['export_logs_enabled'] : false;
-        $sanitized['user_access_reports_enabled'] = isset($settings['user_access_reports_enabled']) ? (bool) $settings['user_access_reports_enabled'] : false;
-        $sanitized['security_event_notifications'] = isset($settings['security_event_notifications']) ? (bool) $settings['security_event_notifications'] : false;
-        $sanitized['notify_new_admin_user'] = isset($settings['notify_new_admin_user']) ? (bool) $settings['notify_new_admin_user'] : false;
-        $sanitized['notify_role_changes'] = isset($settings['notify_role_changes']) ? (bool) $settings['notify_role_changes'] : false;
-        $sanitized['notify_settings_modified'] = isset($settings['notify_settings_modified']) ? (bool) $settings['notify_settings_modified'] : false;
-        $sanitized['notify_multiple_failed_logins'] = isset($settings['notify_multiple_failed_logins']) ? (bool) $settings['notify_multiple_failed_logins'] : false;
+        $sanitized['export_logs_enabled'] = !empty($settings['export_logs_enabled']);
+        $sanitized['user_access_reports_enabled'] = !empty($settings['user_access_reports_enabled']);
+        $sanitized['security_event_notifications'] = !empty($settings['security_event_notifications']);
+        $sanitized['notify_new_admin_user'] = !empty($settings['notify_new_admin_user']);
+        $sanitized['notify_role_changes'] = !empty($settings['notify_role_changes']);
+        $sanitized['notify_settings_modified'] = !empty($settings['notify_settings_modified']);
+        $sanitized['notify_multiple_failed_logins'] = !empty($settings['notify_multiple_failed_logins']);
 
         if (isset($settings['compliance_mode'])) {
             $allowed = ['none', 'gdpr', 'ccpa'];
@@ -173,9 +173,9 @@ class SecurityPolicyModel extends AbstractSettingsModel {
         }
 
         // Advanced Security
-        $sanitized['disable_xmlrpc'] = isset($settings['disable_xmlrpc']) ? (bool) $settings['disable_xmlrpc'] : false;
-        $sanitized['disable_rest_api_anonymous'] = isset($settings['disable_rest_api_anonymous']) ? (bool) $settings['disable_rest_api_anonymous'] : false;
-        $sanitized['security_headers_enabled'] = isset($settings['security_headers_enabled']) ? (bool) $settings['security_headers_enabled'] : false;
+        $sanitized['disable_xmlrpc'] = !empty($settings['disable_xmlrpc']);
+        $sanitized['disable_rest_api_anonymous'] = !empty($settings['disable_rest_api_anonymous']);
+        $sanitized['security_headers_enabled'] = !empty($settings['security_headers_enabled']);
 
         if (isset($settings['x_frame_options'])) {
             $allowed = ['DENY', 'SAMEORIGIN'];
@@ -196,8 +196,8 @@ class SecurityPolicyModel extends AbstractSettingsModel {
             $sanitized['referrer_policy'] = sanitize_text_field($settings['referrer_policy']);
         }
 
-        $sanitized['database_backup_enabled'] = isset($settings['database_backup_enabled']) ? (bool) $settings['database_backup_enabled'] : false;
-        $sanitized['auto_security_updates'] = isset($settings['auto_security_updates']) ? (bool) $settings['auto_security_updates'] : false;
+        $sanitized['database_backup_enabled'] = !empty($settings['database_backup_enabled']);
+        $sanitized['auto_security_updates'] = !empty($settings['auto_security_updates']);
 
         return wp_parse_args($sanitized, $this->getDefaultSettings());
     }

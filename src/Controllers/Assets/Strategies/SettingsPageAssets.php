@@ -109,7 +109,7 @@ class SettingsPageAssets implements AssetStrategyInterface {
         // This is what JavaScript expects!
         \wp_localize_script('wpapp-settings-base', 'wpAppCoreSettings', [
             'ajaxUrl' => \admin_url('admin-ajax.php'),
-            'nonce' => \wp_create_nonce('wp_app_core_settings_nonce'),
+            'nonce' => \wp_create_nonce('wpapp_nonce'),
             'currentTab' => $current_tab,
             'i18n' => [
                 'saving' => \__('Saving...', 'wp-app-core'),

@@ -27,31 +27,82 @@
  */
 
 jQuery(document).ready(function($) {
-    // DEPRECATED: Reset handler moved to page-level
-    // Using global settings-reset-helper.js (auto-initialize)
+    console.log('[Security Policy Tab] 🔄 Initializing...');
 
-    console.log('[Security Policy Tab] Using global handlers + custom warnings');
+    /**
+     * Toggle Activity Logs Options
+     * Adds/removes class to body for CSS pointer-events control
+     */
+    function toggleActivityLogsOptions() {
+        const isEnabled = $('.activity-logs-toggle').is(':checked');
+        console.log('[Security Policy Tab] Activity logs enabled:', isEnabled);
+
+        if (isEnabled) {
+            $('body').addClass('activity-logs-enabled');
+        } else {
+            $('body').removeClass('activity-logs-enabled');
+        }
+    }
+
+    $('.activity-logs-toggle').on('change', toggleActivityLogsOptions);
+    toggleActivityLogsOptions(); // Initial state
+
+    /**
+     * Toggle Security Notifications Options
+     */
+    function toggleSecurityNotificationsOptions() {
+        const isEnabled = $('.security-notifications-toggle').is(':checked');
+        console.log('[Security Policy Tab] Security notifications enabled:', isEnabled);
+
+        if (isEnabled) {
+            $('body').addClass('security-notifications-enabled');
+        } else {
+            $('body').removeClass('security-notifications-enabled');
+        }
+    }
+
+    $('.security-notifications-toggle').on('change', toggleSecurityNotificationsOptions);
+    toggleSecurityNotificationsOptions(); // Initial state
+
+    /**
+     * Toggle Security Headers Options
+     */
+    function toggleSecurityHeadersOptions() {
+        const isEnabled = $('.security-headers-toggle').is(':checked');
+        console.log('[Security Policy Tab] Security headers enabled:', isEnabled);
+
+        if (isEnabled) {
+            $('body').addClass('security-headers-enabled');
+        } else {
+            $('body').removeClass('security-headers-enabled');
+        }
+    }
+
+    $('.security-headers-toggle').on('change', toggleSecurityHeadersOptions);
+    toggleSecurityHeadersOptions(); // Initial state
 
     /**
      * CUSTOM LOGIC: XML-RPC toggle warning
-     * This is tab-specific behavior that stays here
      */
     $('input[name="platform_security_policy[disable_xmlrpc]"]').on('change', function() {
         if ($(this).is(':checked')) {
-            WPModal.confirm({
-                title: 'Disable XML-RPC?',
-                message: 'WARNING: Disabling XML-RPC will prevent remote publishing and some mobile apps from working.\n\nAre you sure you want to disable XML-RPC?',
-                danger: true,
-                confirmLabel: 'Disable XML-RPC',
-                onConfirm: function() {
-                    // Keep checkbox checked
-                },
-                onCancel: function() {
-                    // Uncheck if cancelled
-                    $('input[name="platform_security_policy[disable_xmlrpc]"]').prop('checked', false);
-                }
-            });
+            if (typeof WPModal !== 'undefined') {
+                WPModal.confirm({
+                    title: 'Disable XML-RPC?',
+                    message: 'WARNING: Disabling XML-RPC will prevent remote publishing and some mobile apps from working.\n\nAre you sure you want to disable XML-RPC?',
+                    danger: true,
+                    confirmLabel: 'Disable XML-RPC',
+                    onConfirm: function() {
+                        // Keep checkbox checked
+                    },
+                    onCancel: function() {
+                        // Uncheck if cancelled
+                        $('input[name="platform_security_policy[disable_xmlrpc]"]').prop('checked', false);
+                    }
+                });
+            }
         }
     });
 
+    console.log('[Security Policy Tab] ✅ Initialization complete');
 });

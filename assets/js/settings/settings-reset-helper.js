@@ -76,7 +76,9 @@
                 console.log('[Settings Helper] ✅ Button configured:', {
                     id: $btn.attr('id'),
                     action: action,
-                    title: title
+                    title: title,
+                    message: message,
+                    messageLength: message.length
                 });
 
             // Setup click handler

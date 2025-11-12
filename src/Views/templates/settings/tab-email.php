@@ -27,6 +27,9 @@ if (!defined('ABSPATH')) {
 <div class="platform-settings-email">
     <form method="post" action="options.php" id="platform-email-settings-form">
         <?php settings_fields('platform_email_settings'); ?>
+        <input type="hidden" name="reset_to_defaults" value="0">
+        <input type="hidden" name="current_tab" value="email">
+        <input type="hidden" name="saved_tab" value="email">
 
         <!-- SMTP Configuration Section -->
         <div class="settings-section">

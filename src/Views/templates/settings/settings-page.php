@@ -44,14 +44,14 @@ $tabs = [
 $tab_config = [
     'general' => [
         'save_label' => __('Save General Settings', 'wp-app-core'),
-        'reset_action' => 'reset_general_settings',
+        'reset_action' => 'reset_general',
         'reset_title' => __('Reset General Settings?', 'wp-app-core'),
         'reset_message' => __('Are you sure you want to reset all general settings to their default values?\n\nThis action cannot be undone.', 'wp-app-core'),
         'form_id' => 'platform-general-settings-form'
     ],
     'email' => [
         'save_label' => __('Save Email Settings', 'wp-app-core'),
-        'reset_action' => 'reset_email_settings',
+        'reset_action' => 'reset_email',
         'reset_title' => __('Reset Email Settings?', 'wp-app-core'),
         'reset_message' => __('Are you sure you want to reset all email settings to their default values?\n\nThis action cannot be undone.', 'wp-app-core'),
         'form_id' => 'platform-email-settings-form'
@@ -183,8 +183,13 @@ $current_config = $tab_config[$current_tab] ?? $tab_config['general'];
 
     <nav class="nav-tab-wrapper wp-clearfix" style="margin-bottom: 20px;">
         <?php foreach ($tabs as $tab_key => $tab_caption): ?>
-            <?php $active = $current_tab === $tab_key ? 'nav-tab-active' : ''; ?>
-            <a href="<?php echo add_query_arg('tab', $tab_key); ?>"
+            <?php
+            $active = $current_tab === $tab_key ? 'nav-tab-active' : '';
+            // Clean URL: remove reset/settings-updated parameters when switching tabs
+            $tab_url = remove_query_arg(['reset', 'reset_tab', 'settings-updated', 'saved_tab', 'message']);
+            $tab_url = add_query_arg('tab', $tab_key, $tab_url);
+            ?>
+            <a href="<?php echo esc_url($tab_url); ?>"
                class="nav-tab <?php echo $active; ?>"
                data-tab="<?php echo esc_attr($tab_key); ?>">
                 <?php echo esc_html($tab_caption); ?>
@@ -217,7 +222,7 @@ $current_config = $tab_config[$current_tab] ?? $tab_config['general'];
                     id="wpapp-settings-reset"
                     class="button button-secondary"
                     data-current-tab="<?php echo esc_attr($current_tab); ?>"
-                    data-reset-action="<?php echo esc_attr($current_config['reset_action']); ?>"
+                    data-form-id="<?php echo esc_attr($current_config['form_id']); ?>"
                     data-reset-title="<?php echo esc_attr($current_config['reset_title']); ?>"
                     data-reset-message="<?php echo esc_attr($current_config['reset_message']); ?>">
                 <?php _e('Reset to Default', 'wp-app-core'); ?>

@@ -27,6 +27,9 @@ if (!defined('ABSPATH')) {
 <div class="platform-settings-general">
     <form method="post" action="options.php" id="platform-general-settings-form">
         <?php settings_fields('platform_settings'); ?>
+        <input type="hidden" name="reset_to_defaults" value="0">
+        <input type="hidden" name="current_tab" value="general">
+        <input type="hidden" name="saved_tab" value="general">
 
         <!-- Company Information Section -->
         <div class="settings-section">

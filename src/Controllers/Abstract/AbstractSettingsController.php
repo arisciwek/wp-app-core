@@ -131,9 +131,9 @@ abstract class AbstractSettingsController {
      * Initialize controller
      */
     public function init(): void {
+        add_action('admin_init', [$this, 'handleResetViaPost'], 5); // Priority 5 - before settings registration
         add_action('admin_init', [$this, 'registerSettings']);
         add_action('admin_enqueue_scripts', [$this, 'enqueueAssets']);
-        $this->registerAjaxHandlers();
     }
 
     /**
@@ -177,27 +177,38 @@ abstract class AbstractSettingsController {
     }
 
     /**
-     * Register AJAX handlers
+     * Register settings with reset detection
      *
-     * Registers controller-specific AJAX actions:
-     * - {prefix}_save_{controller_slug}
-     * - {prefix}_reset_{controller_slug}
-     *
-     * Example for SecurityPolicyController:
-     * - wp_ajax_wpapp_save_security_policy
-     * - wp_ajax_wpapp_reset_security_policy
+     * Native WordPress Settings API handles both save and reset via POST.
+     * Reset is detected via hidden input 'reset_to_defaults' in form.
      */
-    protected function registerAjaxHandlers(): void {
-        $prefix = $this->getPluginPrefix();
-        $controller = $this->getControllerSlug();
+    public function handleResetViaPost(): void {
+        // Check if reset was requested
+        if (isset($_POST['reset_to_defaults']) && $_POST['reset_to_defaults'] === '1') {
+            // Verify nonce from settings_fields()
+            $option_page = $_POST['option_page'] ?? '';
+            check_admin_referer($option_page . '-options');
 
-        // Register controller-specific reset handler
-        // Example: wp_ajax_wpapp_reset_security_policy
-        add_action('wp_ajax_reset_' . str_replace('-', '_', $controller), [$this, 'handleResetSettings']);
+            // Get option name and reset to defaults
+            $option_name = $this->getOptionName();
+            $defaults = $this->model->getDefaults();
+            update_option($option_name, $defaults);
 
-        // Also register generic handler for backward compatibility
-        add_action('wp_ajax_' . $prefix . '_save_settings', [$this, 'handleSaveSettings']);
-        add_action('wp_ajax_' . $prefix . '_reset_settings', [$this, 'handleResetSettings']);
+            // Add reset success parameter to redirect with HIGH PRIORITY
+            // Priority 1 to run before WordPress default redirect
+            add_filter('wp_redirect', function($location) {
+                // Remove WordPress auto-added parameters
+                $location = remove_query_arg(['settings-updated', 'saved_tab', 'message'], $location);
+
+                // Add reset parameters
+                $location = add_query_arg([
+                    'reset' => 'success',
+                    'reset_tab' => $_POST['current_tab'] ?? ''
+                ], $location);
+
+                return $location;
+            }, 1); // Priority 1 - very early
+        }
     }
 
     /**
@@ -353,72 +364,6 @@ abstract class AbstractSettingsController {
         do_action("{$plugin_prefix}_settings_enqueue_assets", $current_tab);
     }
 
-    /**
-     * Handle AJAX save settings
-     */
-    public function handleSaveSettings(): void {
-        $prefix = $this->getPluginPrefix();
-
-        check_ajax_referer($prefix . '_nonce', 'nonce');
-
-        if (!current_user_can($this->getSettingsCapability())) {
-            wp_send_json_error([
-                'message' => __('Permission denied.', 'wp-app-core')
-            ]);
-        }
-
-        $data = $_POST['settings'] ?? [];
-
-        // Validate
-        if (!$this->validator->validate($data)) {
-            wp_send_json_error([
-                'message' => __('Validation failed.', 'wp-app-core'),
-                'errors' => $this->validator->getErrors()
-            ]);
-        }
-
-        // Save
-        $saved = $this->model->saveSettings($data);
-
-        if ($saved) {
-            wp_send_json_success([
-                'message' => __('Settings saved successfully.', 'wp-app-core')
-            ]);
-        } else {
-            wp_send_json_error([
-                'message' => __('Failed to save settings.', 'wp-app-core')
-            ]);
-        }
-    }
-
-    /**
-     * Handle AJAX reset settings
-     */
-    public function handleResetSettings(): void {
-        $prefix = $this->getPluginPrefix();
-
-        check_ajax_referer($prefix . '_nonce', 'nonce');
-
-        if (!current_user_can($this->getSettingsCapability())) {
-            wp_send_json_error([
-                'message' => __('Permission denied.', 'wp-app-core')
-            ]);
-        }
-
-        // Reset to defaults
-        $defaults = $this->model->getDefaults();
-        $saved = $this->model->saveSettings($defaults);
-
-        if ($saved) {
-            wp_send_json_success([
-                'message' => __('Settings reset to defaults.', 'wp-app-core')
-            ]);
-        } else {
-            wp_send_json_error([
-                'message' => __('Failed to reset settings.', 'wp-app-core')
-            ]);
-        }
-    }
 
     /**
      * Get nonce name for forms

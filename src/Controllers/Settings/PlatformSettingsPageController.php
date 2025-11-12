@@ -256,6 +256,12 @@ class PlatformSettingsPageController {
             return $location;
         }
 
+        // SKIP if this is a RESET request (not a save request)
+        if (isset($_POST['reset_to_defaults']) && $_POST['reset_to_defaults'] === '1') {
+            // Reset is handled by AbstractSettingsController
+            return $location;
+        }
+
         // Check if this is a settings save redirect
         if (isset($_POST['option_page'])) {
             $option_page = $_POST['option_page'];

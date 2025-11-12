@@ -40,6 +40,8 @@ if (!current_user_can('manage_options')) {
 
     <form method="post" action="options.php" id="wp-app-core-security-authentication-form" class="wp-app-core-security-auth-form">
         <?php settings_fields('platform_security_authentication'); ?>
+        <input type="hidden" name="reset_to_defaults" value="0">
+        <input type="hidden" name="current_tab" value="security-authentication">
 
         <!-- Password Policy Settings Section -->
         <div class="settings-section">

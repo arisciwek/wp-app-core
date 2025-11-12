@@ -1,21 +1,26 @@
 # TODO-1204: Page-Level Settings Architecture & Tab Pattern
 
 **Created:** 2025-11-12
-**Version:** 1.0.0
+**Updated:** 2025-01-12
+**Version:** 2.0.0
 **Status:** ✅ COMPLETED (Reference Documentation)
 **Priority:** HIGH
 **Context:** Standardized settings UI/UX pattern untuk semua plugin
 **Dependencies:**
 - TODO-1203 (Abstract Settings Framework) ✅ COMPLETED
+- wp-modal plugin ✅ REQUIRED
 
 ---
 
 ## 🎯 Objective
 
-Mendokumentasikan **Global Scope Architecture** untuk settings page yang sudah berhasil diimplementasikan di tab General dan Email. Pattern ini memastikan:
+Mendokumentasikan **Global Scope Architecture** untuk settings page yang sudah berhasil diimplementasikan di semua tabs. Pattern ini memastikan:
 
 - ✅ **Page-Level Buttons**: Save & Reset di level page, bukan di level tab
 - ✅ **Tab-Specific Notifications**: Notifikasi sesuai konteks tab yang di-save/reset
+- ✅ **Hook-Based Messages**: Notification messages via filter hook, bukan hardcoded
+- ✅ **WPModal Integration**: Reset confirmation dengan modal, bukan confirm()
+- ✅ **Conditional Fields**: Standard pattern untuk dependent fields (2FA, IP whitelist, dll)
 - ✅ **Simplified Tab Creation**: Tab baru tidak perlu debugging buttons/notifications
 - ✅ **Reusable Pattern**: Dapat digunakan untuk semua plugin (wp-customer, wp-agency, dll)
 - ✅ **WordPress Default Notice Suppression**: Tidak ada notifikasi duplikat
@@ -26,6 +31,7 @@ Mendokumentasikan **Global Scope Architecture** untuk settings page yang sudah b
 - ✅ Maintainability: Fix di satu tempat, fix semua tab
 - ✅ Developer Experience: Tab creation hanya fokus ke form fields
 - ✅ Debugging: Debug sekali untuk semua tab
+- ✅ Professional UX: Modal confirmations, contextual messages
 
 ---
 
@@ -36,19 +42,24 @@ Mendokumentasikan **Global Scope Architecture** untuk settings page yang sudah b
 **Working Tabs:**
 - ✅ **General Tab** - Save & Reset notifications working
 - ✅ **Email Tab** - Save & Reset notifications working
-- ✅ **Security Authentication Tab** - Reset notifications working
-- ✅ **Security Session Tab** - Reset notifications working
-- ✅ **Security Policy Tab** - Reset notifications working
+- ✅ **Permissions Tab** - Save & Reset notifications working
+- ✅ **Security Authentication Tab** - Save & Reset notifications working + Conditional fields
+- ✅ **Security Session Tab** - Save & Reset notifications working + Conditional fields
+- ✅ **Security Policy Tab** - Save & Reset notifications working + Conditional fields
+- ✅ **Demo Data Tab** - Save working (no reset)
 
 **Components Implemented:**
 - ✅ Page-level Save button (global handler)
 - ✅ Page-level Reset button (global handler)
-- ✅ Tab-specific save notifications
-- ✅ Tab-specific reset notifications
+- ✅ Tab-specific save notifications (via hook)
+- ✅ Tab-specific reset notifications (via hook)
 - ✅ WordPress default notice suppression
 - ✅ Form submission with saved_tab parameter
 - ✅ AJAX reset with reset_tab parameter
 - ✅ Redirect URL parameter handling
+- ✅ WPModal confirmation for reset
+- ✅ Conditional field toggles (CSS + JavaScript pattern)
+- ✅ Nonce unification (wpapp_nonce for all AJAX)
 
 ---
 
@@ -128,19 +139,25 @@ $tab_config = [
 ];
 
 // Line 103-157: Notification handler (GLOBAL)
-// Check for custom notices and suppress WordPress default
+// HOOK PATTERN: Get messages from controllers
+$notification_messages = $controller->getNotificationMessages();
+$save_messages = $notification_messages['save_messages'];
+$reset_messages = $notification_messages['reset_messages'];
+
 $show_custom_notice = false;
 
 // Save notification
 if (isset($_GET['saved_tab']) && $saved_tab === $current_tab) {
     $show_custom_notice = true;
-    echo "Email settings have been saved successfully.";
+    $success_message = $save_messages[$current_tab] ?? __('Settings saved.', 'wp-app-core');
+    echo '<div class="notice notice-success"><p>' . esc_html($success_message) . '</p></div>';
 }
 
 // Reset notification
 if (isset($_GET['reset_tab']) && $reset_tab === $current_tab) {
     $show_custom_notice = true;
-    echo "Email settings have been reset to default values successfully.";
+    $reset_message = $reset_messages[$current_tab] ?? __('Settings reset.', 'wp-app-core');
+    echo '<div class="notice notice-success"><p>' . esc_html($reset_message) . '</p></div>';
 }
 
 // Only show WordPress default if NO custom notice
@@ -316,34 +333,49 @@ public function addSettingsSavedMessage(string $location, int $status): string {
 **Role:** Tab-specific business logic
 
 **Responsibilities:**
+- ✅ Extend AbstractSettingsController
 - ✅ Register settings with WordPress Settings API
+- ✅ Register notification messages via hook
 - ✅ Sanitize & validate form data
-- ✅ Handle AJAX reset requests
+- ✅ Handle AJAX reset requests (inherited from Abstract)
 - ✅ Render tab template
 - ❌ TIDAK handle save/reset buttons
-- ❌ TIDAK handle notifications
+- ❌ TIDAK render notifications
 
 **Example:** EmailSettingsController.php
 ```php
-// Handle AJAX reset
-public function handleResetSettings(): void {
-    check_ajax_referer('wp_app_core_settings_nonce', 'nonce');
+class EmailSettingsController extends AbstractSettingsController {
 
-    if (!current_user_can('manage_options')) {
-        wp_send_json_error(['message' => 'Permission denied']);
+    public function init(): void {
+        // IMPORTANT: Call parent to register AJAX handlers
+        parent::init();
+
+        // Register notification messages via hook
+        add_filter('wpapp_settings_notification_messages', [$this, 'registerNotificationMessages']);
     }
 
-    // Reset to defaults
-    $defaults = $this->model->getDefaultSettings();
-    $saved = $this->model->saveSettings($defaults);
-
-    if ($saved) {
-        wp_send_json_success(['message' => 'Email settings reset successfully']);
-    } else {
-        wp_send_json_error(['message' => 'Failed to reset email settings']);
+    /**
+     * HOOK PATTERN: Register notification messages
+     */
+    public function registerNotificationMessages(array $messages): array {
+        $messages['save_messages']['email'] = __('Email settings have been saved successfully.', 'wp-app-core');
+        $messages['reset_messages']['email'] = __('Email settings have been reset to default values successfully.', 'wp-app-core');
+        return $messages;
     }
+
+    /**
+     * AJAX reset handler (inherited from AbstractSettingsController)
+     * Automatically registered via parent::init()
+     */
+    // handleResetSettings() is inherited - no need to override
 }
 ```
+
+**IMPORTANT:**
+- ✅ Always call `parent::init()` to register AJAX handlers
+- ✅ Register messages via `wpapp_settings_notification_messages` hook
+- ✅ Nonce verification handled by AbstractSettingsController
+- ✅ Reset logic inherited, override only if custom logic needed
 
 #### 6. Individual Tab Templates (tab-email.php, etc)
 
@@ -611,31 +643,43 @@ $tab_config = [
 ];
 ```
 
-**Add to $save_messages array (Line 139-147):**
-```php
-$save_messages = [
-    // ... existing messages
-    'security-session' => __('Security session settings have been saved successfully.', 'wp-app-core'),
-];
-```
+**Done!** ✅ (No need to modify save/reset message arrays - handled by hook)
 
-**Add to $tab_messages array (Line 168-176):**
+#### Step 3: Register Notification Messages (~5 minutes)
+
+**File:** `src/Controllers/Settings/SecuritySessionController.php`
+
+**Add hook registration in init() method:**
 ```php
-$tab_messages = [
-    // ... existing messages
-    'security-session' => __('Security session settings have been reset to default values successfully.', 'wp-app-core'),
-];
+public function init(): void {
+    // IMPORTANT: Call parent to register AJAX handlers
+    parent::init();
+
+    // Register notification messages via hook
+    add_filter('wpapp_settings_notification_messages', [$this, 'registerNotificationMessages']);
+}
+
+/**
+ * Register notification messages for this tab
+ */
+public function registerNotificationMessages(array $messages): array {
+    $messages['save_messages']['security-session'] = __('Security session settings have been saved successfully.', 'wp-app-core');
+    $messages['reset_messages']['security-session'] = __('Security session settings have been reset to default values successfully.', 'wp-app-core');
+    return $messages;
+}
 ```
 
 **Done!** ✅
 
-#### Step 3: Test (~5 minutes)
+#### Step 4: Test (~5 minutes)
 
 1. Navigate to Security Session tab
 2. Click **"Save Session Settings"** → See: "Security session settings have been saved successfully."
 3. Click **"Reset to Default"** → See: "Security session settings have been reset to default values successfully."
 
-**Total time: 30 minutes** (vs 4-6 hours without global scope)
+**Total time: 40 minutes** (vs 4-6 hours without global scope)
+
+**Note:** If tab has conditional fields, add +10 minutes for CSS + JavaScript toggle pattern
 
 ---
 
@@ -723,6 +767,322 @@ if (!$show_custom_notice) {
 ```
 
 **Make sure:** Custom notice check runs BEFORE `settings_errors()` ✅
+
+### Issue: Reset AJAX failing silently (Nonce mismatch)
+
+**Problem:** Security tabs reset tidak muncul notifikasi, tapi General dan Email working
+
+**Root Cause:** Nonce name mismatch between JavaScript dan PHP
+
+**Diagnosis:**
+```javascript
+// JavaScript creates nonce (WRONG):
+'nonce' => wp_create_nonce('wp_app_core_settings_nonce')
+
+// PHP checks nonce (CORRECT):
+check_ajax_referer('wpapp_nonce', 'nonce')
+```
+
+**Solution:** Unify nonce name di SettingsPageAssets.php line 112
+```php
+// BEFORE (WRONG):
+'nonce' => \wp_create_nonce('wp_app_core_settings_nonce'),
+
+// AFTER (CORRECT):
+'nonce' => \wp_create_nonce('wpapp_nonce'),
+```
+
+**Verification:**
+```bash
+# Check browser console for AJAX errors
+# Should see: response.success = true
+# Should NOT see: 403 Forbidden or -1 response
+```
+
+---
+
+## 🎨 Conditional Fields Pattern
+
+### Overview
+
+Many tabs have **dependent fields** yang hanya aktif jika parent toggle di-check:
+
+**Examples:**
+- **Security Authentication**: 2FA Methods hanya aktif jika "Enable 2FA" checked
+- **Security Policy**: Activity Log options hanya aktif jika "Enable Activity Logging" checked
+- **Security Session**: Login History options hanya aktif jika "Enable Login History" checked
+
+### Pattern: CSS + JavaScript + Body Class
+
+#### 1. HTML Structure (Template)
+
+```php
+<!-- Parent toggle dengan class khusus -->
+<input type="checkbox"
+       name="platform_security_authentication[twofa_enabled]"
+       class="twofa-toggle"  <!-- ← Toggle class -->
+       <?php checked($settings['twofa_enabled']); ?>>
+
+<!-- Dependent rows dengan class khusus -->
+<tr class="twofa-option">  <!-- ← Option class -->
+    <th>Authentication Methods</th>
+    <td>
+        <input type="checkbox" name="platform_security_authentication[twofa_methods][]" value="email">
+    </td>
+</tr>
+```
+
+**Naming Convention:**
+- Toggle class: `{feature}-toggle` (e.g., `twofa-toggle`)
+- Option class: `{feature}-option` (e.g., `twofa-option`)
+- Body class: `{feature}-enabled` (e.g., `twofa-enabled`)
+
+#### 2. CSS (Tab Style)
+
+```css
+/* Default state: disabled via pointer-events */
+.twofa-option {
+    opacity: 0.5;
+    pointer-events: none;  /* ← Prevents clicks */
+    transition: opacity 0.3s ease;
+}
+
+/* Enabled state: when body has class */
+.twofa-enabled .twofa-option {
+    opacity: 1;
+    pointer-events: auto;  /* ← Allows clicks */
+}
+```
+
+**Why `pointer-events` instead of `disabled` attribute?**
+- ✅ Applies to entire row (not just inputs)
+- ✅ Visual feedback immediate
+- ✅ No need to track individual inputs
+- ✅ Works with any field type (input, select, textarea)
+
+#### 3. JavaScript (Tab Script)
+
+```javascript
+jQuery(document).ready(function($) {
+    /**
+     * Toggle 2FA Options
+     * Adds/removes class to body for CSS pointer-events control
+     */
+    function toggle2FAOptions() {
+        const isEnabled = $('.twofa-toggle').is(':checked');
+
+        if (isEnabled) {
+            $('body').addClass('twofa-enabled');
+        } else {
+            $('body').removeClass('twofa-enabled');
+        }
+    }
+
+    // Initialize on page load
+    $('.twofa-toggle').on('change', toggle2FAOptions);
+    toggle2FAOptions(); // Initial state
+});
+```
+
+**Why add class to `body` instead of parent element?**
+- ✅ Global scope - CSS selectors cleaner
+- ✅ Prevents nested selector issues
+- ✅ Easier debugging (inspect body classes)
+
+#### 4. Complete Example: Security Authentication Tab
+
+**CSS:** `assets/css/settings/security-authentication-tab-style.css`
+```css
+/* All dependent field types */
+.twofa-option,
+.ip-whitelist-options,
+.ip-blacklist-options,
+.access-hours-options {
+    opacity: 0.5;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+/* Enabled states */
+.twofa-enabled .twofa-option { opacity: 1; pointer-events: auto; }
+.ip-whitelist-enabled .ip-whitelist-options { opacity: 1; pointer-events: auto; }
+.ip-blacklist-enabled .ip-blacklist-options { opacity: 1; pointer-events: auto; }
+.access-hours-enabled .access-hours-options { opacity: 1; pointer-events: auto; }
+```
+
+**JavaScript:** `assets/js/settings/security-authentication-tab-script.js`
+```javascript
+jQuery(document).ready(function($) {
+    // Toggle 2FA Options
+    function toggle2FAOptions() {
+        const isEnabled = $('.twofa-toggle').is(':checked');
+        isEnabled ? $('body').addClass('twofa-enabled') : $('body').removeClass('twofa-enabled');
+    }
+    $('.twofa-toggle').on('change', toggle2FAOptions);
+    toggle2FAOptions();
+
+    // Toggle IP Whitelist Options
+    function toggleIPWhitelistOptions() {
+        const isEnabled = $('.ip-whitelist-toggle').is(':checked');
+        isEnabled ? $('body').addClass('ip-whitelist-enabled') : $('body').removeClass('ip-whitelist-enabled');
+    }
+    $('.ip-whitelist-toggle').on('change', toggleIPWhitelistOptions);
+    toggleIPWhitelistOptions();
+
+    // ... similar for other toggles
+});
+```
+
+### Benefits
+
+- ✅ **Consistent UX**: All tabs behave the same way
+- ✅ **No Debugging**: Copy-paste pattern works immediately
+- ✅ **Visual Feedback**: Opacity change immediate
+- ✅ **Accessibility**: Fields properly disabled via pointer-events
+- ✅ **Maintainable**: CSS controls behavior, not JavaScript DOM manipulation
+
+---
+
+## 🎭 WPModal Integration
+
+### Overview
+
+Reset buttons use **wp-modal plugin** untuk confirmation dialog, bukan `confirm()` native.
+
+**Benefits:**
+- ✅ Professional UI matching WordPress admin
+- ✅ Contextual messages per tab
+- ✅ Danger variant for destructive actions
+- ✅ Better UX than browser confirm()
+
+### Configuration
+
+**Button attributes:**
+```html
+<button id="wpapp-settings-reset"
+        data-reset-action="reset_email_settings"
+        data-reset-title="Reset Email Settings?"
+        data-reset-message="Are you sure you want to reset all email settings to their default values?
+
+This action cannot be undone.">
+    Reset to Default
+</button>
+```
+
+### JavaScript Integration
+
+**File:** `assets/js/settings/settings-reset-helper.js`
+
+```javascript
+// Auto-initialize all reset buttons
+$('[data-reset-action]').each(function() {
+    const $btn = $(this);
+    const action = $btn.data('reset-action');
+    const title = $btn.data('reset-title');
+    const message = $btn.data('reset-message');
+
+    $btn.on('click', function(e) {
+        e.preventDefault();
+
+        // Show WPModal confirmation
+        WPModal.confirm({
+            title: title,
+            message: message,
+            danger: true,  // Red button for destructive action
+            confirmLabel: 'Reset Settings',
+            onConfirm: function() {
+                // Send AJAX reset request
+                $.ajax({
+                    url: wpAppCoreSettings.ajaxUrl,
+                    type: 'POST',
+                    data: {
+                        action: action,
+                        nonce: wpAppCoreSettings.nonce
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Redirect with reset_tab parameter
+                            window.location.href = '?page=wp-app-core-settings&tab=' + currentTab + '&reset=success&reset_tab=' + currentTab;
+                        }
+                    }
+                });
+            }
+        });
+    });
+});
+```
+
+### Modal CSS Fixes
+
+**File:** `wp-modal/assets/css/wp-modal.css`
+
+**Issue 1: Modal positioning tidak center**
+```css
+/* BEFORE (WRONG): */
+.wpmodal-container {
+    margin: 50px auto;  /* Top margin causes vertical misalignment */
+}
+
+/* AFTER (CORRECT): */
+.wpmodal-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);  /* Perfect centering */
+}
+```
+
+**Issue 2: Modal body height tidak proporsional**
+```css
+/* BEFORE (WRONG): */
+.wpmodal-body {
+    min-height: 200px;  /* Wastes space for short messages */
+}
+
+/* AFTER (CORRECT): */
+.wpmodal-body {
+    /* No min-height - height proportional to content */
+}
+
+.wpmodal[data-modal-type="confirmation"] .wpmodal-body {
+    min-height: auto;  /* Confirmation modals especially need this */
+}
+```
+
+**Issue 3: Message line breaks tidak render**
+```css
+/* BEFORE (WRONG): */
+.wpmodal-content p {
+    /* \n\n in message tidak render as line breaks */
+}
+
+/* AFTER (CORRECT): */
+.wpmodal-content p {
+    white-space: pre-line;  /* Renders \n as <br> */
+    margin: 0 0 10px 0;
+}
+```
+
+### Message Format
+
+**PHP (settings-page.php):**
+```php
+'reset_message' => __('Are you sure you want to reset all email settings to their default values?
+
+This action cannot be undone.', 'wp-app-core'),
+```
+
+**Renders as:**
+```
+Are you sure you want to reset all email settings to their default values?
+
+This action cannot be undone.
+```
+
+**IMPORTANT:**
+- ✅ Use `\n\n` for line breaks in PHP string
+- ✅ CSS `white-space: pre-line` renders them correctly
+- ✅ Contextual message per tab (not generic "Are you sure?")
 
 ---
 
@@ -882,5 +1242,42 @@ if (!$show_custom_notice) {
 
 **Created by:** Claude (Anthropic)
 **Documentation Date:** 2025-11-12
+**Last Updated:** 2025-01-12
 **Implementation Status:** ✅ COMPLETED
 **Pattern Status:** ✅ PRODUCTION-READY
+
+---
+
+## 📝 Changelog
+
+### Version 2.0.0 (2025-01-12)
+
+**Major Updates:**
+- ✅ Added hook-based notification message pattern
+- ✅ Documented nonce unification fix (SettingsPageAssets.php line 112)
+- ✅ Added comprehensive conditional fields pattern (CSS + JavaScript + Body Class)
+- ✅ Added WPModal integration details and CSS fixes
+- ✅ Updated "Adding New Tab" guide to use hook pattern instead of inline arrays
+- ✅ Added troubleshooting for nonce mismatch issues
+- ✅ Expanded from 887 lines to 1246 lines (+359 lines, 40% increase)
+
+**Breaking Changes:**
+- ❌ Inline `$save_messages` and `$reset_messages` arrays **deprecated**
+- ✅ Use `wpapp_settings_notification_messages` hook instead
+- ✅ Controllers must call `parent::init()` to register AJAX handlers
+
+**New Sections:**
+- 🎨 Conditional Fields Pattern (comprehensive guide with examples)
+- 🎭 WPModal Integration (configuration, CSS fixes, message formatting)
+- 🐛 Nonce Mismatch Debugging (root cause, solution, verification)
+
+### Version 1.0.0 (2025-11-12)
+
+**Initial Documentation:**
+- ✅ Page-level architecture overview
+- ✅ Component responsibilities
+- ✅ Data flow diagrams (Save & Reset)
+- ✅ Step-by-step guide for adding new tabs
+- ✅ Debugging guide
+- ✅ File reference
+- ✅ Benefits summary

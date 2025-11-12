@@ -45,6 +45,8 @@ if (!defined('ABSPATH')) {
         <?php
         settings_fields('platform_security_policy');
         ?>
+        <input type="hidden" name="reset_to_defaults" value="0">
+        <input type="hidden" name="current_tab" value="security-policy">
 
         <!-- Section 1: Data Security -->
         <div class="settings-section">

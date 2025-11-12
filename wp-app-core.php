@@ -312,8 +312,8 @@ class WP_App_Core {
             $menu_manager = new \WPAppCore\Controllers\MenuManager('wp-app-core', WP_APP_CORE_VERSION);
             $menu_manager->init();
 
-            // Initialize Platform Settings Controller
-            $platform_settings = new \WPAppCore\Controllers\Settings\PlatformSettingsController();
+            // Initialize Platform Settings Page Controller
+            $platform_settings = new \WPAppCore\Controllers\Settings\PlatformSettingsPageController();
             $platform_settings->init();
 
             // Initialize Platform Staff Controller

@@ -43,6 +43,8 @@ if (!defined('ABSPATH')) {
         <?php
         settings_fields('platform_security_session');
         ?>
+        <input type="hidden" name="reset_to_defaults" value="0">
+        <input type="hidden" name="current_tab" value="security-session">
 
         <!-- Section 1: Session Settings -->
         <div class="settings-section">

@@ -119,12 +119,12 @@ class SettingsPageAssets implements AssetStrategyInterface {
             ]
         ]);
 
-        // Settings Reset Helper (WPModal integration)
+        // Settings Reset Helper - Using WPModal with Form POST (no AJAX)
         \wp_enqueue_script(
             'wpapp-settings-reset-helper',
-            WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/settings-reset-helper.js',
+            WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/settings-reset-helper-post.js',
             ['jquery', 'wp-modal'], // Depend on WPModal
-            \filemtime(WP_APP_CORE_PLUGIN_DIR . 'assets/js/settings/settings-reset-helper.js'),
+            \filemtime(WP_APP_CORE_PLUGIN_DIR . 'assets/js/settings/settings-reset-helper-post.js'),
             true
         );
 

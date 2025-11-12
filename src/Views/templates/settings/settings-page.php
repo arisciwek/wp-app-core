@@ -4,7 +4,7 @@
  *
  * @package     WP_App_Core
  * @subpackage  Views/Templates/Settings
- * @version     2.0.0
+ * @version     2.1.0
  * @author      arisciwek
  *
  * Path: /wp-app-core/src/Views/templates/settings/settings-page.php
@@ -15,6 +15,11 @@
  *              reusable across all wp-app-* plugins.
  *
  * Changelog:
+ * 2.1.0 - 2025-01-12 (TODO-1206)
+ * - Added wpapp_settings_footer_content hook for tab-specific footer customization
+ * - Allows tabs to replace buttons with custom content (e.g., info message)
+ * - AJAX-based tabs can show "Changes saved automatically" instead of buttons
+ * - More elegant than JavaScript approach (no unnecessary HTML rendering)
  * 2.0.0 - 2025-11-12
  * - BREAKING: Moved Save & Reset buttons to page level
  * - Added data-current-tab for global button handling
@@ -206,28 +211,64 @@ $current_config = $tab_config[$current_tab] ?? $tab_config['general'];
         ?>
     </div>
 
-    <!-- GLOBAL SCOPE: Page-level buttons for ALL tabs -->
-    <div class="settings-page-footer" style="position: sticky; bottom: 0; background: #f0f0f1; padding: 15px 20px; border-top: 1px solid #c3c4c7; margin: 20px -20px -10px -20px; z-index: 100;">
-        <p class="submit" style="margin: 0;">
-            <button type="submit"
-                    id="wpapp-settings-save"
-                    class="button button-primary"
-                    data-current-tab="<?php echo esc_attr($current_tab); ?>"
-                    data-form-id="<?php echo esc_attr($current_config['form_id']); ?>">
-                <?php echo esc_html($current_config['save_label']); ?>
-            </button>
+    <?php
+    /**
+     * Hook: wpapp_settings_footer_content
+     * Allows tabs to customize footer content (e.g., info message for AJAX tabs)
+     *
+     * @param string $footer_html  Default footer HTML (buttons)
+     * @param string $current_tab  Current tab slug
+     * @param array  $current_config Current tab configuration
+     *
+     * @return string Custom footer HTML or empty string to hide footer
+     *
+     * @example
+     * // In controller init():
+     * add_filter('wpapp_settings_footer_content', function($html, $tab, $config) {
+     *     if ($tab === 'permissions') {
+     *         return '<div class="notice notice-info inline"><p><span class="dashicons dashicons-info"></span> ' .
+     *                __('Changes are saved automatically', 'wp-app-core') . '</p></div>';
+     *     }
+     *     return $html;
+     * }, 10, 3);
+     */
 
-            <?php if (!empty($current_config['reset_action'])): ?>
-            <button type="button"
-                    id="wpapp-settings-reset"
-                    class="button button-secondary"
-                    data-current-tab="<?php echo esc_attr($current_tab); ?>"
-                    data-form-id="<?php echo esc_attr($current_config['form_id']); ?>"
-                    data-reset-title="<?php echo esc_attr($current_config['reset_title']); ?>"
-                    data-reset-message="<?php echo esc_attr($current_config['reset_message']); ?>">
-                <?php _e('Reset to Default', 'wp-app-core'); ?>
-            </button>
-            <?php endif; ?>
-        </p>
+    // Build default footer HTML
+    ob_start();
+    ?>
+    <p class="submit" style="margin: 0;">
+        <button type="submit"
+                id="wpapp-settings-save"
+                class="button button-primary"
+                data-current-tab="<?php echo esc_attr($current_tab); ?>"
+                data-form-id="<?php echo esc_attr($current_config['form_id']); ?>">
+            <?php echo esc_html($current_config['save_label']); ?>
+        </button>
+
+        <?php if (!empty($current_config['reset_action'])): ?>
+        <button type="button"
+                id="wpapp-settings-reset"
+                class="button button-secondary"
+                data-current-tab="<?php echo esc_attr($current_tab); ?>"
+                data-form-id="<?php echo esc_attr($current_config['form_id']); ?>"
+                data-reset-title="<?php echo esc_attr($current_config['reset_title']); ?>"
+                data-reset-message="<?php echo esc_attr($current_config['reset_message']); ?>">
+            <?php _e('Reset to Default', 'wp-app-core'); ?>
+        </button>
+        <?php endif; ?>
+    </p>
+    <?php
+    $default_footer_html = ob_get_clean();
+
+    // Allow tabs to customize footer
+    $footer_content = apply_filters('wpapp_settings_footer_content', $default_footer_html, $current_tab, $current_config);
+
+    // Render footer if content exists
+    if (!empty($footer_content)):
+    ?>
+    <!-- GLOBAL SCOPE: Page-level footer for ALL tabs -->
+    <div class="settings-page-footer" style="position: sticky; bottom: 0; background: #f0f0f1; padding: 15px 20px; border-top: 1px solid #c3c4c7; margin: 20px -20px -10px -20px; z-index: 100;">
+        <?php echo $footer_content; ?>
     </div>
+    <?php endif; ?>
 </div>

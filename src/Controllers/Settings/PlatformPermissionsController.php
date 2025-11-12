@@ -4,156 +4,159 @@
  *
  * @package     WP_App_Core
  * @subpackage  Controllers/Settings
- * @version     2.0.0
+ * @version     3.1.0
  * @author      arisciwek
  *
  * Path: /wp-app-core/src/Controllers/Settings/PlatformPermissionsController.php
  *
  * Description: Controller untuk platform permission management.
- *              REFACTORED: Extracted from monolithic PlatformSettingsController.
- *              Does NOT extend AbstractSettingsController (not settings, but permissions).
+ *              REFACTORED: Now extends AbstractPermissionsController.
+ *              Minimal implementation - just define plugin-specific details.
  *
  * Changelog:
+ * 3.1.0 - 2025-01-12 (TODO-1206)
+ * - Added customizeFooterForPermissionsTab() using wpapp_settings_footer_content hook
+ * - Shows "Changes are saved automatically" info message instead of buttons
+ * - Constructor now loads RoleManager and calls parent::__construct()
+ * - Footer customized via PHP (not JavaScript) for cleaner approach
+ * 3.0.0 - 2025-01-12 (TODO-1206)
+ * - BREAKING: Now extends AbstractPermissionsController
+ * - Reduced from 160 lines to ~80 lines (50% reduction)
+ * - AJAX handlers auto-registered by abstract
+ * - Server-side validation included by abstract
+ * - All logic moved to abstract classes
  * 2.0.0 - 2025-01-09 (TODO-1203)
  * - BREAKING: Extracted from PlatformSettingsController
  * - Standalone controller for permission management
- * - Single responsibility: Permission matrix only
  * 1.0.0 - 2025-10-19
  * - Was part of PlatformSettingsController
  */
 
 namespace WPAppCore\Controllers\Settings;
 
+use WPAppCore\Controllers\Abstract\AbstractPermissionsController;
+use WPAppCore\Models\Abstract\AbstractPermissionsModel;
 use WPAppCore\Models\Settings\PlatformPermissionModel;
+use WPAppCore\Validators\Abstract\AbstractPermissionsValidator;
+use WPAppCore\Validators\Settings\PlatformPermissionValidator;
 
-class PlatformPermissionsController {
+class PlatformPermissionsController extends AbstractPermissionsController {
 
-    private PlatformPermissionModel $model;
-
+    /**
+     * Constructor
+     * Ensures RoleManager is loaded before any operations
+     */
     public function __construct() {
-        $this->model = new PlatformPermissionModel();
+        // Load RoleManager class (required by controller, model, and validator)
+        require_once WP_APP_CORE_PLUGIN_DIR . 'includes/class-role-manager.php';
+
+        // Call parent constructor to initialize model and validator
+        parent::__construct();
+    }
+
+    /**
+     * Get plugin slug
+     */
+    protected function getPluginSlug(): string {
+        return 'wp-app-core';
+    }
+
+    /**
+     * Get plugin prefix for AJAX actions
+     */
+    protected function getPluginPrefix(): string {
+        return 'wpapp';
+    }
+
+    /**
+     * Get role manager class name
+     */
+    protected function getRoleManagerClass(): string {
+        return 'WP_App_Core_Role_Manager';
+    }
+
+    /**
+     * Get model instance
+     */
+    protected function getModel(): AbstractPermissionsModel {
+        return new PlatformPermissionModel();
+    }
+
+    /**
+     * Get validator instance
+     */
+    protected function getValidator(): AbstractPermissionsValidator {
+        return new PlatformPermissionValidator();
     }
 
     /**
      * Initialize controller
+     * Registers AJAX handlers AND asset enqueuing
      */
     public function init(): void {
-        $this->registerAjaxHandlers();
+        // Register AJAX handlers via parent
+        parent::init();
+
+        // Register asset enqueuing for permissions tab
+        add_action('admin_enqueue_scripts', [$this, 'enqueueAssets']);
+
+        // Customize footer for permissions tab (show info message instead of buttons)
+        add_filter('wpapp_settings_footer_content', [$this, 'customizeFooterForPermissionsTab'], 10, 3);
     }
 
     /**
-     * Register AJAX handlers
+     * Customize footer content for permissions tab
+     * Shows "Changes are saved automatically" message instead of Save/Reset buttons
+     *
+     * @param string $footer_html Default footer HTML
+     * @param string $tab Current tab
+     * @param array $config Current tab config
+     * @return string Custom footer HTML
      */
-    private function registerAjaxHandlers(): void {
-        add_action('wp_ajax_wpapp_save_platform_permissions', [$this, 'handleSavePlatformPermissions']);
-        add_action('wp_ajax_wpapp_reset_platform_permissions', [$this, 'handleResetPlatformPermissions']);
+    public function customizeFooterForPermissionsTab(string $footer_html, string $tab, array $config): string {
+        if ($tab === 'permissions') {
+            return '<div class="notice notice-info inline" style="margin: 0;">' .
+                   '<p style="margin: 0.5em 0;">' .
+                   '<span class="dashicons dashicons-info" style="color: #2271b1;"></span> ' .
+                   '<strong>' . __('Changes are saved automatically', 'wp-app-core') . '</strong> ' .
+                   __('— Each permission change is saved instantly via AJAX.', 'wp-app-core') .
+                   '</p>' .
+                   '</div>';
+        }
+        return $footer_html;
     }
 
     /**
-     * Get capability groups for view
+     * Enqueue assets for permissions tab
+     * Only loads on correct page and tab
      */
-    public function getCapabilityGroups(): array {
-        return $this->model->getCapabilityGroups();
-    }
-
-    /**
-     * Get role capabilities matrix for view
-     */
-    public function getRoleCapabilitiesMatrix(): array {
-        return $this->model->getRoleCapabilitiesMatrix();
-    }
-
-    /**
-     * Get capability descriptions for view
-     */
-    public function getCapabilityDescriptions(): array {
-        return $this->model->getCapabilityDescriptions();
-    }
-
-    /**
-     * Get all capabilities for view
-     */
-    public function getAllCapabilities(): array {
-        return $this->model->getAllCapabilities();
-    }
-
-    /**
-     * Handle save platform permissions
-     */
-    public function handleSavePlatformPermissions(): void {
-        check_ajax_referer('wpapp_nonce', 'nonce');
-
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(['message' => __('Permission denied', 'wp-app-core')]);
+    public function enqueueAssets(string $hook): void {
+        // Only on wp-app-core settings page
+        if ($hook !== 'toplevel_page_wp-app-core-settings') {
+            return;
         }
 
-        $role = sanitize_key($_POST['role'] ?? '');
-        $capabilities = $_POST['capabilities'] ?? [];
-
-        if (empty($role)) {
-            wp_send_json_error(['message' => __('Invalid role', 'wp-app-core')]);
+        // Only on permissions tab
+        $tab = $_GET['tab'] ?? '';
+        if ($tab !== 'permissions') {
+            return;
         }
 
-        if ($this->model->updateRoleCapabilities($role, $capabilities)) {
-            wp_send_json_success(['message' => __('Permissions updated successfully', 'wp-app-core')]);
-        } else {
-            wp_send_json_error(['message' => __('Failed to update permissions', 'wp-app-core')]);
-        }
+        // Call parent to load shared assets
+        parent::enqueueAssets($hook);
     }
 
     /**
-     * Handle reset platform permissions
+     * Get page title for permission matrix
      */
-    public function handleResetPlatformPermissions(): void {
-        // CRITICAL: Register shutdown function to catch fatal errors
-        register_shutdown_function(function() {
-            $error = error_get_last();
-            if ($error !== null && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
-                error_log('=== FATAL ERROR DETECTED IN RESET PERMISSIONS ===');
-                error_log('Type: ' . $error['type']);
-                error_log('Message: ' . $error['message']);
-                error_log('File: ' . $error['file']);
-                error_log('Line: ' . $error['line']);
-                error_log('=== END FATAL ERROR ===');
-            }
-        });
+    protected function getPageTitle(): string {
+        return __('Platform Permission Management', 'wp-app-core');
+    }
 
-        // CRITICAL: Start output buffering to prevent contamination from plugin hooks
-        ob_start();
-
-        error_log('=== WP-APP-CORE RESET PERMISSIONS START ===');
-
-        try {
-            check_ajax_referer('wpapp_nonce', 'nonce');
-
-            if (!current_user_can('manage_options')) {
-                error_log('ERROR: User does not have manage_options capability');
-                ob_end_clean();
-                wp_send_json_error(['message' => __('Permission denied', 'wp-app-core')]);
-                die();
-            }
-
-            error_log('Calling resetToDefault()...');
-            $result = $this->model->resetToDefault();
-            error_log('resetToDefault() returned: ' . ($result ? 'TRUE' : 'FALSE'));
-
-            // CRITICAL: Clean output buffer before sending JSON response
-            ob_end_clean();
-
-            if ($result) {
-                error_log('SUCCESS: Sending success response');
-                wp_send_json_success(['message' => __('Permissions reset to default', 'wp-app-core')]);
-                die();
-            } else {
-                error_log('ERROR: resetToDefault() returned false');
-                wp_send_json_error(['message' => __('Failed to reset permissions', 'wp-app-core')]);
-                die();
-            }
-        } catch (\Exception $e) {
-            error_log('EXCEPTION: ' . $e->getMessage());
-            ob_end_clean();
-            wp_send_json_error(['message' => $e->getMessage()]);
-            die();
-        }
+    /**
+     * Get page description for permission matrix
+     */
+    protected function getPageDescription(): string {
+        return __('Configure role capabilities for platform staff. Changes take effect immediately.', 'wp-app-core');
     }
 }

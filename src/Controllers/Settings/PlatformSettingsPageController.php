@@ -286,11 +286,9 @@ class PlatformSettingsPageController {
                 break;
 
             case 'permissions':
-                $controller = $this->controllers['permissions'];
-                $data['capability_groups'] = $controller->getCapabilityGroups();
-                $data['role_matrix'] = $controller->getRoleCapabilitiesMatrix();
-                $data['capability_descriptions'] = $controller->getCapabilityDescriptions();
-                $data['permission_labels'] = $controller->getAllCapabilities();
+                // Permissions tab now handles its own data via AbstractPermissionsController
+                // tab-permissions.php instantiates controller and calls getViewModel()
+                // No data preparation needed here
                 break;
 
             case 'security-authentication':

@@ -4,7 +4,7 @@
  *
  * @package     WP_App_Core
  * @subpackage  Controllers/Settings
- * @version     2.0.0
+ * @version     2.1.0
  * @author      arisciwek
  *
  * Path: /wp-app-core/src/Controllers/Settings/PlatformDemoDataController.php
@@ -14,6 +14,11 @@
  *              Does NOT extend AbstractSettingsController (not settings, but demo data).
  *
  * Changelog:
+ * 2.1.0 - 2025-01-12 (TODO-1207)
+ * - Updated AJAX handlers to use PlatformDemoData instance methods
+ * - Changed from static methods to instance methods pattern
+ * - Now creates PlatformDemoData instance and calls run()/deleteAll()/getStatistics()
+ * - Added AbstractDemoData require_once for proper class loading
  * 2.0.0 - 2025-01-09 (TODO-1203)
  * - BREAKING: Extracted from PlatformSettingsController
  * - Standalone controller for demo data management
@@ -172,12 +177,16 @@ class PlatformDemoDataController {
 
         try {
             require_once WP_APP_CORE_PLUGIN_DIR . 'src/Database/Demo/Data/PlatformUsersData.php';
+            require_once WP_APP_CORE_PLUGIN_DIR . 'src/Database/Demo/AbstractDemoData.php';
             require_once WP_APP_CORE_PLUGIN_DIR . 'src/Database/Demo/PlatformDemoData.php';
             require_once WP_APP_CORE_PLUGIN_DIR . 'src/Database/Demo/WPUserGenerator.php';
 
-            $result = \WPAppCore\Database\Demo\PlatformDemoData::generate();
+            // Create instance and run generation
+            $generator = new \WPAppCore\Database\Demo\PlatformDemoData();
+            $success = $generator->run();
+            $result = $generator->getLastResults();
 
-            if ($result['success']) {
+            if ($success) {
                 wp_send_json_success([
                     'message' => $result['message'],
                     'users_created' => $result['users_created'],
@@ -212,10 +221,13 @@ class PlatformDemoDataController {
 
         try {
             require_once WP_APP_CORE_PLUGIN_DIR . 'src/Database/Demo/Data/PlatformUsersData.php';
+            require_once WP_APP_CORE_PLUGIN_DIR . 'src/Database/Demo/AbstractDemoData.php';
             require_once WP_APP_CORE_PLUGIN_DIR . 'src/Database/Demo/PlatformDemoData.php';
             require_once WP_APP_CORE_PLUGIN_DIR . 'src/Database/Demo/WPUserGenerator.php';
 
-            $result = \WPAppCore\Database\Demo\PlatformDemoData::deleteAll();
+            // Create instance and delete all
+            $generator = new \WPAppCore\Database\Demo\PlatformDemoData();
+            $result = $generator->deleteAll();
 
             if ($result['success']) {
                 wp_send_json_success([
@@ -252,10 +264,13 @@ class PlatformDemoDataController {
 
         try {
             require_once WP_APP_CORE_PLUGIN_DIR . 'src/Database/Demo/Data/PlatformUsersData.php';
+            require_once WP_APP_CORE_PLUGIN_DIR . 'src/Database/Demo/AbstractDemoData.php';
             require_once WP_APP_CORE_PLUGIN_DIR . 'src/Database/Demo/PlatformDemoData.php';
             require_once WP_APP_CORE_PLUGIN_DIR . 'src/Database/Demo/WPUserGenerator.php';
 
-            $stats = \WPAppCore\Database\Demo\PlatformDemoData::getStatistics();
+            // Create instance and get statistics
+            $generator = new \WPAppCore\Database\Demo\PlatformDemoData();
+            $stats = $generator->getStatistics();
 
             wp_send_json_success([
                 'stats' => $stats

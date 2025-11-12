@@ -1,25 +1,36 @@
 /**
- * Demo Data & Development Settings Tab Styles
+ * Shared Demo Data Tab Styles
  *
  * @package     WP_App_Core
- * @subpackage  Assets/CSS/Settings
- * @version     1.0.0
+ * @subpackage  Assets/CSS/DemoData
+ * @version     2.0.0
  * @author      arisciwek
  *
- * Path: /wp-app-core/assets/css/settings/demo-data-tab-style.css
+ * Path: /wp-app-core/assets/css/demo-data/demo-data.css
  *
- * Description: Styling untuk Demo Data tab
- *              - Grid layout untuk role management cards
- *              - Card styling dengan status indicators
- *              - Development settings form styling
+ * Description: Shared styling untuk Demo Data tab across all plugins.
+ *              REFACTORED: From plugin-specific to shared asset (TODO-1207).
+ *              Used by: wp-app-core, wp-customer, wp-agency, and 17 other plugins.
+ *
+ * Features:
+ * - Grid layout untuk demo data cards
+ * - Card styling dengan status indicators
+ * - Development settings form styling
+ * - Loading states with animations
+ * - Info section styling
  *
  * Changelog:
+ * 2.0.0 - 2025-01-12 (TODO-1207)
+ * - BREAKING: Moved from settings/ to demo-data/ (shared asset)
+ * - Now reusable across all 20 plugins
+ * - Generic styling, no plugin-specific classes
  * 1.0.0 - 2025-10-19
- * - Initial creation
+ * - Initial creation (plugin-specific)
  * - Grid layout for role cards
  * - Status indicators
  */
 
+/* ====== Demo Data Section ====== */
 .demo-data-section {
     background: #fff;
     border: 1px solid #ccd0d4;
@@ -33,6 +44,7 @@
     border-bottom: 1px solid #dcdcde;
 }
 
+/* ====== Grid Layout ====== */
 .demo-data-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -40,6 +52,7 @@
     margin-top: 20px;
 }
 
+/* ====== Demo Data Cards ====== */
 .demo-data-card {
     background: #f6f7f7;
     border: 1px solid #dcdcde;
@@ -96,6 +109,7 @@
     cursor: not-allowed;
 }
 
+/* ====== Messages ====== */
 #demo-data-messages {
     margin: 20px 0 0 0;
 }
@@ -104,6 +118,7 @@
     padding: 12px;
 }
 
+/* ====== Development Settings Section ====== */
 .development-settings-section {
     background: #fff;
     border: 1px solid #ccd0d4;
@@ -135,6 +150,7 @@
     margin-bottom: 5px;
 }
 
+/* ====== Info Section ====== */
 .info-section {
     background: #f0f6fc;
     border-left: 4px solid #2271b1;
@@ -167,7 +183,7 @@
     color: #1d2327;
 }
 
-/* Loading state */
+/* ====== Loading States ====== */
 .demo-data-card.loading {
     opacity: 0.6;
     pointer-events: none;
@@ -184,10 +200,28 @@
     border: 3px solid #f3f3f3;
     border-top: 3px solid #2271b1;
     border-radius: 50%;
-    animation: spin 1s linear infinite;
+    animation: demo-data-spin 1s linear infinite;
 }
 
-@keyframes spin {
+@keyframes demo-data-spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+/* ====== Responsive Design ====== */
+@media (max-width: 782px) {
+    .demo-data-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .development-settings-section .form-table th {
+        width: 100%;
+        display: block;
+        padding: 10px 0;
+    }
+
+    .development-settings-section .form-table td {
+        display: block;
+        padding: 0 0 15px 0;
+    }
 }

@@ -158,7 +158,7 @@ class SettingsPageAssets implements AssetStrategyInterface {
             'security-session' => 'security-session-tab-style.css',
             'security-policy' => 'security-policy-tab-style.css',
             'permissions' => 'permissions-tab-style.css',
-            'demo-data' => 'demo-data-tab-style.css',
+            'demo-data' => '../demo-data/demo-data.css', // TODO-1207: Shared asset
         ];
 
         if (isset($tab_styles[$tab])) {
@@ -201,17 +201,25 @@ class SettingsPageAssets implements AssetStrategyInterface {
             'security-session' => 'security-session-tab-script.js',
             'security-policy' => 'security-policy-tab-script.js',
             'permissions' => 'permissions-tab-script.js',
-            'demo-data' => 'demo-data-tab-script.js',
+            'demo-data' => '../demo-data/demo-data.js', // TODO-1207: Shared asset
         ];
 
         if (isset($tab_scripts[$tab])) {
             $file_path = WP_APP_CORE_PLUGIN_DIR . 'assets/js/settings/' . $tab_scripts[$tab];
 
             if (\file_exists($file_path)) {
+                // Base dependencies for all tabs
+                $dependencies = ['jquery', 'wpapp-settings-base', 'wpapp-settings-reset-helper'];
+
+                // Add wp-modal dependency for demo-data tab (TODO-1207)
+                if ($tab === 'demo-data') {
+                    $dependencies[] = 'wp-modal';
+                }
+
                 \wp_enqueue_script(
                     'wpapp-settings-' . $tab,
                     WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/' . $tab_scripts[$tab],
-                    ['jquery', 'wpapp-settings-base', 'wpapp-settings-reset-helper'],
+                    $dependencies,
                     \filemtime($file_path), // Use filemtime for cache busting
                     true
                 );

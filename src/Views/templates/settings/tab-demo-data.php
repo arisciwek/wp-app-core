@@ -70,8 +70,11 @@ foreach ($platform_roles as $role_slug) {
                     <?php endif; ?>
                 </p>
                 <button type="button"
-                        class="button button-primary platform-create-roles"
+                        class="button button-primary demo-data-button platform-create-roles"
+                        data-action="wpapp_create_platform_roles"
                         data-nonce="<?php echo wp_create_nonce('create_platform_roles'); ?>"
+                        data-confirm="<?php esc_attr_e('Create all 7 platform roles with default capabilities?', 'wp-app-core'); ?>"
+                        data-success-reload="true"
                         <?php echo $existing_role_count === 7 ? 'disabled' : ''; ?>>
                     <?php _e('Create Platform Roles', 'wp-app-core'); ?>
                 </button>
@@ -94,8 +97,12 @@ foreach ($platform_roles as $role_slug) {
                     <?php endif; ?>
                 </p>
                 <button type="button"
-                        class="button button-secondary platform-delete-roles"
+                        class="button button-secondary demo-data-button platform-delete-roles"
+                        data-action="wpapp_delete_platform_roles"
                         data-nonce="<?php echo wp_create_nonce('delete_platform_roles'); ?>"
+                        data-confirm="<?php esc_attr_e('Delete all platform roles and their capabilities?', 'wp-app-core'); ?>"
+                        data-double-confirm="<?php esc_attr_e('This will remove all role permissions. Are you sure?', 'wp-app-core'); ?>"
+                        data-success-reload="true"
                         <?php echo !$roles_exist ? 'disabled' : ''; ?>>
                     <?php _e('Delete Platform Roles', 'wp-app-core'); ?>
                 </button>
@@ -118,8 +125,10 @@ foreach ($platform_roles as $role_slug) {
                     <?php endif; ?>
                 </p>
                 <button type="button"
-                        class="button button-secondary platform-reset-capabilities"
+                        class="button button-secondary demo-data-button platform-reset-capabilities"
+                        data-action="wpapp_reset_platform_capabilities"
                         data-nonce="<?php echo wp_create_nonce('reset_platform_capabilities'); ?>"
+                        data-confirm="<?php esc_attr_e('Reset all platform capabilities to default values?', 'wp-app-core'); ?>"
                         <?php echo !$roles_exist ? 'disabled' : ''; ?>>
                     <?php _e('Reset Capabilities', 'wp-app-core'); ?>
                 </button>
@@ -147,8 +156,11 @@ foreach ($platform_roles as $role_slug) {
                     <?php _e('20 staff members: Super Admin (2), Admin (3), Manager (3), Support (4), Finance (3), Analyst (3), Viewer (2)', 'wp-app-core'); ?>
                 </p>
                 <button type="button"
-                        class="button button-primary platform-generate-staff"
-                        data-nonce="<?php echo wp_create_nonce('generate_platform_staff'); ?>">
+                        class="button button-primary demo-data-button platform-generate-staff"
+                        data-action="wpapp_generate_platform_staff"
+                        data-nonce="<?php echo wp_create_nonce('generate_platform_staff'); ?>"
+                        data-confirm="<?php esc_attr_e('Generate 20 platform staff users with demo data?', 'wp-app-core'); ?>"
+                        data-stats-refresh=".platform-refresh-stats">
                     <?php _e('Generate Platform Staff', 'wp-app-core'); ?>
                 </button>
                 <p class="description">
@@ -165,8 +177,12 @@ foreach ($platform_roles as $role_slug) {
                     <?php _e('Removes users, staff records, and all associated data', 'wp-app-core'); ?>
                 </p>
                 <button type="button"
-                        class="button button-secondary platform-delete-staff"
-                        data-nonce="<?php echo wp_create_nonce('delete_platform_staff'); ?>">
+                        class="button button-secondary demo-data-button platform-delete-staff"
+                        data-action="wpapp_delete_platform_staff"
+                        data-nonce="<?php echo wp_create_nonce('delete_platform_staff'); ?>"
+                        data-confirm="<?php esc_attr_e('Delete all 20 platform staff users and their data?', 'wp-app-core'); ?>"
+                        data-double-confirm="<?php esc_attr_e('This action cannot be undone. Are you absolutely sure?', 'wp-app-core'); ?>"
+                        data-stats-refresh=".platform-refresh-stats">
                     <?php _e('Delete Platform Staff', 'wp-app-core'); ?>
                 </button>
                 <p class="description">
@@ -181,8 +197,10 @@ foreach ($platform_roles as $role_slug) {
                     <p><?php _e('Loading statistics...', 'wp-app-core'); ?></p>
                 </div>
                 <button type="button"
-                        class="button button-secondary platform-refresh-stats"
-                        data-nonce="<?php echo wp_create_nonce('platform_staff_stats'); ?>">
+                        class="button button-secondary demo-data-stats-refresh platform-refresh-stats"
+                        data-action="wpapp_platform_staff_stats"
+                        data-nonce="<?php echo wp_create_nonce('platform_staff_stats'); ?>"
+                        data-stats-container="#platform-staff-stats">
                     <?php _e('Refresh Statistics', 'wp-app-core'); ?>
                 </button>
                 <p class="description">

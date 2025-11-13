@@ -6,7 +6,7 @@
  * @version     1.0.2
  * @author      arisciwek
  *
- * Path: /wp-app-core/assets/js/permissions/permission-matrix.js
+ * Path: /wp-app-core/assets/js/permissions/wpapp-permission-matrix.js
  *
  * Description: Shared JavaScript for permission management UI.
  *              Handles AJAX save/reset operations with consistent patterns.

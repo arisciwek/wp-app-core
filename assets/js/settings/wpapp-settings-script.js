@@ -6,7 +6,7 @@
  * @version     2.0.0
  * @author      arisciwek
  *
- * Path: /wp-app-core/assets/js/settings/settings-script.js
+ * Path: /wp-app-core/assets/js/settings/wpapp-settings-script.js
  *
  * Description: Global JavaScript for platform settings functionality.
  *              Handles page-level Save button that works across ALL tabs.

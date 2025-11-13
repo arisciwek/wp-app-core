@@ -231,7 +231,7 @@ abstract class AbstractPermissionsController {
         // Enqueue shared CSS from wp-app-core
         wp_enqueue_style(
             'wpapp-permission-matrix',
-            WP_APP_CORE_PLUGIN_URL . 'assets/css/permissions/permission-matrix.css',
+            WP_APP_CORE_PLUGIN_URL . 'assets/css/permissions/wpapp-permission-matrix.css',
             [],
             WP_APP_CORE_VERSION
         );
@@ -239,7 +239,7 @@ abstract class AbstractPermissionsController {
         // Enqueue shared JS from wp-app-core
         wp_enqueue_script(
             'wpapp-permission-matrix',
-            WP_APP_CORE_PLUGIN_URL . 'assets/js/permissions/permission-matrix.js',
+            WP_APP_CORE_PLUGIN_URL . 'assets/js/permissions/wpapp-permission-matrix.js',
             ['jquery', 'wp-modal'],
             WP_APP_CORE_VERSION,
             true

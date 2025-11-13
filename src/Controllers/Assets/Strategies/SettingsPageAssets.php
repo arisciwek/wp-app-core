@@ -70,7 +70,7 @@ class SettingsPageAssets implements AssetStrategyInterface {
         // Base settings styles
         \wp_enqueue_style(
             'wpapp-settings-base',
-            WP_APP_CORE_PLUGIN_URL . 'assets/css/settings/settings-style.css',
+            WP_APP_CORE_PLUGIN_URL . 'assets/css/settings/wpapp-settings-style.css',
             [],
             WP_APP_CORE_VERSION
         );
@@ -90,7 +90,7 @@ class SettingsPageAssets implements AssetStrategyInterface {
         // Base settings script
         \wp_enqueue_script(
             'wpapp-settings-base',
-            WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/settings-script.js',
+            WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/wpapp-settings-script.js',
             ['jquery'],
             WP_APP_CORE_VERSION,
             true

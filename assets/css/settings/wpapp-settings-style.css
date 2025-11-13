@@ -6,11 +6,14 @@
  * @version     1.0.1
  * @author      arisciwek
  *
- * Path: /wp-app-core/assets/css/settings/settings-style.css
+ * Path: /wp-app-core/assets/css/settings/wpapp-settings-style.css
  *
  * Description: Styles for platform settings pages
  *
  * Changelog:
+ * 1.0.2 - 2025-01-13 (TODO-1208)
+ * - Renamed to wpapp-settings-style.css for global scope identification
+ *
  * 1.0.1 - 2025-10-30
  * - Renamed from settings.css to settings-style.css for consistency
  *

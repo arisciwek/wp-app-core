@@ -109,9 +109,9 @@ class DashboardTemplate {
         </div>
 
         <?php
-        // Render modal template (TODO-1194)
-        // Modal available globally for all plugins
-        \WPAppCore\Views\Modal\ModalTemplate::render();
+        // Modal template now provided by wp-modal plugin (TODO-1194)
+        // wp-modal plugin renders modal template globally, no need to call here
+        // Old: \WPAppCore\Views\Modal\ModalTemplate::render();
         ?>
         <?php
     }

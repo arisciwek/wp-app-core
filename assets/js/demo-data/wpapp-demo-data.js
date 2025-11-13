@@ -118,10 +118,9 @@ jQuery(document).ready(function($) {
 
         $('.demo-data-button[data-requires]').each(function() {
             const $button = $(this);
-            const requiredType = $button.data('requires');
+            const requiredTypes = $button.data('requires'); // Can be comma-separated
             const checkAction = $button.data('check-action');
             const checkNonce = $button.data('check-nonce');
-            const checkType = $button.data('check-type') || requiredType; // Allow override
 
             // Skip if no check action configured
             if (!checkAction || !checkNonce) {
@@ -129,50 +128,53 @@ jQuery(document).ready(function($) {
                 return;
             }
 
+            // Parse multiple dependencies (comma-separated)
+            const dependencies = requiredTypes.split(',').map(t => t.trim());
+
             // Show checking state
             $button.prop('disabled', true)
                    .attr('title', 'Checking dependencies...');
 
-            // AJAX check
-            $.ajax({
-                url: ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: checkAction,
-                    type: checkType,
-                    nonce: checkNonce
-                },
-                success: function(response) {
-                    if (response.success) {
-                        const hasData = response.data.has_data;
-                        const count = response.data.count || 0;
-
-                        // Enable/disable based on data existence
-                        $button.prop('disabled', !hasData)
-                               .toggleClass('dependency-met', hasData)
-                               .toggleClass('dependency-missing', !hasData);
-
-                        // Update title/tooltip
-                        if (hasData) {
-                            $button.attr('title', `${requiredType} data exists (${count} records)`);
-                        } else {
-                            $button.attr('title', `Requires ${requiredType} to be generated first`);
-                        }
-
-                        console.log(`[DemoData] Dependency check for "${requiredType}":`, hasData ? 'MET ✓' : 'MISSING ✗', `(${count} records)`);
-                    } else {
-                        console.error('[DemoData] Dependency check failed:', response);
-                        $button.prop('disabled', true)
-                               .addClass('dependency-error')
-                               .attr('title', 'Error checking dependency status');
+            // Check all dependencies in parallel
+            const checkPromises = dependencies.map(type => {
+                return $.ajax({
+                    url: ajaxUrl,
+                    type: 'POST',
+                    data: {
+                        action: checkAction,
+                        type: type,
+                        nonce: checkNonce
                     }
-                },
-                error: function(xhr, status, error) {
-                    console.error('[DemoData] Dependency check AJAX error:', {xhr, status, error});
-                    $button.prop('disabled', true)
-                           .addClass('dependency-error')
-                           .attr('title', 'Error checking dependency status');
+                }).then(response => {
+                    const hasData = response.success && response.data.has_data;
+                    const count = response.data?.count || 0;
+                    console.log(`[DemoData] Dependency "${type}":`, hasData ? 'MET ✓' : 'MISSING ✗', `(${count} records)`);
+                    return {type, hasData, count};
+                }).catch(err => {
+                    console.error(`[DemoData] Check failed for "${type}":`, err);
+                    return {type, hasData: false, count: 0};
+                });
+            });
+
+            // Wait for all checks to complete
+            Promise.all(checkPromises).then(results => {
+                const allMet = results.every(r => r.hasData);
+                const missing = results.filter(r => !r.hasData).map(r => r.type);
+
+                // Enable/disable based on ALL dependencies met
+                $button.prop('disabled', !allMet)
+                       .toggleClass('dependency-met', allMet)
+                       .toggleClass('dependency-missing', !allMet);
+
+                // Update title/tooltip
+                if (allMet) {
+                    const totalRecords = results.reduce((sum, r) => sum + r.count, 0);
+                    $button.attr('title', `All dependencies met (${totalRecords} total records)`);
+                } else {
+                    $button.attr('title', `Missing: ${missing.join(', ')}`);
                 }
+
+                console.log(`[DemoData] Button "${$button.text().trim()}" dependencies:`, allMet ? 'ALL MET ✓' : `MISSING: ${missing.join(', ')}`);
             });
         });
     }

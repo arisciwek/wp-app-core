@@ -4,7 +4,7 @@
  *
  * @package     WP_App_Core
  * @subpackage  Database/Demo
- * @version     1.0.8
+ * @version     1.0.11
  * @author      arisciwek
  *
  * Path: /wp-app-core/src/Database/Demo/WPUserGenerator.php
@@ -20,6 +20,27 @@
  * - deleteUsers()  : Delete demo users by IDs
  *
  * Changelog:
+ * 1.0.11 - 2025-11-13 (FIX: Support both 'role' and 'roles' parameter)
+ * - CRITICAL FIX: Added support for 'role' (singular string) parameter
+ * - Previously only checked 'roles' (array), causing 'subscriber' default
+ * - BranchDemoData uses 'role' => 'customer' (singular)
+ * - Now checks 'roles'[0] first, then 'role', then fallback to 'subscriber'
+ * - Fixes unwanted 'subscriber' role in demo user creation
+ * - Maintains backward compatibility with both parameter formats
+ *
+ * 1.0.10 - 2025-11-13 (FIX: Allow manage_options for web demo generation)
+ * - CRITICAL FIX: Changed validation to allow manage_options OR create_users
+ * - Fixes "cannot create users" error when admin generates demo data via web UI
+ * - Root cause: Web requests (PHP_SAPI: cgi-fcgi) need capability check
+ * - Administrators have manage_options but may not have create_users explicitly
+ * - Now supports both CLI (WP_CLI/cli) and web (manage_options) execution
+ *
+ * 1.0.9 - 2025-11-13 (DEBUG: Enhanced validation logging)
+ * - Added detailed debug logging in validate() method
+ * - Logs WP_CLI constant state, value, and PHP_SAPI for troubleshooting
+ * - Helps diagnose intermittent "cannot create users" errors
+ * - No functional changes, debug only
+ *
  * 1.0.8 - 2025-11-01 (TODO-1190: Static ID Hook Pattern)
  * - BREAKING: Changed to instance-based class (from static)
  * - Added validate() with CLI detection for script execution
@@ -41,17 +62,30 @@ class WPUserGenerator {
     private static $usedUsernames = [];
 
     protected function validate(): bool {
+        // Debug validation checks
+        $wp_cli_defined = defined('WP_CLI');
+        $wp_cli_value = $wp_cli_defined ? WP_CLI : false;
+        $php_sapi = PHP_SAPI;
+
+        $this->debug("validate() called - WP_CLI defined: " . ($wp_cli_defined ? 'yes' : 'no') .
+                     ", value: " . ($wp_cli_value ? 'true' : 'false') .
+                     ", PHP_SAPI: {$php_sapi}");
+
         // Allow CLI/script execution for demo data generation
         if ((defined('WP_CLI') && WP_CLI) || (PHP_SAPI === 'cli')) {
+            $this->debug('validate() passed - CLI mode detected');
             return true; // CLI/script always allowed for demo data
         }
 
         // For web requests, check user capability
-        if (!current_user_can('create_users')) {
-            $this->debug('Current user cannot create users');
-            return false;
+        // Allow if user can manage_options (administrator) OR create_users
+        if (current_user_can('manage_options') || current_user_can('create_users')) {
+            $this->debug('validate() passed - user has manage_options or create_users capability');
+            return true;
         }
-        return true;
+
+        $this->debug('Current user cannot create users');
+        return false;
     }
 
     public function generateUser($data) {
@@ -120,7 +154,14 @@ class WPUserGenerator {
         }
 
         // 3. Insert new user via wp_insert_user() for proper WordPress integration
-        $base_role = isset($data['roles'][0]) ? $data['roles'][0] : 'subscriber';
+        // Support both 'role' (singular) and 'roles' (array) for backward compatibility
+        $base_role = 'subscriber'; // Default fallback
+        if (isset($data['roles'][0])) {
+            $base_role = $data['roles'][0];
+        } elseif (isset($data['role'])) {
+            $base_role = $data['role'];
+        }
+
         $email = isset($data['email']) ? $data['email'] : ($username . '@example.com');
 
         $user_data_to_insert = [

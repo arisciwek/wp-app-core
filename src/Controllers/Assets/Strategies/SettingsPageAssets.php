@@ -119,12 +119,14 @@ class SettingsPageAssets implements AssetStrategyInterface {
             ]
         ]);
 
-        // Settings Reset Helper - Using WPModal with Form POST (no AJAX)
+        // SHARED: Settings Reset Script - Global for ALL plugins
+        // Handles Reset button with WPModal confirmation + Form POST (no AJAX)
+        // Used by: wp-customer, wp-agency, wp-disnaker, etc.
         \wp_enqueue_script(
-            'wpapp-settings-reset-helper',
-            WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/settings-reset-helper-post.js',
+            'wpapp-settings-reset-script',
+            WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/wpapp-settings-reset-script.js',
             ['jquery', 'wp-modal'], // Depend on WPModal
-            \filemtime(WP_APP_CORE_PLUGIN_DIR . 'assets/js/settings/settings-reset-helper-post.js'),
+            \filemtime(WP_APP_CORE_PLUGIN_DIR . 'assets/js/settings/wpapp-settings-reset-script.js'),
             true
         );
 
@@ -209,7 +211,7 @@ class SettingsPageAssets implements AssetStrategyInterface {
 
             if (\file_exists($file_path)) {
                 // Base dependencies for all tabs
-                $dependencies = ['jquery', 'wpapp-settings-base', 'wpapp-settings-reset-helper'];
+                $dependencies = ['jquery', 'wpapp-settings-base', 'wpapp-settings-reset-script'];
 
                 // Add wp-modal dependency for demo-data tab (TODO-1207)
                 if ($tab === 'demo-data') {

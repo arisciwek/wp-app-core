@@ -1,44 +1,62 @@
 /**
- * Settings Reset Helper - WPModal with Form POST
+ * Settings Reset Script - GLOBAL for ALL Plugins
  *
  * @package     WP_App_Core
  * @subpackage  Assets/JS/Settings
- * @version     2.0.0
+ * @version     2.1.0
  * @author      arisciwek
  *
- * Path: /wp-app-core/assets/js/settings/settings-reset-helper-post.js
+ * Path: /wp-app-core/assets/js/settings/wpapp-settings-reset-script.js
  *
- * Description: Reset settings dengan WPModal confirmation + native form POST
- *              NO AJAX - menggunakan WordPress Settings API standard
+ * Description: SHARED reset script untuk semua plugin yang memiliki fitur reset di settings.
+ *              Menggunakan WPModal confirmation + native form POST (NO AJAX).
+ *              WordPress Settings API standard.
+ *
+ * Used By:
+ * - wp-customer (Customer Settings > General, Permissions, etc.)
+ * - wp-agency (Agency Settings > General, Permissions, etc.)
+ * - wp-disnaker (Disnaker Settings > General, Permissions, etc.)
+ * - All future wp-app-* plugins with reset functionality
  *
  * Dependencies:
  * - jQuery
  * - WPModal (wp-modal plugin)
+ * - wpapp-settings-base (for save button)
+ *
+ * Button Requirements:
+ * - ID: #wpapp-settings-reset
+ * - Attributes: data-form-id, data-reset-title, data-reset-message
  *
  * Changelog:
+ * 2.1.0 - 2025-11-14
+ * - RENAMED: settings-reset-helper-post.js → wpapp-settings-reset-script.js
+ * - Updated to follow wpapp-* naming convention
+ * - Documented as GLOBAL shared script for all plugins
+ * - Added comprehensive usage documentation
+ *
  * 2.0.0 - 2025-11-12
  * - BREAKING: Changed from AJAX to native form POST
- * - Still uses WPModal for beautiful confirmation dialog
+ * - Uses WPModal for beautiful confirmation dialog
  * - Much simpler and faster - no AJAX overhead
  */
 
 (function($) {
     'use strict';
 
-    console.log('[Settings Reset Helper POST] Loading...');
+    console.log('[WPApp Settings Reset] Loading...');
 
     $(document).ready(function() {
-        console.log('[Settings Reset Helper POST] Initializing...');
+        console.log('[WPApp Settings Reset] Initializing...');
 
         // Find reset button
         const $resetBtn = $('#wpapp-settings-reset');
 
         if ($resetBtn.length === 0) {
-            console.log('[Settings Reset Helper POST] No reset button found');
+            console.log('[WPApp Settings Reset] No reset button found');
             return;
         }
 
-        console.log('[Settings Reset Helper POST] Reset button found');
+        console.log('[WPApp Settings Reset] Reset button found');
 
         // Setup click handler
         $resetBtn.on('click', function(e) {
@@ -49,14 +67,14 @@
             const message = $btn.data('reset-message') || 'Are you sure you want to reset settings to default values?\n\nThis action cannot be undone.';
             const formId = $btn.data('form-id');
 
-            console.log('[Settings Reset Helper POST] Reset clicked:', {
+            console.log('[WPApp Settings Reset] Reset clicked:', {
                 formId: formId,
                 title: title
             });
 
             // Check if WPModal is loaded
             if (typeof WPModal === 'undefined') {
-                console.error('[Settings Reset Helper POST] WPModal not loaded!');
+                console.error('[WPApp Settings Reset] WPModal not loaded!');
                 // Fallback to native confirm
                 if (confirm(message)) {
                     submitResetForm(formId);
@@ -71,7 +89,7 @@
                 danger: true,
                 confirmLabel: 'Reset Settings',
                 onConfirm: function() {
-                    console.log('[Settings Reset Helper POST] Confirmed - submitting form');
+                    console.log('[WPApp Settings Reset] Confirmed - submitting form');
                     submitResetForm(formId);
                 }
             });
@@ -84,7 +102,7 @@
             const $form = $('#' + formId);
 
             if ($form.length === 0) {
-                console.error('[Settings Reset Helper POST] Form not found:', formId);
+                console.error('[WPApp Settings Reset] Form not found:', formId);
                 alert('Error: Form not found. Please refresh the page.');
                 return;
             }
@@ -92,13 +110,13 @@
             // Set reset flag to 1
             $form.find('input[name="reset_to_defaults"]').val('1');
 
-            console.log('[Settings Reset Helper POST] Submitting form via POST to options.php');
+            console.log('[WPApp Settings Reset] Submitting form via POST to options.php');
 
             // Submit form - will reload page with success/error message
             $form.submit();
         }
 
-        console.log('[Settings Reset Helper POST] Initialization complete');
+        console.log('[WPApp Settings Reset] Initialization complete');
     });
 
 })(jQuery);

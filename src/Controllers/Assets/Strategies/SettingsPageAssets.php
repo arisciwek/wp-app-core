@@ -158,7 +158,7 @@ class SettingsPageAssets implements AssetStrategyInterface {
             'security-session' => 'security-session-tab-style.css',
             'security-policy' => 'security-policy-tab-style.css',
             'permissions' => 'permissions-tab-style.css',
-            'demo-data' => '../demo-data/demo-data.css', // TODO-1207: Shared asset
+            'demo-data' => '../demo-data/wpapp-demo-data.css', // TODO-1207: Shared asset (renamed for global scope)
         ];
 
         if (isset($tab_styles[$tab])) {
@@ -201,7 +201,7 @@ class SettingsPageAssets implements AssetStrategyInterface {
             'security-session' => 'security-session-tab-script.js',
             'security-policy' => 'security-policy-tab-script.js',
             'permissions' => 'permissions-tab-script.js',
-            'demo-data' => '../demo-data/demo-data.js', // TODO-1207: Shared asset
+            'demo-data' => '../demo-data/wpapp-demo-data.js', // TODO-1207: Shared asset (renamed for global scope)
         ];
 
         if (isset($tab_scripts[$tab])) {

@@ -3,13 +3,14 @@
  *
  * @package     WP_App_Core
  * @subpackage  Assets/CSS/DemoData
- * @version     2.0.0
+ * @version     2.1.0
  * @author      arisciwek
  *
- * Path: /wp-app-core/assets/css/demo-data/demo-data.css
+ * Path: /wp-app-core/assets/css/demo-data/wpapp-demo-data.css
  *
  * Description: Shared styling untuk Demo Data tab across all plugins.
  *              REFACTORED: From plugin-specific to shared asset (TODO-1207).
+ *              RENAMED: For global scope identification (TODO-1208).
  *              Used by: wp-app-core, wp-customer, wp-agency, and 17 other plugins.
  *
  * Features:
@@ -18,8 +19,15 @@
  * - Development settings form styling
  * - Loading states with animations
  * - Info section styling
+ * - Consistent button heights with flexbox alignment
  *
  * Changelog:
+ * 2.1.0 - 2025-01-13
+ * - Fixed: Consistent button alignment with card-footer pattern
+ * - Added: .demo-data-card-footer class with margin-top: auto
+ * - Added: Flexbox layout to .demo-data-card (flex-direction: column)
+ * - Added: min-height 200px to cards for consistent heights
+ * - Improved: Button styling with flexbox centering
  * 2.0.0 - 2025-01-12 (TODO-1207)
  * - BREAKING: Moved from settings/ to demo-data/ (shared asset)
  * - Now reusable across all 20 plugins
@@ -59,6 +67,9 @@
     padding: 20px;
     border-radius: 4px;
     position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 180px;
 }
 
 .demo-data-card h4 {
@@ -100,8 +111,20 @@
     margin-right: 5px;
 }
 
+/* ====== Card Footer (for button alignment) ====== */
+.demo-data-card-footer {
+    margin-top: auto;
+    padding-top: 10px;
+}
+
 .demo-data-card button {
     width: 100%;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.4;
+    padding: 8px 12px;
 }
 
 .demo-data-card button:disabled {

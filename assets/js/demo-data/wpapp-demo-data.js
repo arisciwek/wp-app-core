@@ -6,10 +6,11 @@
  * @version     2.0.0
  * @author      arisciwek
  *
- * Path: /wp-app-core/assets/js/demo-data/demo-data.js
+ * Path: /wp-app-core/assets/js/demo-data/wpapp-demo-data.js
  *
  * Description: Shared JavaScript for demo data tab across all plugins.
  *              REFACTORED: From plugin-specific to shared asset (TODO-1207).
+ *              RENAMED: For global scope identification (TODO-1208).
  *              Used by: wp-app-core, wp-customer, wp-agency, and 17 other plugins.
  *
  * Features:

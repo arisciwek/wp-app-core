@@ -3,7 +3,7 @@
  *
  * @package     WP_App_Core
  * @subpackage  Assets/CSS/DemoData
- * @version     2.1.0
+ * @version     2.1.1
  * @author      arisciwek
  *
  * Path: /wp-app-core/assets/css/demo-data/wpapp-demo-data.css
@@ -20,13 +20,19 @@
  * - Loading states with animations
  * - Info section styling
  * - Consistent button heights with flexbox alignment
+ * - Dependency state styling (TODO-1209)
  *
  * Changelog:
+ * 2.1.1 - 2025-01-13 (TODO-1209)
+ * - Added: Dependency state styling (.dependency-missing, .dependency-met, .dependency-error)
+ * - Added: Visual feedback for buttons with unmet dependencies (gray, disabled)
+ * - Added: Error state styling for dependency check failures (red)
+ * - Improved: Button hover states for dependency-missing
  * 2.1.0 - 2025-01-13
  * - Fixed: Consistent button alignment with card-footer pattern
  * - Added: .demo-data-card-footer class with margin-top: auto
  * - Added: Flexbox layout to .demo-data-card (flex-direction: column)
- * - Added: min-height 200px to cards for consistent heights
+ * - Added: min-height 180px to cards for consistent heights
  * - Improved: Button styling with flexbox centering
  * 2.0.0 - 2025-01-12 (TODO-1207)
  * - BREAKING: Moved from settings/ to demo-data/ (shared asset)
@@ -130,6 +136,32 @@
 .demo-data-card button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+/* ====== Dependency States ====== */
+.demo-data-card button.dependency-missing {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #9ea3a8;
+    border-color: #8c8f94;
+}
+
+.demo-data-card button.dependency-missing:hover,
+.demo-data-card button.dependency-missing:focus {
+    background-color: #9ea3a8;
+    border-color: #8c8f94;
+    opacity: 0.6;
+}
+
+.demo-data-card button.dependency-error {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: #dc3232;
+    border-color: #dc3232;
+}
+
+.demo-data-card button.dependency-met {
+    /* Normal enabled button state - no special styling needed */
 }
 
 /* ====== Messages ====== */

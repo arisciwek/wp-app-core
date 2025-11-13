@@ -3,7 +3,7 @@
  *
  * @package     WP_App_Core
  * @subpackage  Assets/JS/DemoData
- * @version     2.0.0
+ * @version     2.0.1
  * @author      arisciwek
  *
  * Path: /wp-app-core/assets/js/demo-data/wpapp-demo-data.js
@@ -16,6 +16,7 @@
  * Features:
  * - Generic AJAX handlers using data attributes
  * - Configurable actions via data-action attribute
+ * - Dependency checking with auto enable/disable (TODO-1209)
  * - Loading states management
  * - Error handling
  * - Success/error notifications
@@ -34,8 +35,17 @@
  * - data-double-confirm: Double confirmation message (optional, for dangerous actions)
  * - data-success-reload: Reload page after success (optional, default: false)
  * - data-stats-refresh: Trigger stats refresh after success (optional)
+ * - data-requires: Entity type that must exist (optional, for dependency checking)
+ * - data-check-action: AJAX action for checking dependency (required if data-requires)
+ * - data-check-nonce: Nonce for check action (required if data-requires)
  *
  * Changelog:
+ * 2.0.1 - 2025-01-13 (TODO-1209)
+ * - Added checkDependencies() function for dependency management
+ * - Buttons with data-requires auto-disabled until dependency met
+ * - Auto re-check dependencies after successful generation
+ * - Clear tooltip feedback for dependency status
+ * - Console logging for dependency check results
  * 2.0.1 - 2025-01-12 (TODO-1207)
  * - Added WPModal integration for confirmation dialogs
  * - Replaced native confirm() with WPModal.confirm()
@@ -80,6 +90,91 @@ jQuery(document).ready(function($) {
         $('html, body').animate({
             scrollTop: messageDiv.offset().top - 50
         }, 300);
+    }
+
+    /**
+     * Check dependencies for demo data buttons
+     * Buttons with data-requires will be checked and enabled/disabled
+     *
+     * Required attributes:
+     * - data-requires: Entity type that must exist (e.g., 'customer', 'branch')
+     * - data-check-action: AJAX action for checking (e.g., 'customer_check_demo_data')
+     * - data-check-nonce: Nonce for check action
+     *
+     * Optional attributes:
+     * - data-check-type: Override type sent to backend (default: uses data-requires value)
+     *
+     * Backend Response Expected:
+     * {
+     *   "success": true,
+     *   "data": {
+     *     "has_data": true/false,
+     *     "count": 123
+     *   }
+     * }
+     */
+    function checkDependencies() {
+        console.log('[DemoData] Checking dependencies...');
+
+        $('.demo-data-button[data-requires]').each(function() {
+            const $button = $(this);
+            const requiredType = $button.data('requires');
+            const checkAction = $button.data('check-action');
+            const checkNonce = $button.data('check-nonce');
+            const checkType = $button.data('check-type') || requiredType; // Allow override
+
+            // Skip if no check action configured
+            if (!checkAction || !checkNonce) {
+                console.log('[DemoData] Button has data-requires but missing check-action/nonce:', $button);
+                return;
+            }
+
+            // Show checking state
+            $button.prop('disabled', true)
+                   .attr('title', 'Checking dependencies...');
+
+            // AJAX check
+            $.ajax({
+                url: ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: checkAction,
+                    type: checkType,
+                    nonce: checkNonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        const hasData = response.data.has_data;
+                        const count = response.data.count || 0;
+
+                        // Enable/disable based on data existence
+                        $button.prop('disabled', !hasData)
+                               .toggleClass('dependency-met', hasData)
+                               .toggleClass('dependency-missing', !hasData);
+
+                        // Update title/tooltip
+                        if (hasData) {
+                            $button.attr('title', `${requiredType} data exists (${count} records)`);
+                        } else {
+                            $button.attr('title', `Requires ${requiredType} to be generated first`);
+                        }
+
+                        console.log(`[DemoData] Dependency check for "${requiredType}":`, hasData ? 'MET ✓' : 'MISSING ✗', `(${count} records)`);
+                    } else {
+                        console.error('[DemoData] Dependency check failed:', response);
+                        $button.prop('disabled', true)
+                               .addClass('dependency-error')
+                               .attr('title', 'Error checking dependency status');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('[DemoData] Dependency check AJAX error:', {xhr, status, error});
+                    $button.prop('disabled', true)
+                           .addClass('dependency-error')
+                           .attr('title', 'Error checking dependency status');
+                }
+            });
+        });
     }
 
     /**
@@ -195,6 +290,12 @@ jQuery(document).ready(function($) {
                         setTimeout(function() {
                             window.location.reload();
                         }, 1500);
+                    } else {
+                        // Re-check dependencies if no reload
+                        // Give backend time to commit data before checking
+                        setTimeout(function() {
+                            checkDependencies();
+                        }, 500);
                     }
                 } else {
                     const errorMsg = response.data.message || 'An error occurred during operation';
@@ -308,6 +409,12 @@ jQuery(document).ready(function($) {
     $('.demo-data-stats-refresh').each(function() {
         $(this).trigger('click');
     });
+
+    /**
+     * Check dependencies on page load
+     * Buttons with data-requires will be validated
+     */
+    checkDependencies();
 
     /**
      * Legacy support for old class names (backward compatibility)

@@ -4,28 +4,47 @@
  *
  * @package     WP_App_Core
  * @subpackage  Controllers/Assets/Strategies
- * @version     1.0.0
+ * @version     1.2.0
  * @author      arisciwek
  *
  * Path: /wp-app-core/src/Controllers/Assets/Strategies/SettingsPageAssets.php
  *
  * Description: Asset loading strategy for Platform Settings pages.
  *              Loads tab-specific CSS and JS with proper localization.
+ *              Separates platform-specific scripts from shared global scripts.
  *
  * Responsibilities:
  * - Detect if on wp-app-core settings page
  * - Load base settings CSS/JS
- * - Load tab-specific assets based on active tab
+ * - Load platform-specific tab scripts from /settings/ directory
+ * - Load shared tab scripts from /settings/ directory
  * - Provide wpAppCoreSettings localization
  *
- * Tab Assets Loaded:
- * - general: general-tab-*.css/js
- * - email: email-tab-*.css/js
- * - security-authentication: security-authentication-tab-*.css/js
- * - security-session: security-session-tab-*.css/js
- * - security-policy: security-policy-tab-*.css/js
+ * Tab Assets Loaded (Platform-specific):
+ * - general: platform-general-tab-script.js
+ * - email: platform-email-tab-script.js
+ * - security-authentication: platform-security-authentication-tab-script.js
+ * - security-session: platform-security-session-tab-script.js
+ * - security-policy: platform-security-policy-tab-script.js
+ * - permissions: platform-permissions-tab-script.js
+ * - error-logger: platform-error-logger.js
+ *
+ * Tab Assets Loaded (Shared):
+ * - demo-data: wpapp-demo-data.js (can be reused by other plugins)
  *
  * Changelog:
+ * 1.2.0 - 2025-11-14 (Task-1210)
+ * - Moved platform-specific tab scripts back from /platform/ to /settings/
+ * - Keeping platform- prefix for clarity
+ * - Consolidated all scripts in /settings/ directory
+ *
+ * 1.1.0 - 2025-11-14
+ * - Moved platform-specific tab scripts from /settings/ to /platform/
+ * - Added platform- prefix to tab scripts
+ * - Separated platform scripts from shared scripts
+ * - Updated handle names: wpapp-settings-* → platform-settings-*
+ * - Updated action hooks: wpapp_after_shared_tab_script → wpapp_after_platform_tab_script
+ *
  * 1.0.0 - 2025-01-09
  * - Initial implementation
  * - Extracted from class-dependencies.php
@@ -96,12 +115,12 @@ class SettingsPageAssets implements AssetStrategyInterface {
             true
         );
 
-        // TEMP: Error logger for debugging fast-disappearing errors
+        // PLATFORM: Error logger for debugging fast-disappearing errors (Platform-specific)
         \wp_enqueue_script(
-            'wpapp-error-logger',
-            WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/error-logger.js',
+            'platform-error-logger',
+            WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/platform-error-logger.js',
             [],
-            \filemtime(WP_APP_CORE_PLUGIN_DIR . 'assets/js/settings/error-logger.js'),
+            \filemtime(WP_APP_CORE_PLUGIN_DIR . 'assets/js/settings/platform-error-logger.js'),
             false // Load in head to catch early errors
         );
 
@@ -189,50 +208,72 @@ class SettingsPageAssets implements AssetStrategyInterface {
     /**
      * Enqueue tab-specific JavaScript
      *
-     * Loads shared assets yang bisa digunakan plugin lain.
-     * Plugin lain dapat reuse assets ini tanpa duplikasi.
+     * Platform-specific tab scripts (local scope).
+     * Consolidated in /settings/ directory (Task-1210).
      *
      * @param string $tab Tab slug
      * @return void
      */
     private function enqueue_tab_script(string $tab): void {
-        $tab_scripts = [
-            'general' => 'general-tab-script.js',
-            'email' => 'email-tab-script.js',
-            'security-authentication' => 'security-authentication-tab-script.js',
-            'security-session' => 'security-session-tab-script.js',
-            'security-policy' => 'security-policy-tab-script.js',
-            'permissions' => 'permissions-tab-script.js',
-            'demo-data' => '../demo-data/wpapp-demo-data.js', // TODO-1207: Shared asset (renamed for global scope)
+        // Platform-specific tab scripts (not shared with other plugins)
+        $platform_tab_scripts = [
+            'general' => 'platform-general-tab-script.js',
+            'email' => 'platform-email-tab-script.js',
+            'security-authentication' => 'platform-security-authentication-tab-script.js',
+            'security-session' => 'platform-security-session-tab-script.js',
+            'security-policy' => 'platform-security-policy-tab-script.js',
+            'permissions' => 'platform-permissions-tab-script.js',
         ];
 
-        if (isset($tab_scripts[$tab])) {
-            $file_path = WP_APP_CORE_PLUGIN_DIR . 'assets/js/settings/' . $tab_scripts[$tab];
+        // Shared tab scripts (can be reused by other plugins)
+        $shared_tab_scripts = [
+            'demo-data' => '../demo-data/wpapp-demo-data.js', // TODO-1207: Shared asset
+        ];
+
+        // Check platform-specific scripts first
+        if (isset($platform_tab_scripts[$tab])) {
+            $file_path = WP_APP_CORE_PLUGIN_DIR . 'assets/js/settings/' . $platform_tab_scripts[$tab];
 
             if (\file_exists($file_path)) {
-                // Base dependencies for all tabs
                 $dependencies = ['jquery', 'wpapp-settings-base', 'wpapp-settings-reset-script'];
 
-                // Add wp-modal dependency for demo-data tab (TODO-1207)
-                if ($tab === 'demo-data') {
-                    $dependencies[] = 'wp-modal';
-                }
-
                 \wp_enqueue_script(
-                    'wpapp-settings-' . $tab,
-                    WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/' . $tab_scripts[$tab],
+                    'platform-settings-' . $tab,
+                    WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/' . $platform_tab_scripts[$tab],
                     $dependencies,
                     \filemtime($file_path), // Use filemtime for cache busting
                     true
                 );
 
                 /**
-                 * Action: After shared tab script enqueued
-                 * Allows plugins to add overrides or additional scripts
+                 * Action: After platform tab script enqueued
                  *
                  * @param string $tab Current tab slug
                  * @param string $handle JS handle that was enqueued
                  */
+                \do_action('wpapp_after_platform_tab_script', $tab, 'platform-settings-' . $tab);
+            }
+        }
+        // Check shared scripts
+        elseif (isset($shared_tab_scripts[$tab])) {
+            $file_path = WP_APP_CORE_PLUGIN_DIR . 'assets/js/settings/' . $shared_tab_scripts[$tab];
+
+            if (\file_exists($file_path)) {
+                $dependencies = ['jquery', 'wpapp-settings-base', 'wpapp-settings-reset-script'];
+
+                // Add wp-modal dependency for demo-data tab
+                if ($tab === 'demo-data') {
+                    $dependencies[] = 'wp-modal';
+                }
+
+                \wp_enqueue_script(
+                    'wpapp-settings-' . $tab,
+                    WP_APP_CORE_PLUGIN_URL . 'assets/js/settings/' . $shared_tab_scripts[$tab],
+                    $dependencies,
+                    \filemtime($file_path),
+                    true
+                );
+
                 \do_action('wpapp_after_shared_tab_script', $tab, 'wpapp-settings-' . $tab);
             }
         }

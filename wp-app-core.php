@@ -199,9 +199,6 @@ class WP_App_Core {
 
         // Initialize admin bar info
         add_action('init', ['WP_App_Core_Admin_Bar_Info', 'init']);
-
-        // Register DataTable nonce for AJAX requests
-        add_action('admin_enqueue_scripts', [$this, 'enqueue_datatable_scripts']);
     }
 
     /**
@@ -293,17 +290,6 @@ class WP_App_Core {
     }
 
     /**
-     * Enqueue DataTable scripts and localize data
-     */
-    public function enqueue_datatable_scripts() {
-        // Localize script with nonce and ajax URL for DataTables
-        wp_localize_script('jquery', 'wpapp_datatable', [
-            'nonce' => wp_create_nonce('wpapp_datatable_nonce'),
-            'ajax_url' => admin_url('admin-ajax.php')
-        ]);
-    }
-
-    /**
      * Initialize plugin
      */
     public function init() {
@@ -318,10 +304,6 @@ class WP_App_Core {
 
             // Initialize Platform Staff Controller
             $platform_staff = new \WPAppCore\Controllers\Platform\PlatformStaffController();
-
-            // Initialize DataTable Assets Controller
-            $datatable_assets = new \WPAppCore\Controllers\DataTable\DataTableAssetsController();
-            $datatable_assets->init();
         }
 
         // Initialize components here

@@ -61,6 +61,8 @@
  * Hook Patterns:
  * - Before insert: apply_filters('{plugin}_{entity}_before_insert', $insert_data, $data)
  * - After create: do_action('{plugin}_{entity}_created', $entity_id, $insert_data)
+ * - Before delete: do_action('{plugin}_{entity}_before_delete', $id, $entity)
+ * - After delete: do_action('{plugin}_{entity}_deleted', $id, $entity)
  *
  * Changelog:
  * 1.0.0 - 2025-01-02
@@ -543,15 +545,24 @@ abstract class AbstractCrudModel {
                 return false;
             }
 
-            // 2. Delete from database
+            // 2. Hook: Before delete (for cascade operations)
+            $hook_prefix = $this->getPluginPrefix() . '_' . $this->getEntityName();
+            do_action("{$hook_prefix}_before_delete", $id, $current);
+
+            // 3. Delete from database
             $result = $wpdb->delete(
                 $this->getTableName(),
                 ['id' => $id],
                 ['%d']
             );
 
-            // 3. Invalidate cache
+            // 4. Invalidate cache
             $this->invalidateCache($id);
+
+            // 5. Hook: After delete (for cleanup operations)
+            if ($result !== false) {
+                do_action("{$hook_prefix}_deleted", $id, $current);
+            }
 
             return $result !== false;
 

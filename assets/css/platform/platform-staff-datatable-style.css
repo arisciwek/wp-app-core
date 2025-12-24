@@ -1,0 +1,294 @@
+/**
+ * Platform Staff DataTable Styles
+ *
+ * @package     WP_App_Core
+ * @subpackage  Assets/CSS/Platform
+ * @version     1.0.0
+ * @author      arisciwek
+ *
+ * Path: /wp-app-core/assets/css/platform/platform-staff-datatable-style.css
+ *
+ * Description: DataTable specific styling untuk platform staff listing.
+ *
+ * Changelog:
+ * 1.0.0 - 2025-10-19
+ * - Initial implementation
+ * - Table styling
+ * - Action buttons
+ * - Responsive table
+ */
+
+/* ==========================================================================
+   DataTable Wrapper
+   ========================================================================== */
+
+.dataTables_wrapper {
+    margin-top: 20px;
+    width: 100%;
+    overflow-x: auto;
+}
+
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.table-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 15px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* ==========================================================================
+   DataTable Elements
+   ========================================================================== */
+
+.dataTables_length label,
+.dataTables_filter label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+
+.dataTables_length select {
+    padding: 4px 8px;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+}
+
+.dataTables_filter input {
+    padding: 6px 10px;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    margin-left: 8px;
+}
+
+.dataTables_info {
+    color: #666;
+    font-size: 13px;
+}
+
+/* ==========================================================================
+   Pagination
+   ========================================================================== */
+
+.dataTables_paginate {
+    display: flex;
+    gap: 5px;
+}
+
+.dataTables_paginate .paginate_button {
+    padding: 6px 12px;
+    border: 1px solid #c3c4c7;
+    background: #f6f7f7;
+    color: #2c3338;
+    text-decoration: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.dataTables_paginate .paginate_button:hover {
+    background: #f0f0f1;
+    border-color: #8c8f94;
+}
+
+.dataTables_paginate .paginate_button.current {
+    background: #2271b1;
+    color: #fff;
+    border-color: #2271b1;
+}
+
+.dataTables_paginate .paginate_button.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ==========================================================================
+   Table
+   ========================================================================== */
+
+#platform-staff-table {
+    width: 100% !important;
+    table-layout: auto;
+}
+
+#platform-staff-table thead th {
+    background: #f6f7f7;
+    border-bottom: 2px solid #2271b1;
+    padding: 12px 8px;
+    font-weight: 600;
+    text-align: left;
+    white-space: nowrap;
+    font-size: 13px;
+}
+
+#platform-staff-table tbody td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #dcdcde;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 13px;
+}
+
+#platform-staff-table tbody tr:hover {
+    background-color: #f6f7f7;
+}
+
+/* ==========================================================================
+   Status Badge
+   ========================================================================== */
+
+.staff-status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.staff-status-badge.status-aktif {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.staff-status-badge.status-tidak-aktif {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* ==========================================================================
+   Action Buttons in Table
+   ========================================================================== */
+
+.staff-action-buttons {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.view-staff-btn,
+.edit-staff-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 8px;
+    min-width: auto;
+    cursor: pointer;
+}
+
+.view-staff-btn .dashicons,
+.edit-staff-btn .dashicons {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+}
+
+#platform-staff-table a.view-staff-btn {
+    text-decoration: none;
+    color: #2271b1;
+}
+
+#platform-staff-table a.view-staff-btn:hover {
+    color: #135e96;
+    text-decoration: underline;
+}
+
+/* ==========================================================================
+   Processing & Empty States
+   ========================================================================== */
+
+.dataTables_processing {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    padding: 20px 40px;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    z-index: 10;
+}
+
+.dataTables_empty {
+    text-align: center;
+    padding: 40px 20px !important;
+    color: #666;
+    font-style: italic;
+}
+
+/* ==========================================================================
+   Sorting Icons
+   ========================================================================== */
+
+table.dataTable thead .sorting:before,
+table.dataTable thead .sorting_asc:before,
+table.dataTable thead .sorting_desc:before,
+table.dataTable thead .sorting_asc_disabled:before,
+table.dataTable thead .sorting_desc_disabled:before {
+    opacity: 0.3;
+}
+
+table.dataTable thead .sorting_asc:before,
+table.dataTable thead .sorting_desc:after {
+    opacity: 1;
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+
+@media screen and (max-width: 782px) {
+    .table-header,
+    .table-footer {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .dataTables_length,
+    .dataTables_filter,
+    .dataTables_info,
+    .dataTables_paginate {
+        width: 100%;
+        text-align: center;
+    }
+
+    .dataTables_length label,
+    .dataTables_filter label {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .dataTables_length select,
+    .dataTables_filter input {
+        width: 100%;
+        margin-left: 0;
+        margin-top: 5px;
+    }
+
+    .dataTables_paginate {
+        justify-content: center;
+    }
+
+    #platform-staff-table {
+        font-size: 13px;
+    }
+
+    #platform-staff-table thead th,
+    #platform-staff-table tbody td {
+        padding: 8px;
+    }
+}

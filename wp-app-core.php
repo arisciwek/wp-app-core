@@ -148,9 +148,6 @@ class WP_App_Core {
         require_once WP_APP_CORE_PLUGIN_DIR . 'includes/class-autoloader.php';
         WP_App_Core_Autoloader::register();
 
-        // Load core classes
-        require_once WP_APP_CORE_PLUGIN_DIR . 'includes/class-admin-bar-info.php';
-
         // Load upgrade handler
         require_once WP_APP_CORE_PLUGIN_DIR . 'includes/class-upgrade.php';
 
@@ -192,9 +189,6 @@ class WP_App_Core {
 
         // Hook into wp_branch_access_type filter to set platform user access type for branches
         add_filter('wp_branch_access_type', [$this, 'set_platform_branch_access_type'], 10, 2);
-
-        // Initialize admin bar info
-        add_action('init', ['WP_App_Core_Admin_Bar_Info', 'init']);
 
         // Register DataTable nonce for AJAX requests
         add_action('admin_enqueue_scripts', [$this, 'enqueue_datatable_scripts']);

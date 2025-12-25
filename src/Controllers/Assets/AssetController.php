@@ -92,10 +92,7 @@ class AssetController {
      * @return void
      */
     public function enqueue_frontend_assets(): void {
-        // Admin bar assets on frontend
-        if (is_admin_bar_showing()) {
-            $this->enqueue_admin_bar_assets();
-        }
+        // Frontend assets can be added here if needed
     }
 
     /**
@@ -107,11 +104,6 @@ class AssetController {
         $screen = get_current_screen();
         if (!$screen) {
             return;
-        }
-
-        // Admin bar assets (always load in admin)
-        if (is_admin_bar_showing()) {
-            $this->enqueue_admin_bar_assets();
         }
 
         // Platform Settings page
@@ -129,27 +121,6 @@ class AssetController {
         }
     }
 
-    /**
-     * Enqueue admin bar assets
-     *
-     * @return void
-     */
-    private function enqueue_admin_bar_assets(): void {
-        wp_enqueue_style(
-            'wp-app-core-admin-bar',
-            WP_APP_CORE_PLUGIN_URL . 'assets/css/admin-bar/admin-bar-style.css',
-            ['admin-bar'],
-            $this->version
-        );
-
-        wp_enqueue_script(
-            'wp-app-core-admin-bar',
-            WP_APP_CORE_PLUGIN_URL . 'assets/js/admin-bar/admin-bar-script.js',
-            ['jquery'],
-            $this->version,
-            true
-        );
-    }
 
     /**
      * Enqueue platform staff dashboard assets

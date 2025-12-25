@@ -1,0 +1,101 @@
+/**
+ * Platform Staff Forms Styles
+ *
+ * @package     WP_App_Core
+ * @subpackage  Assets/CSS/Platform
+ * @version     1.0.0
+ * @author      arisciwek
+ *
+ * Path: /wp-app-core/assets/css/platform/platform-staff-forms.css
+ *
+ * Description: Styling for platform staff forms (edit, create).
+ *              Two-column grid layout for compact modal display.
+ *
+ * Changelog:
+ * 1.0.0 - 2025-12-25
+ * - Initial creation
+ * - Two-column grid layout
+ * - Responsive design
+ */
+
+/* Form Container */
+.wpapp-form {
+    padding: 0;
+    max-width: 100%;
+}
+
+/* Two Column Grid Layout */
+.wpapp-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 0;
+}
+
+.wpapp-form-column {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Form Fields */
+.wpapp-form-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.wpapp-form-field label {
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #1d2327;
+    font-size: 13px;
+}
+
+.wpapp-form-field label .required {
+    color: #dc3232;
+    margin-left: 3px;
+}
+
+/* Input Elements */
+.wpapp-input {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid #dcdcdc;
+    border-radius: 3px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.wpapp-input:focus {
+    border-color: #2271b1;
+    outline: none;
+    box-shadow: 0 0 0 1px #2271b1;
+}
+
+.wpapp-input:disabled,
+.wpapp-input:read-only {
+    background-color: #f6f7f7;
+    color: #646970;
+    cursor: not-allowed;
+}
+
+/* Help Text */
+.wpapp-field-help {
+    margin-top: 4px;
+    color: #646970;
+    font-size: 11px;
+    font-style: italic;
+    line-height: 1.3;
+}
+
+/* Error State */
+.wpapp-form-field.has-error .wpapp-input {
+    border-color: #dc3232;
+}
+
+/* Responsive: Stack on small screens */
+@media (max-width: 768px) {
+    .wpapp-form-grid {
+        grid-template-columns: 1fr;
+    }
+}

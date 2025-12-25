@@ -157,6 +157,21 @@ class AssetController {
      * @return void
      */
     private function enqueue_platform_staff_assets(): void {
+        // Enqueue CSS for forms and info display
+        wp_enqueue_style(
+            'platform-staff-forms',
+            WP_APP_CORE_PLUGIN_URL . 'assets/css/platform/platform-staff-forms.css',
+            [],
+            $this->version
+        );
+
+        wp_enqueue_style(
+            'platform-staff-info',
+            WP_APP_CORE_PLUGIN_URL . 'assets/css/platform/platform-staff-info.css',
+            [],
+            $this->version
+        );
+
         // Enqueue minimal JS for DataTable initialization
         // Dependency: jquery only (datatables will be loaded by wp-datatable BaseAssets)
         // Nonce and config will be provided by wp-datatable DualPanelAssets (wpdtConfig)

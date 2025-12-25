@@ -154,12 +154,8 @@ class WP_App_Core {
         // Load upgrade handler
         require_once WP_APP_CORE_PLUGIN_DIR . 'includes/class-upgrade.php';
 
-        // Load Asset Controller (NEW - replaces class-dependencies.php)
-        require_once WP_APP_CORE_PLUGIN_DIR . 'src/Controllers/Assets/AssetStrategyInterface.php';
+        // Load Asset Controller (Simplified - single file approach)
         require_once WP_APP_CORE_PLUGIN_DIR . 'src/Controllers/Assets/AssetController.php';
-        require_once WP_APP_CORE_PLUGIN_DIR . 'src/Controllers/Assets/Strategies/SettingsPageAssets.php';
-        require_once WP_APP_CORE_PLUGIN_DIR . 'src/Controllers/Assets/Strategies/AdminBarAssets.php';
-        require_once WP_APP_CORE_PLUGIN_DIR . 'src/Controllers/Assets/Strategies/PlatformStaffAssets.php';
 
         // Load WP Customer integration (TODO-1210)
         // DISABLED: Not needed anymore - using direct capability checks in wp-customer

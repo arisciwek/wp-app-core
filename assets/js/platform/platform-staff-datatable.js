@@ -1,175 +1,134 @@
 /**
- * Platform Staff DataTable Handler - Base Panel System Integration
+ * Platform Staff DataTable
  *
  * @package     WP_App_Core
  * @subpackage  Assets/JS/Platform
- * @version     1.0.0
+ * @version     3.0.0
  * @author      arisciwek
  *
  * Path: /wp-app-core/assets/js/platform/platform-staff-datatable.js
  *
- * Description: Komponen untuk mengelola DataTables platform staff.
- *              Terintegrasi dengan base panel system dari wp-app-core.
- *              Menangani server-side processing dan event handling.
- *
- * Changelog:
- * 1.0.0 - 2025-11-01 (TODO-1192)
- * - Initial creation following wp-agency pattern
- * - Integrated with wp-app-core base panel system
- * - Table ID: #platform-staff-list-table
- * - AJAX action: get_platform_staff_datatable
+ * Description: Minimal DataTable initialization for Platform Staff dashboard.
+ *              Compatible with wp-datatable dual-panel system.
+ *              DELEGATES all panel interactions to wp-datatable framework.
  *
  * Dependencies:
  * - jQuery
  * - DataTables library
- * - wp-app-core base panel system
- * - wpAppCorePlatformStaff localized object (translations, ajaxurl, nonce)
+ * - wp-datatable panel-manager.js (handles all row/button clicks automatically)
+ *
+ * How it works:
+ * 1. Initialize DataTable with server-side processing
+ * 2. Server returns DT_RowData with staff ID
+ * 3. DataTables automatically converts DT_RowData to data-* attributes on <tr>
+ * 4. wp-datatable panel-manager.js detects clicks on .wpdt-datatable rows
+ * 5. Panel opens automatically - NO custom code needed!
+ *
+ * Changelog:
+ * 3.0.0 - 2025-12-25
+ * - BREAKING: Complete rewrite for wp-datatable compatibility
+ * - Migrated from wpapp-datatable to wpdt-datatable
+ * - Following customer-datatable.js pattern
+ * - TRUE minimal implementation - delegates everything to framework
  */
 
 (function($) {
     'use strict';
 
     /**
-     * Platform Staff DataTable Module
+     * Initialize on document ready
      */
-    const PlatformStaffDataTable = {
-
-        /**
-         * DataTable instance
-         */
-        table: null,
-
-        /**
-         * Initialization flag
-         */
-        initialized: false,
-
-        /**
-         * Initialize DataTable
-         */
-        init() {
-            if (this.initialized) {
-                console.log('[PlatformStaffDataTable] Already initialized');
-                return;
-            }
-
-            // Check if table element exists
-            const tableId = '#platform-staff-list-table';
-            if ($(tableId).length === 0) {
-                console.log('[PlatformStaffDataTable] Table element not found: ' + tableId);
-                return;
-            }
-
-            console.log('[PlatformStaffDataTable] Table found: ' + tableId);
-
-            // Check dependencies
-            if (typeof wpAppCorePlatformStaff === 'undefined') {
-                console.error('[PlatformStaffDataTable] wpAppCorePlatformStaff object not found.');
-                return;
-            }
-
-            console.log('[PlatformStaffDataTable] Initializing...');
-
-            this.initDataTable();
-            this.bindEvents();
-
-            this.initialized = true;
-            console.log('[PlatformStaffDataTable] Initialized successfully');
-        },
-
-        /**
-         * Initialize DataTable with server-side processing
-         */
-        initDataTable() {
-            const statusFilter = $('#platform-staff-status-filter').val() || 'aktif';
-
-            this.table = $('#platform-staff-list-table').DataTable({
-                processing: true,
-                serverSide: true,
-                ajax: {
-                    url: wpAppCorePlatformStaff.ajaxurl,
-                    type: 'POST',
-                    data: function(d) {
-                        d.action = 'get_platform_staff_datatable';
-                        d.nonce = wpAppCorePlatformStaff.nonce;
-                        d.status_filter = statusFilter;
-                    }
-                },
-                columns: [
-                    { data: 'employee_id', title: wpAppCorePlatformStaff.i18n.employee_id || 'Employee ID' },
-                    { data: 'full_name', title: wpAppCorePlatformStaff.i18n.full_name || 'Full Name' },
-                    { data: 'department', title: wpAppCorePlatformStaff.i18n.department || 'Department' },
-                    { data: 'hire_date', title: wpAppCorePlatformStaff.i18n.hire_date || 'Hire Date' },
-                    {
-                        data: 'actions',
-                        title: wpAppCorePlatformStaff.i18n.actions || 'Actions',
-                        orderable: false,
-                        searchable: false
-                    }
-                ],
-                order: [[0, 'asc']],
-                pageLength: 10,
-                lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
-                language: {
-                    processing: wpAppCorePlatformStaff.i18n.processing || 'Processing...',
-                    search: wpAppCorePlatformStaff.i18n.search || 'Search:',
-                    lengthMenu: wpAppCorePlatformStaff.i18n.lengthMenu || 'Show _MENU_ entries',
-                    info: wpAppCorePlatformStaff.i18n.info || 'Showing _START_ to _END_ of _TOTAL_ entries',
-                    infoEmpty: wpAppCorePlatformStaff.i18n.infoEmpty || 'Showing 0 to 0 of 0 entries',
-                    infoFiltered: wpAppCorePlatformStaff.i18n.infoFiltered || '(filtered from _MAX_ total entries)',
-                    zeroRecords: wpAppCorePlatformStaff.i18n.zeroRecords || 'No matching records found',
-                    emptyTable: wpAppCorePlatformStaff.i18n.emptyTable || 'No data available in table',
-                    paginate: {
-                        first: wpAppCorePlatformStaff.i18n.first || 'First',
-                        previous: wpAppCorePlatformStaff.i18n.previous || 'Previous',
-                        next: wpAppCorePlatformStaff.i18n.next || 'Next',
-                        last: wpAppCorePlatformStaff.i18n.last || 'Last'
-                    }
-                },
-                dom: '<"datatable-header"f>t<"datatable-footer"lip>',
-                drawCallback: function() {
-                    console.log('[PlatformStaffDataTable] Table redrawn');
-                }
-            });
-
-            console.log('[PlatformStaffDataTable] DataTable initialized');
-        },
-
-        /**
-         * Bind event handlers
-         */
-        bindEvents() {
-            // Status filter change
-            $(document).on('change', '#platform-staff-status-filter', () => {
-                console.log('[PlatformStaffDataTable] Status filter changed');
-                if (this.table) {
-                    this.table.ajax.reload();
-                }
-            });
-
-            // Row click for panel integration
-            $(document).on('click', '#platform-staff-list-table tbody tr', function(e) {
-                // Prevent opening panel if clicking action buttons
-                if ($(e.target).closest('button').length || $(e.target).closest('a').length) {
-                    return;
-                }
-
-                const rowData = PlatformStaffDataTable.table.row(this).data();
-                if (rowData && rowData.DT_RowData) {
-                    $(document).trigger('wpapp:open-panel', [{
-                        id: rowData.DT_RowData.id,
-                        entity: rowData.DT_RowData.entity
-                    }]);
-                }
-            });
-
-            console.log('[PlatformStaffDataTable] Events bound');
-        }
-    };
-
-    // Initialize on document ready
     $(document).ready(function() {
-        PlatformStaffDataTable.init();
+        console.log('[Platform Staff DataTable] ========================================');
+        console.log('[Platform Staff DataTable] Script loaded and executing');
+        console.log('[Platform Staff DataTable] jQuery version:', $.fn.jquery);
+        console.log('[Platform Staff DataTable] DataTables available:', typeof $.fn.DataTable);
+        console.log('[Platform Staff DataTable] ajaxurl:', typeof ajaxurl !== 'undefined' ? ajaxurl : 'UNDEFINED');
+
+        var $table = $('#platform-staff-datatable');
+        console.log('[Platform Staff DataTable] Table selector:', $table.length > 0 ? 'FOUND' : 'NOT FOUND');
+
+        if ($table.length === 0) {
+            console.error('[Platform Staff DataTable] Table element #platform-staff-datatable not found!');
+            console.log('[Platform Staff DataTable] Available tables:', $('table').map(function() { return this.id; }).get());
+            return;
+        }
+
+        // Get nonce from wpdtConfig
+        var nonce = '';
+        if (typeof wpdtConfig !== 'undefined' && wpdtConfig.nonce) {
+            nonce = wpdtConfig.nonce;
+            console.log('[Platform Staff DataTable] Using wpdtConfig.nonce');
+        } else {
+            console.error('[Platform Staff DataTable] No nonce available!');
+        }
+
+        // Initialize DataTable with server-side processing
+        console.log('[Platform Staff DataTable] Initializing DataTable with nonce:', nonce);
+
+        try {
+            var staffTable = $table.DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: {
+                url: ajaxurl,
+                type: 'POST',
+                data: function(d) {
+                    d.action = 'get_platform_staff_datatable';
+                    d.nonce = nonce;
+                }
+            },
+            columns: [
+                { data: 'name', name: 'name' },
+                { data: 'email', name: 'email' },
+                { data: 'phone', name: 'phone' },
+                {
+                    data: 'status',
+                    name: 'status'
+                    // No render function - Model sends HTML badge
+                },
+                {
+                    data: 'actions',
+                    name: 'actions',
+                    orderable: false,
+                    searchable: false
+                }
+            ],
+            pageLength: 10,
+            order: [[0, 'asc']],
+            language: {
+                processing: 'Processing...',
+                search: 'Search:',
+                lengthMenu: 'Show _MENU_ entries',
+                info: 'Showing _START_ to _END_ of _TOTAL_ entries',
+                infoEmpty: 'Showing 0 to 0 of 0 entries',
+                infoFiltered: '(filtered from _MAX_ total entries)',
+                zeroRecords: 'No matching records found',
+                emptyTable: 'No data available in table',
+                paginate: {
+                    first: 'First',
+                    previous: 'Previous',
+                    next: 'Next',
+                    last: 'Last'
+                }
+            },
+            initComplete: function() {
+                console.log('[Platform Staff DataTable] Initialized successfully');
+                console.log('[Platform Staff DataTable] wp-datatable will handle row clicks automatically');
+            }
+        });
+
+        // Store table instance globally for panel-manager.js
+        window.platformStaffDataTableInstance = staffTable;
+
+        console.log('[Platform Staff DataTable] Setup complete');
+
+        } catch (error) {
+            console.error('[Platform Staff DataTable] ERROR during initialization:', error);
+            console.error('[Platform Staff DataTable] Error stack:', error.stack);
+        }
+
+        console.log('[Platform Staff DataTable] ========================================');
     });
 
 })(jQuery);

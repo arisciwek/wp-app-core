@@ -4,283 +4,508 @@
  *
  * @package     WP_App_Core
  * @subpackage  Controllers/Platform
- * @version     2.0.0
+ * @version     3.0.0
  * @author      arisciwek
  *
  * Path: /wp-app-core/src/Controllers/Platform/PlatformStaffDashboardController.php
  *
  * Description: Dashboard controller untuk Platform Staff management.
- *              Extends AbstractDashboardController untuk inherit dashboard system.
- *              Handles DataTable rendering, statistics, filters, and tabs.
- *              Integrates dengan centralized base panel system.
+ *              Refactored dari AbstractDashboardController ke wp-datatable framework.
+ *              Uses hook-based architecture untuk extensibility.
  *
  * Changelog:
- * 2.0.0 - 2025-11-04 (TODO-1198: Abstract Controller Implementation)
- * - BREAKING: Refactored to extend AbstractDashboardController
- * - Code reduction: 448 lines → ~260 lines (42% reduction)
- * - Implements 13 abstract methods from base class
- * - All dashboard rendering inherited FREE from AbstractDashboardController
- * - All AJAX handlers inherited FREE (datatable, details, stats)
- * - All hook registration inherited FREE (6 actions + 2 filters)
- * - KEPT: Tab content injection hooks (render_info_tab, render_placeholder_tab)
- * - ADDED: Backward compatibility for old AJAX action (handle_platform_staff_datatable)
- * - Maintains 2 tabs: Info + Placeholder
- * - Full integration with wp-app-core DataTable system
- * - Custom override: getStatsData() for Indonesian status (aktif/tidak aktif)
+ * 3.0.0 - 2025-12-25 (TODO-2205: wp-datatable Integration)
+ * - BREAKING: Removed dependency on AbstractDashboardController
+ * - Migrated to wp-datatable DualPanel layout system
+ * - Hook changes: wpapp_* → wpdt_*
+ * - Nonce changes: wpapp_panel_nonce → wpdt_nonce
+ * - Simplified structure: No abstract methods, pure hook-based
+ * - Following CustomerDashboardController pattern
  *
- * 1.0.0 - 2025-11-01 (TODO-1192)
- * - Initial implementation following AgencyDashboardController pattern
- * - Integrated with centralized DataTable system
- * - Register hooks for DataTable, stats, tabs
- * - Implement AJAX handlers
- * - Support 2 tabs: Info + Placeholder
+ * 2.0.0 - 2025-11-04
+ * - Extended AbstractDashboardController
+ *
+ * 1.0.0 - 2025-11-01
+ * - Initial implementation
  */
 
 namespace WPAppCore\Controllers\Platform;
 
-use WPAppCore\Controllers\Abstract\AbstractDashboardController;
+use WPDataTable\Templates\DualPanel\DashboardTemplate;
 use WPAppCore\Models\Platform\PlatformStaffDataTableModel;
 use WPAppCore\Models\Platform\PlatformStaffModel;
 
 defined('ABSPATH') || exit;
 
-class PlatformStaffDashboardController extends AbstractDashboardController {
+class PlatformStaffDashboardController {
+
+    /**
+     * @var PlatformStaffModel
+     */
+    private $model;
+
+    /**
+     * @var PlatformStaffDataTableModel
+     */
+    private $datatable_model;
 
     /**
      * Constructor
-     *
-     * Initializes models and registers hooks via parent
      */
     public function __construct() {
-        parent::__construct();
+        $this->model = new PlatformStaffModel();
+        $this->datatable_model = new PlatformStaffDataTableModel();
 
-        // Register tab content hooks
-        add_action('wpapp_tab_view_content', [$this, 'render_info_tab'], 10, 3);
-        add_action('wpapp_tab_view_content', [$this, 'render_placeholder_tab'], 10, 3);
+        $this->init_hooks();
+    }
 
-        // Backward compatibility: Register old AJAX action names
-        // Old file used: handle_platform_staff_datatable
-        // Parent class uses: get_platform_staff_datatable
-        add_action('wp_ajax_handle_platform_staff_datatable', [$this, 'handle_datatable_ajax']);
+    /**
+     * Initialize hooks
+     */
+    private function init_hooks(): void {
+        // Signal wp-datatable to load dual panel assets
+        add_filter('wpdt_use_dual_panel', [$this, 'signal_dual_panel'], 10, 1);
+
+        // Register tabs
+        add_filter('wpdt_datatable_tabs', [$this, 'register_tabs'], 10, 2);
+
+        // Register content hooks
+        add_action('wpdt_left_panel_content', [$this, 'render_datatable'], 10, 1);
+        add_action('wpdt_statistics_content', [$this, 'render_statistics'], 10, 1);
+
+        // AJAX handlers - Dashboard
+        add_action('wp_ajax_get_platform_staff_datatable', [$this, 'handle_datatable']);
+        add_action('wp_ajax_get_platform_staff_details', [$this, 'handle_get_details']);
+        add_action('wp_ajax_get_platform_staff_stats', [$this, 'handle_get_stats']);
+
+        // AJAX handlers - Modal CRUD
+        add_action('wp_ajax_get_platform_staff_form', [$this, 'handle_get_staff_form']);
+        add_action('wp_ajax_save_platform_staff', [$this, 'handle_save_staff']);
+        add_action('wp_ajax_delete_platform_staff', [$this, 'handle_delete_staff']);
+
+        // Backward compatibility
+        add_action('wp_ajax_handle_platform_staff_datatable', [$this, 'handle_datatable']);
+    }
+
+    /**
+     * Render dashboard page
+     * Called from MenuManager
+     */
+    public function render(): void {
+        // Check permission (aligned with menu capability in MenuManager)
+        if (!current_user_can('view_platform_users')) {
+            wp_die(__('You do not have permission to access this page.', 'wp-app-core'));
+        }
+
+        // Render wp-datatable dual panel dashboard
+        DashboardTemplate::render([
+            'entity' => 'platform_staff',
+            'title' => __('Platform Staff', 'wp-app-core'),
+            'description' => __('Manage platform staff members', 'wp-app-core'),
+            'has_stats' => true,
+            'has_tabs' => true,
+            'has_filters' => false,
+            'ajax_action' => 'get_platform_staff_details',
+        ]);
     }
 
     // ========================================
-    // IMPLEMENT ABSTRACT METHODS (13 required)
+    // DUAL PANEL SIGNAL
     // ========================================
 
     /**
-     * Get entity name (singular, lowercase)
-     *
-     * @return string
+     * Signal wp-datatable to use dual panel layout
      */
-    protected function getEntityName(): string {
-        return 'platform_staff';
+    public function signal_dual_panel($use): bool {
+        error_log('[PlatformStaffDashboard] signal_dual_panel called, page=' . ($_GET['page'] ?? 'none'));
+        if (isset($_GET['page']) && $_GET['page'] === 'wp-app-core-platform-staff') {
+            error_log('[PlatformStaffDashboard] Returning true for dual panel');
+            return true;
+        }
+        error_log('[PlatformStaffDashboard] Returning false for dual panel');
+        return $use;
     }
 
-    /**
-     * Get entity display name (singular)
-     *
-     * @return string
-     */
-    protected function getEntityDisplayName(): string {
-        return 'Platform Staff';
-    }
+    // ========================================
+    // TAB REGISTRATION
+    // ========================================
 
     /**
-     * Get entity display name (plural)
-     *
-     * @return string
+     * Register tabs for platform staff dashboard
      */
-    protected function getEntityDisplayNamePlural(): string {
-        return 'Platform Staff';
-    }
+    public function register_tabs($tabs, $entity): array {
+        if ($entity !== 'platform_staff') {
+            return $tabs;
+        }
 
-    /**
-     * Get text domain
-     *
-     * @return string
-     */
-    protected function getTextDomain(): string {
-        return 'wp-app-core';
-    }
-
-    /**
-     * Get entity plugin path
-     *
-     * @return string
-     */
-    protected function getEntityPath(): string {
-        return WP_APP_CORE_PATH;
-    }
-
-    /**
-     * Get DataTable model instance
-     *
-     * @return PlatformStaffDataTableModel
-     */
-    protected function getDataTableModel() {
-        return new PlatformStaffDataTableModel();
-    }
-
-    /**
-     * Get CRUD model instance
-     *
-     * @return PlatformStaffModel
-     */
-    protected function getModel() {
-        return new PlatformStaffModel();
-    }
-
-    /**
-     * Get AJAX action for DataTable
-     *
-     * @return string
-     */
-    protected function getDataTableAjaxAction(): string {
-        return 'get_platform_staff_datatable';
-    }
-
-    /**
-     * Get AJAX action for entity details
-     *
-     * @return string
-     */
-    protected function getDetailsAjaxAction(): string {
-        return 'get_platform_staff_details';
-    }
-
-    /**
-     * Get AJAX action for statistics
-     *
-     * @return string
-     */
-    protected function getStatsAjaxAction(): string {
-        return 'get_platform_staff_stats';
-    }
-
-    /**
-     * Get view permission capability
-     *
-     * @return string
-     */
-    protected function getViewCapability(): string {
-        return 'view_platform_users';
-    }
-
-    /**
-     * Get statistics configuration
-     *
-     * @return array
-     */
-    protected function getStatsConfig(): array {
-        return [
-            'total' => [
-                'label' => __('Total Staff', 'wp-app-core'),
-                'value' => 0,
-                'icon' => 'dashicons-groups',
-                'color' => 'blue'
-            ],
-            'active' => [
-                'label' => __('Active', 'wp-app-core'),
-                'value' => 0,
-                'icon' => 'dashicons-yes-alt',
-                'color' => 'green'
-            ],
-            'inactive' => [
-                'label' => __('Inactive', 'wp-app-core'),
-                'value' => 0,
-                'icon' => 'dashicons-dismiss',
-                'color' => 'red'
-            ]
-        ];
-    }
-
-    /**
-     * Get tabs configuration
-     *
-     * @return array
-     */
-    protected function getTabsConfig(): array {
         return [
             'info' => [
                 'title' => __('Staff Information', 'wp-app-core'),
+                'template' => WP_APP_CORE_PATH . 'src/Views/platform/tabs/platform-staff-info.php',
                 'priority' => 10
-            ],
-            'placeholder' => [
-                'title' => __('Additional', 'wp-app-core'),
-                'priority' => 20
             ]
         ];
     }
 
     // ========================================
-    // TAB CONTENT RENDERING
+    // CONTENT RENDERING
     // ========================================
 
     /**
-     * Render info tab content
-     *
-     * Hooked to: wpapp_tab_view_content
-     *
-     * @param string $tab_id Current tab ID
-     * @param string $entity Entity name
-     * @param mixed $data Entity data
+     * Render DataTable in left panel
      */
-    public function render_info_tab($tab_id, $entity, $data): void {
-        if ($entity !== 'platform_staff' || $tab_id !== 'info') {
+    public function render_datatable($config): void {
+        error_log('[PlatformStaffDashboard] render_datatable called with entity: ' . ($config['entity'] ?? 'none'));
+
+        if ($config['entity'] !== 'platform_staff') {
+            error_log('[PlatformStaffDashboard] Entity mismatch, skipping render');
             return;
         }
 
-        // Convert object to variable for template
-        $staff = $data;
-        $user = get_userdata($staff->user_id);
+        $view_file = WP_APP_CORE_PATH . 'src/Views/platform/datatable/platform-staff-datatable.php';
+        error_log('[PlatformStaffDashboard] View file path: ' . $view_file);
+        error_log('[PlatformStaffDashboard] File exists: ' . (file_exists($view_file) ? 'YES' : 'NO'));
 
-        $tab_file = WP_APP_CORE_PATH . 'src/Views/platform-staff/tabs/info.php';
-
-        if (file_exists($tab_file)) {
-            include $tab_file;
+        if (file_exists($view_file)) {
+            error_log('[PlatformStaffDashboard] Including DataTable view');
+            include $view_file;
+        } else {
+            error_log('[PlatformStaffDashboard] DataTable view file not found: ' . $view_file);
+            echo '<p>DataTable view not found</p>';
         }
     }
 
     /**
-     * Render placeholder tab content
-     *
-     * Hooked to: wpapp_tab_view_content
-     *
-     * @param string $tab_id Current tab ID
-     * @param string $entity Entity name
-     * @param mixed $data Entity data
+     * Render statistics boxes
      */
-    public function render_placeholder_tab($tab_id, $entity, $data): void {
-        if ($entity !== 'platform_staff' || $tab_id !== 'placeholder') {
+    public function render_statistics($config): void {
+        if ($config['entity'] !== 'platform_staff') {
             return;
         }
 
-        $staff = $data;
+        $view_file = WP_APP_CORE_PATH . 'src/Views/platform/stats/platform-staff-stats.php';
 
-        $tab_file = WP_APP_CORE_PATH . 'src/Views/platform-staff/tabs/placeholder.php';
-
-        if (file_exists($tab_file)) {
-            include $tab_file;
+        if (file_exists($view_file)) {
+            include $view_file;
+        } else {
+            error_log('[PlatformStaffDashboard] Stats view file not found: ' . $view_file);
         }
     }
 
     // ========================================
-    // CUSTOM STATISTICS OVERRIDE
+    // AJAX HANDLERS - Dashboard
     // ========================================
 
     /**
-     * Override getStatsData to handle aktif/tidak aktif status
-     *
-     * Platform Staff uses 'aktif'/'tidak aktif' instead of 'active'/'inactive'
-     *
-     * @return array Statistics data
+     * Handle DataTable AJAX request
      */
-    protected function getStatsData(): array {
+    public function handle_datatable(): void {
+        error_log('[PlatformStaffDashboard] handle_datatable AJAX called');
+        error_log('[PlatformStaffDashboard] $_POST: ' . print_r($_POST, true));
+
+        try {
+            // Verify nonce
+            if (!check_ajax_referer('wpdt_nonce', 'nonce', false)) {
+                error_log('[PlatformStaffDashboard] Nonce check FAILED');
+                throw new \Exception(__('Security check failed', 'wp-app-core'));
+            }
+
+            error_log('[PlatformStaffDashboard] Nonce check PASSED');
+
+            // Get DataTable data from POST (not GET)
+            $params = $_POST;
+            error_log('[PlatformStaffDashboard] Calling get_datatable_data with params');
+            $response = $this->datatable_model->get_datatable_data($params);
+
+            error_log('[PlatformStaffDashboard] Sending JSON response');
+            wp_send_json($response);
+
+        } catch (\Exception $e) {
+            error_log('[PlatformStaffDashboard] DataTable error: ' . $e->getMessage());
+            wp_send_json_error([
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Handle get details AJAX request
+     */
+    public function handle_get_details(): void {
+        try {
+            // Verify nonce
+            if (!check_ajax_referer('wpdt_nonce', 'nonce', false)) {
+                throw new \Exception(__('Security check failed', 'wp-app-core'));
+            }
+
+            // Panel-manager.js sends data via POST
+            $staff_id = isset($_POST['id']) ? intval($_POST['id']) : 0;
+
+            if (!$staff_id) {
+                throw new \Exception(__('Invalid staff ID', 'wp-app-core'));
+            }
+
+            // Get staff data
+            $staff = $this->model->find($staff_id);
+
+            if (!$staff) {
+                throw new \Exception(__('Staff not found', 'wp-app-core'));
+            }
+
+            // Prepare tabs content
+            $tabs_content = $this->render_tabs_content($staff);
+
+            wp_send_json_success([
+                'title' => sprintf(__('Platform Staff: %s', 'wp-app-core'), $staff->name),
+                'tabs' => $tabs_content
+            ]);
+
+        } catch (\Exception $e) {
+            error_log('[PlatformStaffDashboard] Get details error: ' . $e->getMessage());
+            wp_send_json_error([
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Render all tabs content and return as array
+     *
+     * @param object $staff Staff data
+     * @return array Associative array [tab_id => html_content]
+     */
+    private function render_tabs_content($staff): array {
+        error_log('[PlatformStaffDashboard] render_tabs_content called');
+        error_log('[PlatformStaffDashboard] Staff ID: ' . ($staff->id ?? 'NULL'));
+
+        $tabs = [];
+
+        // Get registered tabs
+        $registered_tabs = $this->register_tabs([], 'platform_staff');
+        error_log('[PlatformStaffDashboard] Registered tabs: ' . print_r(array_keys($registered_tabs), true));
+
+        // Render each tab
+        foreach ($registered_tabs as $tab_id => $tab_config) {
+            if (isset($tab_config['template']) && file_exists($tab_config['template'])) {
+                error_log("[PlatformStaffDashboard] Rendering tab: {$tab_id}");
+                ob_start();
+                $data = $staff; // Make $data available to template
+                include $tab_config['template'];
+                $content = ob_get_clean();
+                $tabs[$tab_id] = $content;
+                error_log("[PlatformStaffDashboard] Tab {$tab_id} rendered, length: " . strlen($content));
+            }
+        }
+
+        error_log('[PlatformStaffDashboard] Total tabs rendered: ' . count($tabs));
+        return $tabs;
+    }
+
+    /**
+     * Handle get stats AJAX request
+     */
+    public function handle_get_stats(): void {
+        try {
+            // Verify nonce
+            if (!check_ajax_referer('wpdt_nonce', 'nonce', false)) {
+                throw new \Exception(__('Security check failed', 'wp-app-core'));
+            }
+
+            // Get stats data
+            $stats = $this->get_stats_data();
+
+            wp_send_json_success([
+                'stats' => $stats
+            ]);
+
+        } catch (\Exception $e) {
+            error_log('[PlatformStaffDashboard] Get stats error: ' . $e->getMessage());
+            wp_send_json_error([
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get statistics data
+     */
+    private function get_stats_data(): array {
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'app_platform_staff';
+
         return [
-            'total' => $this->datatable_model->get_total_count('all'),
-            'active' => $this->datatable_model->get_total_count('aktif'),
-            'inactive' => $this->datatable_model->get_total_count('tidak aktif')
+            [
+                'label' => __('Total Staff', 'wp-app-core'),
+                'value' => $wpdb->get_var("SELECT COUNT(*) FROM {$table}"),
+                'icon' => 'dashicons-groups'
+            ],
+            [
+                'label' => __('Active', 'wp-app-core'),
+                'value' => $wpdb->get_var("SELECT COUNT(*) FROM {$table} WHERE status = 'active'"),
+                'icon' => 'dashicons-yes'
+            ],
+            [
+                'label' => __('Inactive', 'wp-app-core'),
+                'value' => $wpdb->get_var("SELECT COUNT(*) FROM {$table} WHERE status = 'inactive'"),
+                'icon' => 'dashicons-no'
+            ]
         ];
+    }
+
+    // ========================================
+    // AJAX HANDLERS - MODAL CRUD
+    // ========================================
+
+    /**
+     * Handle get staff form (edit)
+     */
+    public function handle_get_staff_form(): void {
+        $nonce = $_REQUEST['nonce'] ?? '';
+        if (!wp_verify_nonce($nonce, 'wpdt_nonce')) {
+            echo '<p class="error">' . __('Security check failed', 'wp-app-core') . '</p>';
+            wp_die();
+        }
+
+        $mode = $_GET['mode'] ?? 'edit';
+        $staff_id = isset($_GET['staff_id']) ? (int) $_GET['staff_id'] : 0;
+
+        // Check permissions
+        if (!current_user_can('manage_options') && !current_user_can('edit_platform_users')) {
+            echo '<p class="error">' . __('Permission denied', 'wp-app-core') . '</p>';
+            wp_die();
+        }
+
+        try {
+            if ($mode === 'edit' && $staff_id) {
+                $staff = $this->model->find($staff_id);
+
+                if (!$staff) {
+                    echo '<p class="error">' . __('Staff not found', 'wp-app-core') . '</p>';
+                    wp_die();
+                }
+
+                include WP_APP_CORE_PATH . 'src/Views/platform/forms/edit-staff-form.php';
+            }
+        } catch (\Exception $e) {
+            echo '<p class="error">' . esc_html($e->getMessage()) . '</p>';
+        }
+
+        wp_die();
+    }
+
+    /**
+     * Handle save staff (update)
+     */
+    public function handle_save_staff(): void {
+        @ini_set('display_errors', '0');
+        ob_start();
+
+        $nonce = $_POST['nonce'] ?? '';
+        if (!wp_verify_nonce($nonce, 'wpdt_nonce')) {
+            ob_end_clean();
+            wp_send_json_error(['message' => __('Security check failed', 'wp-app-core')]);
+            wp_die();
+        }
+
+        // Check permissions
+        if (!current_user_can('manage_options') && !current_user_can('edit_platform_users')) {
+            ob_end_clean();
+            wp_send_json_error(['message' => __('Permission denied', 'wp-app-core')]);
+            wp_die();
+        }
+
+        $staff_id = isset($_POST['staff_id']) ? (int) $_POST['staff_id'] : 0;
+
+        if (!$staff_id) {
+            ob_end_clean();
+            wp_send_json_error(['message' => __('Invalid staff ID', 'wp-app-core')]);
+            wp_die();
+        }
+
+        // Prepare data
+        $data = [
+            'full_name' => sanitize_text_field($_POST['full_name'] ?? ''),
+            'department' => sanitize_text_field($_POST['department'] ?? ''),
+            'phone' => sanitize_text_field($_POST['phone'] ?? ''),
+            'hire_date' => sanitize_text_field($_POST['hire_date'] ?? ''),
+            'status' => sanitize_text_field($_POST['status'] ?? 'aktif'),
+        ];
+
+        // Basic validation
+        if (empty($data['full_name'])) {
+            ob_end_clean();
+            wp_send_json_error(['message' => __('Full name is required', 'wp-app-core')]);
+            wp_die();
+        }
+
+        if (empty($data['department'])) {
+            ob_end_clean();
+            wp_send_json_error(['message' => __('Department is required', 'wp-app-core')]);
+            wp_die();
+        }
+
+        try {
+            // Update staff
+            $result = $this->model->update($staff_id, $data);
+
+            if ($result) {
+                // Clear cache
+                wp_cache_delete('platform_staff_' . $staff_id, 'wp-app-core');
+
+                // Get updated staff data
+                $staff = $this->model->find($staff_id);
+
+                ob_end_clean();
+                wp_send_json_success([
+                    'message' => __('Staff updated successfully', 'wp-app-core'),
+                    'staff' => $staff
+                ]);
+            } else {
+                ob_end_clean();
+                wp_send_json_error(['message' => __('Failed to update staff', 'wp-app-core')]);
+            }
+
+        } catch (\Exception $e) {
+            ob_end_clean();
+            wp_send_json_error(['message' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Handle delete staff
+     */
+    public function handle_delete_staff(): void {
+        $nonce = $_POST['nonce'] ?? '';
+        if (!wp_verify_nonce($nonce, 'wpdt_nonce')) {
+            wp_send_json_error(['message' => __('Security check failed', 'wp-app-core')]);
+            wp_die();
+        }
+
+        if (!current_user_can('manage_options') && !current_user_can('delete_platform_users')) {
+            wp_send_json_error(['message' => __('Permission denied', 'wp-app-core')]);
+            wp_die();
+        }
+
+        $staff_id = isset($_POST['staff_id']) ? (int) $_POST['staff_id'] : 0;
+
+        if (!$staff_id) {
+            wp_send_json_error(['message' => __('Invalid staff ID', 'wp-app-core')]);
+            wp_die();
+        }
+
+        try {
+            // Use model delete() method
+            $result = $this->model->delete($staff_id);
+
+            if ($result) {
+                wp_send_json_success(['message' => __('Staff deleted successfully', 'wp-app-core')]);
+            } else {
+                wp_send_json_error(['message' => __('Staff not found or failed to delete', 'wp-app-core')]);
+            }
+
+        } catch (\Exception $e) {
+            wp_send_json_error(['message' => $e->getMessage()]);
+        }
     }
 }

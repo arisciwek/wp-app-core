@@ -80,7 +80,12 @@ class PlatformStaffModel {
 
         global $wpdb;
         $staff = $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM {$this->table} WHERE id = %d",
+            "SELECT s.*,
+                    s.full_name as name,
+                    u.user_email as email
+             FROM {$this->table} s
+             LEFT JOIN {$wpdb->users} u ON s.user_id = u.ID
+             WHERE s.id = %d",
             $id
         ));
 

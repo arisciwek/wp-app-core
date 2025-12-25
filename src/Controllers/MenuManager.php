@@ -66,13 +66,13 @@ class MenuManager {
             60
         );
 
-        // Platform Staff Menu (TODO-1192: Using Dashboard Controller)
+        // Platform Staff Menu (TODO-2205: wp-datatable Integration)
         add_menu_page(
             __('Platform Staff', 'wp-app-core'),
             __('Platform Staff', 'wp-app-core'),
             'view_platform_users',
             'wp-app-core-platform-staff',
-            [$this->staff_dashboard_controller, 'renderDashboard'],
+            [$this->staff_dashboard_controller, 'render'],
             'dashicons-groups',
             25
         );

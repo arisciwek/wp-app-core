@@ -268,10 +268,10 @@ jQuery(document).ready(function($) {
 
                 if (response.success) {
                     // Build success message
-                    let message = response.data.message || 'Operation completed successfully';
+                    let message = (response.data && response.data.message) || 'Operation completed successfully';
 
                     // Add error details if present (partial success)
-                    if (response.data.errors && response.data.errors.length > 0) {
+                    if (response.data && response.data.errors && response.data.errors.length > 0) {
                         message += '\n\nErrors:\n' + response.data.errors.join('\n');
                     }
 
@@ -300,7 +300,7 @@ jQuery(document).ready(function($) {
                         }, 500);
                     }
                 } else {
-                    const errorMsg = response.data.message || 'An error occurred during operation';
+                    const errorMsg = (response.data && response.data.message) || 'An error occurred during operation';
                     showMessage(errorMsg, 'error');
                 }
             },

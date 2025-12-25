@@ -50,11 +50,14 @@ class PlatformStaffDataTableModel extends DataTableModel {
             's.employee_id',
             's.full_name',
             's.department',
-            's.phone'
+            's.phone',
+            'u.user_email'
         ];
 
-        // Define base JOINs (if needed in future)
-        $this->base_joins = [];
+        // Define base JOINs to get user email
+        $this->base_joins = [
+            "LEFT JOIN {$wpdb->users} u ON s.user_id = u.ID"
+        ];
     }
 
     /**
@@ -67,10 +70,10 @@ class PlatformStaffDataTableModel extends DataTableModel {
     protected function get_columns(): array {
         return [
             's.id as id',
-            's.employee_id as employee_id',
-            's.full_name as full_name',
-            's.department as department',
-            's.hire_date as hire_date'
+            's.full_name as name',
+            'u.user_email as email',
+            's.phone as phone',
+            's.status as status'
         ];
     }
 
@@ -90,10 +93,10 @@ class PlatformStaffDataTableModel extends DataTableModel {
                 'id' => $row->id,                         // Required for panel AJAX
                 'entity' => 'platform_staff'              // Required for panel entity detection
             ],
-            'employee_id' => esc_html($row->employee_id),
-            'full_name' => esc_html($row->full_name),
-            'department' => esc_html($row->department ?? '-'),
-            'hire_date' => $row->hire_date ? date('d/m/Y', strtotime($row->hire_date)) : '-',
+            'name' => esc_html($row->name ?? '-'),
+            'email' => esc_html($row->email ?? '-'),
+            'phone' => esc_html($row->phone ?? '-'),
+            'status' => $this->format_status_badge($row->status),
             'actions' => $this->generate_action_buttons($row)
         ];
     }
@@ -147,19 +150,19 @@ class PlatformStaffDataTableModel extends DataTableModel {
     private function generate_action_buttons($row): string {
         $buttons = [];
 
-        // View button (always shown, opens panel)
+        // View button - uses wpdt-panel-trigger for wp-datatable integration
         $buttons[] = sprintf(
-            '<button type="button" class="button button-small wpapp-panel-trigger" data-id="%d" data-entity="platform_staff" title="%s">
+            '<button type="button" class="button button-small wpdt-panel-trigger" data-id="%d" data-entity="platform_staff" title="%s">
                 <span class="dashicons dashicons-visibility"></span>
             </button>',
             esc_attr($row->id),
             esc_attr__('View Details', 'wp-app-core')
         );
 
-        // Edit button (if user has permission)
-        if (current_user_can('edit_platform_users')) {
+        // Edit button - opens modal
+        if (current_user_can('manage_options') || current_user_can('edit_platform_users')) {
             $buttons[] = sprintf(
-                '<button type="button" class="button button-small wpapp-edit-platform-staff" data-id="%d" title="%s">
+                '<button type="button" class="button button-small staff-edit-btn" data-id="%d" title="%s">
                     <span class="dashicons dashicons-edit"></span>
                 </button>',
                 esc_attr($row->id),
@@ -167,10 +170,10 @@ class PlatformStaffDataTableModel extends DataTableModel {
             );
         }
 
-        // Delete button (if user has permission)
-        if (current_user_can('delete_platform_users')) {
+        // Delete button - shows confirmation modal
+        if (current_user_can('manage_options') || current_user_can('delete_platform_users')) {
             $buttons[] = sprintf(
-                '<button type="button" class="button button-small wpapp-delete-platform-staff" data-id="%d" title="%s">
+                '<button type="button" class="button button-small staff-delete-btn" data-id="%d" title="%s">
                     <span class="dashicons dashicons-trash"></span>
                 </button>',
                 esc_attr($row->id),
@@ -178,7 +181,7 @@ class PlatformStaffDataTableModel extends DataTableModel {
             );
         }
 
-        return implode(' ', $buttons);
+        return '<div class="wpdt-action-buttons">' . implode(' ', $buttons) . '</div>';
     }
 
     /**

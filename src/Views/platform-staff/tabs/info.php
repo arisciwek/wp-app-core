@@ -63,7 +63,7 @@ if (!isset($staff)) {
                     ? __('Active', 'wp-app-core')
                     : __('Inactive', 'wp-app-core');
                 ?>
-                <span class="wpapp-badge wpapp-badge-<?php echo esc_attr($status_class); ?>">
+                <span class="wpdt-badge wpdt-badge-<?php echo esc_attr($status_class); ?>">
                     <?php echo esc_html($status_text); ?>
                 </span>
             </span>

@@ -81,11 +81,8 @@ class PlatformStaffController extends AbstractCrudController {
         // Note: get_platform_staff_stats handled by DashboardController
         // Note: get_platform_staff_datatable handled by DashboardController
 
-        // Register NEW DataTable system test endpoint (from old file)
-        \WPAppCore\Controllers\DataTable\DataTableController::register_ajax_action(
-            'platform_staff_datatable_test',
-            'WPAppCore\\Models\\Platform\\PlatformStaffDataTableModel'
-        );
+        // REMOVED: DataTableController test endpoint (deprecated - class removed in v2.0)
+        // DataTable functionality now handled by wp-datatable plugin
     }
 
     // ========================================

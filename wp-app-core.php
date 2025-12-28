@@ -337,5 +337,24 @@ function wp_app_core() {
     return WP_App_Core::instance();
 }
 
-// Start the plugin
-wp_app_core();
+// Start the plugin on plugins_loaded to ensure wp-datatable is available
+add_action('plugins_loaded', function() {
+    // Check if wp-datatable main class exists (instantiated by run_wp_datatable at priority 10)
+    $is_datatable_ready = class_exists('WP_DataTable', false); // false = no autoload, must be already loaded
+
+    if (!$is_datatable_ready) {
+        // wp-datatable not loaded - register notice
+        add_action('admin_notices', function() {
+            if (!class_exists('WP_DataTable', false)) {
+                echo '<div class="notice notice-error"><p>';
+                echo '<strong>WP App Core:</strong> Requires wp-datatable plugin to be installed and activated.';
+                echo '</p></div>';
+            }
+        });
+        return;
+    }
+
+    // wp-datatable is ready - initialize wp-app-core
+    // Note: We don't check AbstractDataTable because it's loaded on-demand by autoloader
+    wp_app_core();
+}, 20); // Priority 20 ensures wp-datatable (priority 10) loads first

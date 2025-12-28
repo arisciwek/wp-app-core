@@ -4,34 +4,34 @@
  *
  * @package     WP_App_Core
  * @subpackage  Models/Platform
- * @version     1.0.0
+ * @version     2.0.0
  * @author      arisciwek
  *
  * Path: /wp-app-core/src/Models/Platform/PlatformStaffDataTableModel.php
  *
  * Description: DataTable model untuk server-side processing platform staff.
- *              Extends base DataTableModel dari wp-app-core.
- *              Implements columns, joins, dan row formatting.
- *              Integrates dengan base panel system.
+ *              NOW extends AbstractDataTable from wp-datatable (v2.0).
+ *              Uses WordPress native $wpdb pattern.
+ *              Integrates dengan wp-datatable's panel system.
  *
  * Changelog:
+ * 2.0.0 - 2025-12-28
+ * - BREAKING: Changed to extend WPDataTable\Core\AbstractDataTable
+ * - Removed dependency on deprecated wp-app-core DataTableModel
+ * - Uses WordPress native $wpdb pattern (no QueryBuilder)
+ * - Uses DataTableHelpers trait methods for badges and buttons
+ * - Implements get_entity_name() and get_text_domain()
+ * - Updated badge classes: wpapp-badge → wpdt-badge
+ *
  * 1.0.0 - 2025-11-01 (TODO-1192)
- * - Updated to follow AgencyDataTableModel pattern
- * - Extends WPAppCore\Models\DataTable\DataTableModel
- * - Define columns: employee_id, full_name, department, hire_date, status, actions
- * - Implement get_columns() method
- * - Implement format_row() with DT_RowId and DT_RowData for panel
- * - Add format_status_badge() helper
- * - Add generate_action_buttons() helper
- * - Add get_total_count() for dashboard statistics
- * - Add get_where() for status filtering
+ * - Initial version extending wp-app-core's DataTableModel
  */
 
 namespace WPAppCore\Models\Platform;
 
-use WPAppCore\Models\DataTable\DataTableModel;
+use WPDataTable\Core\AbstractDataTable;
 
-class PlatformStaffDataTableModel extends DataTableModel {
+class PlatformStaffDataTableModel extends AbstractDataTable {
 
     /**
      * Constructor
@@ -42,8 +42,17 @@ class PlatformStaffDataTableModel extends DataTableModel {
 
         global $wpdb;
 
-        $this->table = $wpdb->prefix . 'app_platform_staff s';  // Include alias 's' for columns
+        $this->table = $wpdb->prefix . 'app_platform_staff s';
         $this->index_column = 's.id';
+
+        // Columns to SELECT in SQL query
+        $this->columns = [
+            's.id as id',
+            's.full_name as name',
+            'u.user_email as email',
+            's.phone as phone',
+            's.status as status'
+        ];
 
         // Define searchable columns for global search
         $this->searchable_columns = [
@@ -61,54 +70,62 @@ class PlatformStaffDataTableModel extends DataTableModel {
     }
 
     /**
-     * Get columns configuration for DataTable
+     * Get entity name for this DataTable
      *
-     * Defines all columns with their properties
-     *
-     * @return array Columns configuration
+     * @return string
      */
-    protected function get_columns(): array {
-        return [
-            's.id as id',
-            's.full_name as name',
-            'u.user_email as email',
-            's.phone as phone',
-            's.status as status'
-        ];
+    public function get_entity_name(): string {
+        return 'platform_staff';
+    }
+
+    /**
+     * Get text domain for translations
+     *
+     * @return string
+     */
+    public function get_text_domain(): string {
+        return 'wp-app-core';
     }
 
     /**
      * Format row data for DataTable output
      *
      * Applies proper escaping and formatting to each row.
-     * Adds DT_RowId and DT_RowData for panel functionality.
+     * Uses DataTableHelpers trait methods for consistent UI.
      *
      * @param object $row Database row object
      * @return array Formatted row data
      */
     protected function format_row($row): array {
-        return [
-            'DT_RowId' => 'platform-staff-' . $row->id,  // Required for panel open
-            'DT_RowData' => [
-                'id' => $row->id,                         // Required for panel AJAX
-                'entity' => 'platform_staff'              // Required for panel entity detection
-            ],
-            'name' => esc_html($row->name ?? '-'),
-            'email' => esc_html($row->email ?? '-'),
-            'phone' => esc_html($row->phone ?? '-'),
-            'status' => $this->format_status_badge($row->status),
-            'actions' => $this->generate_action_buttons($row)
-        ];
+        return array_merge(
+            $this->format_panel_row_data($row, 'platform_staff'),
+            [
+                'name' => $this->esc_output($row->name ?? ''),
+                'email' => $this->esc_output($row->email ?? ''),
+                'phone' => $this->esc_output($row->phone ?? ''),
+                'status' => $this->format_status_badge($row->status ?? 'inactive', [
+                    'text_domain' => 'wp-app-core',
+                    'active_value' => 'aktif'
+                ]),
+                'actions' => $this->generate_action_buttons($row, [
+                    'entity' => 'platform_staff',
+                    'edit_capability' => 'edit_platform_users',
+                    'delete_capability' => 'delete_platform_users',
+                    'text_domain' => 'wp-app-core'
+                ])
+            ]
+        );
     }
 
     /**
      * Get WHERE conditions for filtering
      *
-     * Applies status filter
+     * Override to add status filter support
      *
+     * @param array $request_data DataTables request data
      * @return array WHERE conditions
      */
-    public function get_where(): array {
+    protected function get_where_conditions(array $request_data): array {
         global $wpdb;
         $where = [];
 
@@ -123,77 +140,6 @@ class PlatformStaffDataTableModel extends DataTableModel {
     }
 
     /**
-     * Format status badge with color coding
-     *
-     * @param string $status Status value
-     * @return string HTML badge
-     */
-    private function format_status_badge(string $status): string {
-        $badge_class = $status === 'aktif' ? 'success' : 'error';
-        $status_text = $status === 'aktif'
-            ? __('Active', 'wp-app-core')
-            : __('Inactive', 'wp-app-core');
-
-        return sprintf(
-            '<span class="wpapp-badge wpapp-badge-%s">%s</span>',
-            esc_attr($badge_class),
-            esc_html($status_text)
-        );
-    }
-
-    /**
-     * Generate action buttons for each row
-     *
-     * @param object $row Database row object
-     * @return string HTML action buttons
-     */
-    private function generate_action_buttons($row): string {
-        $buttons = [];
-
-        // View button - uses wpdt-panel-trigger for wp-datatable integration
-        $buttons[] = sprintf(
-            '<button type="button" class="button button-small wpdt-panel-trigger" data-id="%d" data-entity="platform_staff" title="%s">
-                <span class="dashicons dashicons-visibility"></span>
-            </button>',
-            esc_attr($row->id),
-            esc_attr__('View Details', 'wp-app-core')
-        );
-
-        // Edit button - opens modal
-        if (current_user_can('manage_options') || current_user_can('edit_platform_users')) {
-            $buttons[] = sprintf(
-                '<button type="button" class="button button-small staff-edit-btn" data-id="%d" title="%s">
-                    <span class="dashicons dashicons-edit"></span>
-                </button>',
-                esc_attr($row->id),
-                esc_attr__('Edit', 'wp-app-core')
-            );
-        }
-
-        // Delete button - shows confirmation modal
-        if (current_user_can('manage_options') || current_user_can('delete_platform_users')) {
-            $buttons[] = sprintf(
-                '<button type="button" class="button button-small staff-delete-btn" data-id="%d" title="%s">
-                    <span class="dashicons dashicons-trash"></span>
-                </button>',
-                esc_attr($row->id),
-                esc_attr__('Delete', 'wp-app-core')
-            );
-        }
-
-        return '<div class="wpdt-action-buttons">' . implode(' ', $buttons) . '</div>';
-    }
-
-    /**
-     * Get table alias for WHERE/JOIN clauses
-     *
-     * @return string Table alias
-     */
-    protected function get_table_alias(): string {
-        return 's';
-    }
-
-    /**
      * Get total count with filtering
      *
      * Helper method for dashboard statistics
@@ -204,20 +150,10 @@ class PlatformStaffDataTableModel extends DataTableModel {
     public function get_total_count(string $status_filter = 'aktif'): int {
         global $wpdb;
 
-        // Temporarily set POST for get_where() method
-        $original_post = $_POST;
-        $_POST['status_filter'] = $status_filter;
-
-        // Build WHERE conditions
-        $where_conditions = $this->get_where();
-
-        // Restore original POST
-        $_POST = $original_post;
-
-        // Build count query
+        // Build WHERE condition
         $where_sql = '';
-        if (!empty($where_conditions)) {
-            $where_sql = ' WHERE ' . implode(' AND ', $where_conditions);
+        if ($status_filter !== 'all') {
+            $where_sql = $wpdb->prepare(' WHERE s.status = %s', $status_filter);
         }
 
         $count_sql = "SELECT COUNT(DISTINCT s.id) as total
